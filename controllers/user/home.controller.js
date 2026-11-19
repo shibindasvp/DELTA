@@ -12,7 +12,26 @@ export const showHome = async (req, res, next) => {
             Brand.find({ isDeleted: false, isActive: true }).limit(10)
         ]);
 
-        const brands = dbBrands.length > 0 ? dbBrands : LUXURY_BRANDS;
+        const rawBrands = dbBrands.length > 0 ? dbBrands : LUXURY_BRANDS;
+
+        // Fetch a representative product for each brand so "The Great Maisons" display actual catalog photos
+        const brands = await Promise.all(
+            rawBrands.map(async (b) => {
+                const brandObj = b.toObject ? b.toObject() : { ...b };
+                if (b._id) {
+                    const sampleProduct = await Product.findOne({
+                        brand: b._id,
+                        isActive: true,
+                        isDeleted: false
+                    })
+                    .sort({ isFeatured: -1, createdAt: -1 })
+                    .lean();
+
+                    brandObj.featuredProduct = sampleProduct || null;
+                }
+                return brandObj;
+            })
+        );
 
         res.render("user/home/home", {
             user: req.user || res.locals.currentUser || null,

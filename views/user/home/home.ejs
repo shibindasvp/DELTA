@@ -431,7 +431,7 @@
                                 <a href="/shop" class="block w-full h-full">
                                     <figure class="relative w-full h-full m-0 p-0 overflow-hidden flex flex-col justify-end">
                                         <img 
-                                            src="https://www.vacheron-constantin.com/dam/rcq/vac/Od/-i/b7/Gr/Sf/m-/0f/rF/Fw/kb/YA/Od-ib7GrSfm-0frFFwkbYA.png.transform.vacdetail.png" 
+                                            src="/uploads/products/variant-crop-1795065452998-fc45954f.jpg" 
                                             alt="Buste d'Akhénaton" 
                                             class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
                                             loading="lazy"
@@ -525,26 +525,44 @@
             </div>
 
             <% 
-                const getMaisonLink = (keyword, defaultSlug) => {
+                const getMaisonData = (keyword, defaultSlug, defaultTitle, defaultAction, fallbackImg) => {
+                    let targetBrand = null;
                     if (typeof brands !== 'undefined' && Array.isArray(brands)) {
-                        const target = brands.find(b => {
+                        targetBrand = brands.find(b => {
                             const s = (b.slug || '').toLowerCase();
                             const n = (b.name || '').toLowerCase();
                             const k = keyword.toLowerCase();
                             return s === k || s.includes(k) || n.includes(k);
                         });
-                        if (target && target.slug) {
-                            return `/shop?brand=${encodeURIComponent(target.slug)}`;
+                    }
+                    const slug = (targetBrand && targetBrand.slug) ? targetBrand.slug : defaultSlug;
+                    const brandUrl = `/shop?brand=${encodeURIComponent(slug)}`;
+                    
+                    let productImg = fallbackImg;
+                    let productName = defaultTitle;
+                    if (targetBrand && targetBrand.featuredProduct) {
+                        const p = targetBrand.featuredProduct;
+                        if (p.name) productName = p.name;
+                        if (p.images && p.images.length > 0) {
+                            productImg = p.images[0];
+                        } else if (p.variants && p.variants.length > 0 && p.variants[0].images && p.variants[0].images.length > 0) {
+                            productImg = p.variants[0].images[0];
                         }
                     }
-                    return `/shop?brand=${encodeURIComponent(defaultSlug)}`;
+                    return {
+                        brandUrl,
+                        productImg,
+                        productName,
+                        brandName: (targetBrand && targetBrand.name) ? targetBrand.name : defaultTitle,
+                        actionText: defaultAction
+                    };
                 };
 
-                const rolexUrl = getMaisonLink('rolex', 'rolex');
-                const patekUrl = getMaisonLink('patek', 'patek-philippe');
-                const apUrl = getMaisonLink('audemars', 'audemars-piguet');
-                const vcUrl = getMaisonLink('vacheron', 'vacheron-constantin');
-                const omegaUrl = getMaisonLink('omega', 'omega');
+                const rolexMaison = getMaisonData('rolex', 'rolex', 'Rolex Boutique', 'ENTER BOUTIQUE', '/uploads/products/product-crop-1787994905397-8072a245.webp');
+                const patekMaison = getMaisonData('patek', 'patek-philippe', 'Patek Philippe Salon', 'ENTER SALON', '/uploads/products/variant-crop-1795065255621-86fb08c6.jpg');
+                const apMaison = getMaisonData('audemars', 'audemars-piguet', 'Audemars Piguet Studio', 'ENTER STUDIO', '/uploads/products/product-crop-1788172289774-e6ea436c.webp');
+                const vcMaison = getMaisonData('vacheron', 'vacheron-constantin', 'Vacheron Constantin', 'EXPLORE ATELIER', '/uploads/products/variant-crop-1795065452998-fc45954f.jpg');
+                const omegaMaison = getMaisonData('omega', 'omega', 'Omega Gallery', 'VIEW COLLECTION', '/uploads/products/variant-crop-1795065532840-b118d835.jpg');
             %>
 
             <!-- Staggered 5-Brand Row with Modern 3D Tilt & Light Sheen Animations -->
@@ -552,12 +570,12 @@
                 
                 <!-- 1. Rolex Boutique (Slightly Lower Offset) -->
                 <div class="delta-reveal delay-1 maison-card-wrapper flex flex-col items-center text-center cursor-pointer lg:translate-y-8" data-tilt>
-                    <a href="<%= rolexUrl %>" class="block w-full group">
+                    <a href="<%= rolexMaison.brandUrl %>" class="block w-full group">
                         <!-- Image Container with Glare Effect -->
-                        <div class="maison-card-inner aspect-[4/5] w-full bg-[#f4f2ee] rounded-none overflow-hidden mb-6 relative shadow-sm group-hover:shadow-2xl transition-all duration-700">
+                        <div class="maison-card-inner aspect-[4/5] w-full bg-[#f4f2ee] rounded-none overflow-hidden mb-6 relative shadow-sm group-hover:shadow-2xl transition-all duration-700 flex items-center justify-center p-2">
                             <img 
-                                src="https://media.rolex.com/image/upload/q_auto/f_auto/c_limit,w_1920/v1775050318/rolexcom/094398bf1f99/watches/datejust-41/roller-loop/04/rolex-new-watches-2026-the-datejust-41-roller-loop-m126334-0033-beauty-shot-standing" 
-                                alt="Rolex Boutique" 
+                                src="<%= rolexMaison.productImg %>" 
+                                alt="<%= rolexMaison.productName %>" 
                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
                                 loading="lazy"
                             >
@@ -566,13 +584,16 @@
                         </div>
                         
                         <!-- Title & Animated Expandable Action -->
-                        <div class="space-y-2">
+                        <div class="space-y-1.5">
                             <h3 class="text-lg sm:text-xl font-serif text-[#141619] font-normal tracking-tight group-hover:text-[#006039] transition-colors leading-tight">
                                 Rolex Boutique
                             </h3>
+                            <p class="text-[11px] font-sans text-zinc-500 group-hover:text-zinc-800 transition-colors truncate px-2 font-light">
+                                <%= rolexMaison.productName %>
+                            </p>
                             <div class="maison-accent-line"></div>
-                            <p class="text-[9px] uppercase tracking-[0.25em] text-zinc-400 font-semibold group-hover:text-[#006039] group-hover:tracking-[0.32em] transition-all duration-300 flex items-center justify-center gap-1">
-                                <span>ENTER BOUTIQUE</span>
+                            <p class="text-[9px] uppercase tracking-[0.25em] text-zinc-400 font-semibold group-hover:text-[#006039] group-hover:tracking-[0.32em] transition-all duration-300 flex items-center justify-center gap-1 pt-0.5">
+                                <span><%= rolexMaison.actionText %></span>
                                 <span class="maison-arrow-icon">→</span>
                             </p>
                         </div>
@@ -581,24 +602,27 @@
 
                 <!-- 2. Patek Philippe Salon (Higher Baseline) -->
                 <div class="delta-reveal delay-2 maison-card-wrapper flex flex-col items-center text-center cursor-pointer lg:translate-y-0" data-tilt>
-                    <a href="<%= patekUrl %>" class="block w-full group">
-                        <div class="maison-card-inner aspect-[4/5] w-full bg-[#f4f2ee] rounded-none overflow-hidden mb-6 relative shadow-sm group-hover:shadow-2xl transition-all duration-700">
+                    <a href="<%= patekMaison.brandUrl %>" class="block w-full group">
+                        <div class="maison-card-inner aspect-[4/5] w-full bg-[#f4f2ee] rounded-none overflow-hidden mb-6 relative shadow-sm group-hover:shadow-2xl transition-all duration-700 flex items-center justify-center p-2">
                             <img 
-                                src="https://patek-res.cloudinary.com/dfsmedia/0906caea301d42b3b8bd23bd656d1711/7005-51887"
-                                alt="Patek Philippe Salon" 
+                                src="<%= patekMaison.productImg %>" 
+                                alt="<%= patekMaison.productName %>" 
                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
                                 loading="lazy"
                             >
                             <div class="maison-glare"></div>
                         </div>
                         
-                        <div class="space-y-2">
+                        <div class="space-y-1.5">
                             <h3 class="text-lg sm:text-xl font-serif text-[#141619] font-normal tracking-tight group-hover:text-[#006039] transition-colors leading-tight">
                                 Patek Philippe<br>Salon
                             </h3>
+                            <p class="text-[11px] font-sans text-zinc-500 group-hover:text-zinc-800 transition-colors truncate px-2 font-light">
+                                <%= patekMaison.productName %>
+                            </p>
                             <div class="maison-accent-line"></div>
-                            <p class="text-[9px] uppercase tracking-[0.25em] text-zinc-400 font-semibold group-hover:text-[#006039] group-hover:tracking-[0.32em] transition-all duration-300 flex items-center justify-center gap-1">
-                                <span>ENTER SALON</span>
+                            <p class="text-[9px] uppercase tracking-[0.25em] text-zinc-400 font-semibold group-hover:text-[#006039] group-hover:tracking-[0.32em] transition-all duration-300 flex items-center justify-center gap-1 pt-0.5">
+                                <span><%= patekMaison.actionText %></span>
                                 <span class="maison-arrow-icon">→</span>
                             </p>
                         </div>
@@ -607,24 +631,27 @@
 
                 <!-- 3. Audemars Piguet Studio (Medium Baseline) -->
                 <div class="delta-reveal delay-3 maison-card-wrapper flex flex-col items-center text-center cursor-pointer lg:translate-y-6" data-tilt>
-                    <a href="<%= apUrl %>" class="block w-full group">
-                        <div class="maison-card-inner aspect-[4/5] w-full bg-[#f4f2ee] rounded-none overflow-hidden mb-6 relative shadow-sm group-hover:shadow-2xl transition-all duration-700">
+                    <a href="<%= apMaison.brandUrl %>" class="block w-full group">
+                        <div class="maison-card-inner aspect-[4/5] w-full bg-[#f4f2ee] rounded-none overflow-hidden mb-6 relative shadow-sm group-hover:shadow-2xl transition-all duration-700 flex items-center justify-center p-2">
                             <img 
-                                src="https://dynamicmedia.audemarspiguet.com/is/image/audemarspiguet/standup-1000?fmt=avif-alpha&dpr=off"
-                                alt="Audemars Piguet Studio" 
+                                src="<%= apMaison.productImg %>" 
+                                alt="<%= apMaison.productName %>" 
                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
                                 loading="lazy"
                             >
                             <div class="maison-glare"></div>
                         </div>
                         
-                        <div class="space-y-2">
+                        <div class="space-y-1.5">
                             <h3 class="text-lg sm:text-xl font-serif text-[#141619] font-normal tracking-tight group-hover:text-[#006039] transition-colors leading-tight">
                                 Audemars Piguet<br>Studio
                             </h3>
+                            <p class="text-[11px] font-sans text-zinc-500 group-hover:text-zinc-800 transition-colors truncate px-2 font-light">
+                                <%= apMaison.productName %>
+                            </p>
                             <div class="maison-accent-line"></div>
-                            <p class="text-[9px] uppercase tracking-[0.25em] text-zinc-400 font-semibold group-hover:text-[#006039] group-hover:tracking-[0.32em] transition-all duration-300 flex items-center justify-center gap-1">
-                                <span>ENTER STUDIO</span>
+                            <p class="text-[9px] uppercase tracking-[0.25em] text-zinc-400 font-semibold group-hover:text-[#006039] group-hover:tracking-[0.32em] transition-all duration-300 flex items-center justify-center gap-1 pt-0.5">
+                                <span><%= apMaison.actionText %></span>
                                 <span class="maison-arrow-icon">→</span>
                             </p>
                         </div>
@@ -633,38 +660,11 @@
 
                 <!-- 4. Vacheron Constantin (Highest Baseline with Dark Backdrop) -->
                 <div class="delta-reveal delay-4 maison-card-wrapper flex flex-col items-center text-center cursor-pointer lg:-translate-y-4" data-tilt>
-                    <a href="<%= vcUrl %>" class="block w-full group">
-                        <div class="maison-card-inner aspect-[4/5] w-full bg-[#0a0c10] rounded-none overflow-hidden mb-6 relative shadow-md group-hover:shadow-2xl transition-all duration-700">
+                    <a href="<%= vcMaison.brandUrl %>" class="block w-full group">
+                        <div class="maison-card-inner aspect-[4/5] w-full bg-[#f4f2ee] rounded-none overflow-hidden mb-6 relative shadow-md group-hover:shadow-2xl transition-all duration-700 flex items-center justify-center p-2">
                             <img 
-                                src="https://www.vacheron-constantin.com/dam/rcq/vac/cU/Cv/Dl/xQ/QJ/28/xm/3W/i4/CW/sA/cUCvDlxQQJ28xm3Wi4CWsA.png.transform.vacdetailmob.png"
-                                alt="Vacheron Constantin Atelier" 
-                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out filter contrast-110"
-                                loading="lazy"
-                            >
-                            
-                            <div class="maison-glare"></div>
-                        </div>
-                        
-                        <div class="space-y-2">
-                            <h3 class="text-lg sm:text-xl font-serif text-[#141619] font-normal tracking-tight group-hover:text-[#006039] transition-colors leading-tight">
-                                Vacheron<br>Constantin
-                            </h3>
-                            <div class="maison-accent-line"></div>
-                            <p class="text-[9px] uppercase tracking-[0.25em] text-zinc-400 font-semibold group-hover:text-[#006039] group-hover:tracking-[0.32em] transition-all duration-300 flex items-center justify-center gap-1">
-                                <span>EXPLORE ATELIER</span>
-                                <span class="maison-arrow-icon">→</span>
-                            </p>
-                        </div>
-                    </a>
-                </div>
-
-                <!-- 5. Omega Gallery (Slightly Lower Offset) -->
-                <div class="delta-reveal delay-5 maison-card-wrapper flex flex-col items-center text-center cursor-pointer col-span-2 sm:col-span-1 lg:col-span-1 lg:translate-y-10" data-tilt>
-                    <a href="<%= omegaUrl %>" class="block w-full max-w-[240px] sm:max-w-none mx-auto group">
-                        <div class="maison-card-inner aspect-[4/5] w-full bg-[#f8f9fa] rounded-none overflow-hidden mb-6 relative shadow-sm group-hover:shadow-2xl transition-all duration-700">
-                            <img 
-                                src="https://www.omegawatches.com/media/catalog/product/o/m/omega-speedmaster-moonwatch-professional-co-axial-master-chronometer-chronograph-42-mm-31060425010002-92e1a9.png?w=1400"
-                                alt="Omega Gallery" 
+                                src="<%= vcMaison.productImg %>" 
+                                alt="<%= vcMaison.productName %>" 
                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
                                 loading="lazy"
                             >
@@ -673,11 +673,43 @@
                         
                         <div class="space-y-2">
                             <h3 class="text-lg sm:text-xl font-serif text-[#141619] font-normal tracking-tight group-hover:text-[#006039] transition-colors leading-tight">
+                                Vacheron<br>Constantin
+                            </h3>
+                            <p class="text-[11px] font-sans text-zinc-500 group-hover:text-zinc-800 transition-colors truncate px-2 font-light">
+                                <%= vcMaison.productName %>
+                            </p>
+                            <div class="maison-accent-line"></div>
+                            <p class="text-[9px] uppercase tracking-[0.25em] text-zinc-400 font-semibold group-hover:text-[#006039] group-hover:tracking-[0.32em] transition-all duration-300 flex items-center justify-center gap-1 pt-0.5">
+                                <span><%= vcMaison.actionText %></span>
+                                <span class="maison-arrow-icon">→</span>
+                            </p>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- 5. Omega Gallery (Slightly Lower Offset) -->
+                <div class="delta-reveal delay-5 maison-card-wrapper flex flex-col items-center text-center cursor-pointer col-span-2 sm:col-span-1 lg:col-span-1 lg:translate-y-10" data-tilt>
+                    <a href="<%= omegaMaison.brandUrl %>" class="block w-full max-w-[240px] sm:max-w-none mx-auto group">
+                        <div class="maison-card-inner aspect-[4/5] w-full bg-[#f8f9fa] rounded-none overflow-hidden mb-6 relative shadow-sm group-hover:shadow-2xl transition-all duration-700 flex items-center justify-center p-2">
+                            <img 
+                                src="<%= omegaMaison.productImg %>" 
+                                alt="<%= omegaMaison.productName %>" 
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
+                                loading="lazy"
+                            >
+                            <div class="maison-glare"></div>
+                        </div>
+                        
+                        <div class="space-y-1.5">
+                            <h3 class="text-lg sm:text-xl font-serif text-[#141619] font-normal tracking-tight group-hover:text-[#006039] transition-colors leading-tight">
                                 Omega Gallery
                             </h3>
+                            <p class="text-[11px] font-sans text-zinc-500 group-hover:text-zinc-800 transition-colors truncate px-2 font-light">
+                                <%= omegaMaison.productName %>
+                            </p>
                             <div class="maison-accent-line"></div>
-                            <p class="text-[9px] uppercase tracking-[0.25em] text-zinc-400 font-semibold group-hover:text-[#006039] group-hover:tracking-[0.32em] transition-all duration-300 flex items-center justify-center gap-1">
-                                <span>VIEW COLLECTION</span>
+                            <p class="text-[9px] uppercase tracking-[0.25em] text-zinc-400 font-semibold group-hover:text-[#006039] group-hover:tracking-[0.32em] transition-all duration-300 flex items-center justify-center gap-1 pt-0.5">
+                                <span><%= omegaMaison.actionText %></span>
                                 <span class="maison-arrow-icon">→</span>
                             </p>
                         </div>
