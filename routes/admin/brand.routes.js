@@ -4,6 +4,10 @@ import {
     preventAdminCache
 } from "../../middlewares/adminAuth.middleware.js";
 import {
+    handleBrandLogoUpload,
+    processBrandLogo
+} from "../../middlewares/upload.middleware.js";
+import {
     showBrands,
     addBrandHandler,
     editBrandHandler,
@@ -28,6 +32,8 @@ router.get(
 router.post(
     "/brands/add",
     isAdminAuthenticated,
+    handleBrandLogoUpload,
+    processBrandLogo,
     addBrandHandler
 );
 
@@ -35,6 +41,8 @@ router.post(
 router.post(
     "/brands/:id/edit",
     isAdminAuthenticated,
+    handleBrandLogoUpload,
+    processBrandLogo,
     editBrandHandler
 );
 

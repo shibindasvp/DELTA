@@ -69,6 +69,11 @@ const userSchema =
                 default: null
             },
 
+            profileImagePublicId: {
+                type: String,
+                default: null
+            },
+
             role: {
                 type: String,
                 enum: ["user", "admin"],

@@ -55,6 +55,8 @@ export const validateProduct = (data = {}, totalImageCount = 0) => {
         }
         if (totalImageCount < 3) {
             errors.images = `A minimum of 3 timepiece images is required (currently ${totalImageCount}).`;
+        } else if (totalImageCount > 6) {
+            errors.images = `A maximum of 6 timepiece images is allowed (currently ${totalImageCount}).`;
         }
     } else {
         let totalVariantPhotos = 0;
@@ -126,6 +128,8 @@ export const validateProduct = (data = {}, totalImageCount = 0) => {
         const overallImages = totalVariantPhotos + totalImageCount;
         if (overallImages < 3 && (!data.retainedImages || data.retainedImages.length < 3)) {
             errors.images = `A minimum of 3 timepiece images is required across your editions (currently ${overallImages}).`;
+        } else if (overallImages > 6) {
+            errors.images = `A maximum of 6 timepiece images is allowed across editions (currently ${overallImages}).`;
         }
     }
 

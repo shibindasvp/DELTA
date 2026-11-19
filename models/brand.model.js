@@ -8,6 +8,7 @@ const brandSchema = new mongoose.Schema(
         foundedYear: { type: Number, default: null },
         description: { type: String, default: "" },
         logo: { type: String, default: "" },
+        logoPublicId: { type: String, default: "" },
         website: { type: String, default: "" },
         isActive: { type: Boolean, default: true },
         isDeleted: { type: Boolean, default: false }

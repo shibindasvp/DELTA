@@ -30,7 +30,38 @@ export const parseSpecsInput = (data = {}) => {
 import crypto from "crypto";
 import path from "path";
 import fs from "fs";
+import {
+    uploadToCloudinary,
+    deleteFromCloudinary,
+    deleteMultipleFromCloudinary,
+    extractPublicIdFromUrl
+} from "../../utils/cloudinary.js";
 
+export const processVariantImages = async (images = []) => {
+    const urls = [];
+    const publicIds = [];
+
+    for (const img of images) {
+        if (!img || typeof img !== "string") continue;
+        if (img.startsWith("data:image")) {
+            const uploadResult = await uploadToCloudinary(img, {
+                folder: "delta/products"
+            });
+            urls.push(uploadResult.url);
+            if (uploadResult.publicId) {
+                publicIds.push(uploadResult.publicId);
+            }
+        } else {
+            // Already a URL (Cloudinary or local)
+            urls.push(img);
+            const pubId = extractPublicIdFromUrl(img);
+            if (pubId) {
+                publicIds.push(pubId);
+            }
+        }
+    }
+    return { urls, publicIds };
+};
 
 export const saveBase64ImagesToDisk = (images = []) => {
     const savedPaths = [];
@@ -41,7 +72,7 @@ export const saveBase64ImagesToDisk = (images = []) => {
 
     for (const img of images) {
         if (!img || typeof img !== "string") continue;
-        if (img.startsWith("/uploads/")) {
+        if (img.startsWith("/uploads/") || img.startsWith("http")) {
             savedPaths.push(img);
         } else if (img.startsWith("data:image")) {
             const matches = img.match(/^data:image\/([a-zA-Z0-9+.-]+);base64,(.+)$/) || img.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
@@ -308,11 +339,18 @@ export const addProduct = async (data, imagePaths = []) => {
     }
 
     let allSavedVariantImages = [];
+    let allVariantPublicIds = [];
 
-    parsedVariants.forEach((v, idx) => {
-        if (v.images && Array.isArray(v.images)) {
-            v.images = saveBase64ImagesToDisk(v.images);
-            allSavedVariantImages.push(...v.images);
+    for (const [idx, v] of parsedVariants.entries()) {
+        if (v.images && Array.isArray(v.images) && v.images.length > 0) {
+            const { urls, publicIds } = await processVariantImages(v.images);
+            v.images = urls;
+            v.imagePublicIds = publicIds;
+            allSavedVariantImages.push(...urls);
+            allVariantPublicIds.push(...publicIds);
+        } else {
+            v.images = [];
+            v.imagePublicIds = [];
         }
         if (!v.sku) {
             const colorCodeClean = (v.colorCode || '#1b1c1c').replace('#', '').toUpperCase();
@@ -322,7 +360,7 @@ export const addProduct = async (data, imagePaths = []) => {
         v.discountPrice = (v.discountPrice !== undefined && v.discountPrice !== null && v.discountPrice !== "") ? Number(v.discountPrice) : null;
         v.stock = parseInt(v.stock, 10) >= 0 ? parseInt(v.stock, 10) : 3;
         v.isDefault = idx === 0;
-    });
+    }
 
     const primaryVariant = parsedVariants[0] || {};
     const totalComputedStock = parsedVariants.reduce((sum, v) => sum + (parseInt(v.stock, 10) || 0), 0);
@@ -330,8 +368,16 @@ export const addProduct = async (data, imagePaths = []) => {
         ? primaryVariant.images
         : (imagePaths.length > 0 ? imagePaths : allSavedVariantImages);
 
-    if (primaryImages.length < 3 && allSavedVariantImages.length < 3) {
+    const primaryPublicIds = (primaryVariant.imagePublicIds && primaryVariant.imagePublicIds.length > 0)
+        ? primaryVariant.imagePublicIds
+        : primaryImages.map(img => extractPublicIdFromUrl(img)).filter(Boolean);
+
+    const totalImagesCount = primaryImages.length > 0 ? primaryImages.length : allSavedVariantImages.length;
+    if (totalImagesCount < 3) {
         throw new Error("A minimum of 3 timepiece photos is required across your editions.");
+    }
+    if (totalImagesCount > 6) {
+        throw new Error("A maximum of 6 timepiece photos is allowed across your editions.");
     }
 
     const product = await createProduct({
@@ -346,6 +392,7 @@ export const addProduct = async (data, imagePaths = []) => {
         stock: totalComputedStock,
         variants: parsedVariants,
         images: primaryImages.length > 0 ? primaryImages : allSavedVariantImages,
+        imagePublicIds: primaryPublicIds.length > 0 ? primaryPublicIds : allVariantPublicIds,
         isFeatured: data.isFeatured === "true" || data.isFeatured === true || data.isFeatured === "on",
         isNewArrival: data.isNewArrival === "true" || data.isNewArrival === true,
         specs: parseSpecsInput(data),
@@ -382,6 +429,7 @@ export const editProduct = async (id, data, newImagePaths = [], retainedImages =
 
     const parsedVariants = parseVariantsInput(data);
     let allSavedVariantImages = [];
+    let allVariantPublicIds = [];
 
     if (parsedVariants.length > 0) {
         const seenEditionColors = new Set();
@@ -399,10 +447,16 @@ export const editProduct = async (id, data, newImagePaths = [], retainedImages =
             seenEditionCombos.add(comboKey);
         }
 
-        parsedVariants.forEach((v, idx) => {
-            if (v.images && Array.isArray(v.images)) {
-                v.images = saveBase64ImagesToDisk(v.images);
-                allSavedVariantImages.push(...v.images);
+        for (const [idx, v] of parsedVariants.entries()) {
+            if (v.images && Array.isArray(v.images) && v.images.length > 0) {
+                const { urls, publicIds } = await processVariantImages(v.images);
+                v.images = urls;
+                v.imagePublicIds = publicIds;
+                allSavedVariantImages.push(...urls);
+                allVariantPublicIds.push(...publicIds);
+            } else {
+                v.images = [];
+                v.imagePublicIds = [];
             }
             if (!v.sku) {
                 const colorCodeClean = (v.colorCode || '#1b1c1c').replace('#', '').toUpperCase();
@@ -412,7 +466,7 @@ export const editProduct = async (id, data, newImagePaths = [], retainedImages =
             v.discountPrice = (v.discountPrice !== undefined && v.discountPrice !== null && v.discountPrice !== "") ? Number(v.discountPrice) : null;
             v.stock = parseInt(v.stock, 10) >= 0 ? parseInt(v.stock, 10) : 3;
             v.isDefault = idx === 0;
-        });
+        }
     }
 
     const effectiveVariants = parsedVariants.length > 0 ? parsedVariants : product.variants;
@@ -423,6 +477,40 @@ export const editProduct = async (id, data, newImagePaths = [], retainedImages =
     const primaryImages = (primaryVariant.images && primaryVariant.images.length > 0)
         ? primaryVariant.images
         : (combinedImages.length > 0 ? combinedImages : product.images);
+
+    const primaryPublicIds = (primaryVariant.imagePublicIds && primaryVariant.imagePublicIds.length > 0)
+        ? primaryVariant.imagePublicIds
+        : primaryImages.map(img => extractPublicIdFromUrl(img)).filter(Boolean);
+
+    // Track old assets to detect deletions
+    const oldAssets = new Set([
+        ...(product.images || []),
+        ...(product.imagePublicIds || []),
+        ...((product.variants || []).flatMap(v => v.images || [])),
+        ...((product.variants || []).flatMap(v => v.imagePublicIds || []))
+    ]);
+
+    const activeAssets = new Set([
+        ...primaryImages,
+        ...primaryPublicIds,
+        ...combinedImages,
+        ...effectiveVariants.flatMap(v => v.images || []),
+        ...effectiveVariants.flatMap(v => v.imagePublicIds || [])
+    ]);
+
+    const assetsToDelete = [...oldAssets].filter(asset => {
+        if (!asset) return false;
+        if (activeAssets.has(asset)) return false;
+        const pubId = extractPublicIdFromUrl(asset);
+        if (pubId && activeAssets.has(pubId)) return false;
+        return true;
+    });
+
+    if (assetsToDelete.length > 0) {
+        await deleteMultipleFromCloudinary(assetsToDelete).catch(err => {
+            console.error("Failed to delete removed product images from Cloudinary:", err);
+        });
+    }
 
     const updatePayload = {
         name: trimmedName,
@@ -435,6 +523,7 @@ export const editProduct = async (id, data, newImagePaths = [], retainedImages =
         stock: totalComputedStock,
         variants: effectiveVariants,
         images: primaryImages.length > 0 ? primaryImages : product.images,
+        imagePublicIds: primaryPublicIds.length > 0 ? primaryPublicIds : product.imagePublicIds,
         isFeatured: data.isFeatured !== undefined ? (data.isFeatured === "true" || data.isFeatured === true || data.isFeatured === "on") : product.isFeatured,
         isNewArrival: data.isNewArrival !== undefined ? (data.isNewArrival === "true" || data.isNewArrival === true || data.isNewArrival === "on") : product.isNewArrival,
         specs: parseSpecsInput(data)
@@ -466,6 +555,21 @@ export const deleteProduct = async (id) => {
         throw new Error("Timepiece not found.");
     }
     return await softDeleteProductById(id);
+};
+
+export const permanentDeleteProduct = async (id) => {
+    const product = await findProductById(id);
+    if (!product) {
+        throw new Error("Timepiece not found.");
+    }
+    const allImages = [
+        ...(product.images || []),
+        ...(product.imagePublicIds || []),
+        ...((product.variants || []).flatMap(v => v.images || [])),
+        ...((product.variants || []).flatMap(v => v.imagePublicIds || []))
+    ];
+    await deleteMultipleFromCloudinary(allImages).catch(() => {});
+    return await Product.findByIdAndDelete(id);
 };
 
 export const toggleProduct = async (id) => {

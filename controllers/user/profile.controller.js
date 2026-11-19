@@ -86,7 +86,10 @@ export const editProfile = async (req, res, next) => {
         };
 
         if (req.file) {
-            updatePayload.profileImage = `/uploads/profile/${req.file.filename}`;
+            updatePayload.profileImage = req.file.cloudinaryUrl || req.file.path || `/uploads/profile/${req.file.filename}`;
+            if (req.file.cloudinaryPublicId) {
+                updatePayload.profileImagePublicId = req.file.cloudinaryPublicId;
+            }
         }
 
         await updateProfile(req.user.userId, updatePayload);

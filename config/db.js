@@ -1,4 +1,12 @@
+import dns from "dns";
 import mongoose from "mongoose";
+
+// Configure public DNS servers to resolve MongoDB Atlas SRV records on networks that refuse SRV DNS queries
+try {
+    dns.setServers(["8.8.8.8", "8.8.4.4"]);
+} catch (dnsErr) {
+    console.warn("DNS server configuration note:", dnsErr.message);
+}
 
 const connectDB = async () => {
     try {

@@ -15,6 +15,7 @@ import Brand from "../../models/brand.model.js";
 import Product from "../../models/product.model.js";
 import { slugify } from "../../utils/slugify.js";
 import { getPaginationData } from "../../utils/pagination.js";
+import { deleteFromCloudinary } from "../../utils/cloudinary.js";
 
 
 const DEFAULT_MAISONS = [
@@ -132,7 +133,7 @@ export const getBrandStats = async () => {
     };
 };
 
-export const addBrand = async ({ name, origin, foundedYear, description, website, isActive = true }) => {
+export const addBrand = async ({ name, origin, foundedYear, description, website, isActive = true, logo = "", logoPublicId = "" }) => {
     const trimmedName = (name || "").trim();
     if (!trimmedName) {
         throw new Error("Brand name is required.");
@@ -158,12 +159,14 @@ export const addBrand = async ({ name, origin, foundedYear, description, website
         foundedYear: foundedYear ? parseInt(foundedYear, 10) : null,
         description: (description || "").trim(),
         website: (website || "").trim(),
+        logo: logo || "",
+        logoPublicId: logoPublicId || "",
         isActive: Boolean(isActive),
         isDeleted: false
     });
 };
 
-export const editBrand = async (id, { name, origin, foundedYear, description, website, isActive }) => {
+export const editBrand = async (id, { name, origin, foundedYear, description, website, isActive, logo, logoPublicId }) => {
     const brand = await findBrandById(id);
     if (!brand || brand.isDeleted) {
         throw new Error("Brand not found.");
@@ -186,6 +189,17 @@ export const editBrand = async (id, { name, origin, foundedYear, description, we
         description: (description || "").trim(),
         website: (website || "").trim()
     };
+
+    if (logo) {
+        // If replacing old logo, clean up from Cloudinary
+        if (brand.logoPublicId || brand.logo) {
+            await deleteFromCloudinary(brand.logoPublicId || brand.logo).catch(err => {
+                console.error("Failed to delete previous brand logo from Cloudinary:", err);
+            });
+        }
+        updatePayload.logo = logo;
+        updatePayload.logoPublicId = logoPublicId || "";
+    }
 
     if (trimmedName.toLowerCase() !== brand.name.toLowerCase()) {
         let baseSlug = slugify(trimmedName);
@@ -226,8 +240,28 @@ export const permanentDeleteBrand = async (id, { cascade = true } = {}) => {
         }
     }
 
-    // Clean up any linked products
+    // Clean up any linked products and their Cloudinary images
+    const linkedProducts = await Product.find({ brand: id }).lean();
+    for (const prod of linkedProducts) {
+        const prodImages = [...(prod.images || []), ...(prod.imagePublicIds || [])];
+        if (prod.variants) {
+            prod.variants.forEach(v => {
+                if (v.images) prodImages.push(...v.images);
+                if (v.imagePublicIds) prodImages.push(...v.imagePublicIds);
+            });
+        }
+        for (const img of prodImages) {
+            await deleteFromCloudinary(img).catch(() => {});
+        }
+    }
     await Product.deleteMany({ brand: id });
+
+    // Delete brand logo from Cloudinary
+    if (brand.logoPublicId || brand.logo) {
+        await deleteFromCloudinary(brand.logoPublicId || brand.logo).catch(err => {
+            console.error("Failed to delete brand logo from Cloudinary:", err);
+        });
+    }
 
     return await hardDeleteBrandById(id);
 };
@@ -241,8 +275,28 @@ export const permanentDeleteAllArchivedBrands = async () => {
     const archivedBrandIds = archivedBrands.map(b => b._id);
     const deletedBrandNames = archivedBrands.map(b => b.name);
 
-    // Clean up any products associated with these archived brands
+    // Clean up any products associated with these archived brands and their images
+    const linkedProducts = await Product.find({ brand: { $in: archivedBrandIds } }).lean();
+    for (const prod of linkedProducts) {
+        const prodImages = [...(prod.images || []), ...(prod.imagePublicIds || [])];
+        if (prod.variants) {
+            prod.variants.forEach(v => {
+                if (v.images) prodImages.push(...v.images);
+                if (v.imagePublicIds) prodImages.push(...v.imagePublicIds);
+            });
+        }
+        for (const img of prodImages) {
+            await deleteFromCloudinary(img).catch(() => {});
+        }
+    }
     await Product.deleteMany({ brand: { $in: archivedBrandIds } });
+
+    // Clean up logos from Cloudinary
+    for (const b of archivedBrands) {
+        if (b.logoPublicId || b.logo) {
+            await deleteFromCloudinary(b.logoPublicId || b.logo).catch(() => {});
+        }
+    }
 
     // Permanently remove all archived brands from Brand collection
     const result = await Brand.deleteMany({ _id: { $in: archivedBrandIds } });

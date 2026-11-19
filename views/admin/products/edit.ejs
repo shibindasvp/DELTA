@@ -182,7 +182,7 @@
                                 </span>
                             </div>
                             <p class="text-xs text-zinc-500 font-light mt-0.5">
-                                Manage each edition with individual <strong>pricing (Max ₹20 Cr), vault stock, collector description, and 3+ multi-angle photos</strong>.
+                                Manage each edition with individual <strong>pricing (Max ₹20 Cr), vault stock, collector description, and 3-6 multi-angle photos</strong>.
                             </p>
                         </div>
                         <button
@@ -426,7 +426,7 @@
                             <label class="block text-[10px] uppercase tracking-wider font-semibold text-zinc-700">
                                 Dedicated Photo Studio for ${v.color || 'this Edition'} <span class="text-rose-500">*</span>
                             </label>
-                            <span class="text-[10px] text-zinc-400 font-mono">${v.images.length}/3 Minimum Multi-Angle Photos (JPG, JPEG, PNG only)</span>
+                            <span class="text-[10px] text-zinc-400 font-mono">${v.images.length}/6 Photos (Min 3, Max 6 — JPG, JPEG, PNG, WebP)</span>
                         </div>
 
                         <button type="button" onclick="triggerVariantUpload(${index})" class="text-xs font-semibold text-[#0A4D2E] hover:text-[#083e25] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3.5 py-1.5 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5 self-start sm:self-auto">
@@ -735,6 +735,22 @@
     function handleVariantFileInputChange(event, idx) {
         const file = event.target.files[0];
         if (!file) return;
+
+        if (variants[idx] && variants[idx].images && variants[idx].images.length >= 6) {
+            const msg = 'Maximum 6 timepiece photos allowed per edition.';
+            if (window.showToast) window.showToast(msg, 'warning');
+            else alert(msg);
+            event.target.value = '';
+            return;
+        }
+
+        if (file.size > 15 * 1024 * 1024) {
+            const msg = 'Image size exceeds the 15MB limit.';
+            if (window.showToast) window.showToast(msg, 'warning');
+            else alert(msg);
+            event.target.value = '';
+            return;
+        }
 
         const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
         const fileName = (file.name || '').toLowerCase();

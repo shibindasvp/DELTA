@@ -27,6 +27,10 @@ import {
     normalizeEmail
 } from "../../validations/auth.validation.js";
 
+import {
+    deleteFromCloudinary
+} from "../../utils/cloudinary.js";
+
 export const getProfile = async (userId) => {
     let user = await findUserById(userId);
 
@@ -58,6 +62,11 @@ export const getProfile = async (userId) => {
 };
 
 export const updateProfile = async (userId, data) => {
+    const user = await findUserById(userId);
+    if (!user) {
+        throw new Error("User not found.");
+    }
+
     const updateData = {
         name: (data.name || data.fullName || "").trim()
     };
@@ -67,7 +76,15 @@ export const updateProfile = async (userId, data) => {
     }
 
     if (data.profileImage) {
+        // If replacing existing image, delete old one from Cloudinary
+        const oldImageId = user.profileImagePublicId || user.profileImage;
+        if (oldImageId && oldImageId !== data.profileImage) {
+            await deleteFromCloudinary(oldImageId);
+        }
         updateData.profileImage = data.profileImage;
+        if (data.profileImagePublicId) {
+            updateData.profileImagePublicId = data.profileImagePublicId;
+        }
     }
 
     return await updateUserById(userId, updateData);

@@ -18,6 +18,12 @@ export const config = {
         clientId: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         callbackUrl: process.env.GOOGLE_CALLBACK_URL || "/auth/google/callback"
+    },
+    cloudinary: {
+        cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+        apiKey: process.env.CLOUDINARY_API_KEY,
+        apiSecret: process.env.CLOUDINARY_API_SECRET,
+        url: process.env.CLOUDINARY_URL
     }
 };
 

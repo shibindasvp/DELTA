@@ -22,6 +22,7 @@ const variantSchema = new mongoose.Schema({
     stock: { type: Number, min: 0, default: 0},
     description: { type: String, default: "" },
     images: [{ type: String }],
+    imagePublicIds: [{ type: String, default: [] }],
     isDefault: { type: Boolean, default: false }
 });
 
@@ -50,6 +51,7 @@ const productSchema = new mongoose.Schema(
         price: { type: Number, required: true, min: 0, max: 200000000 },
         discountPrice: { type: Number, default: null },
         images: [{ type: String, required: true }],
+        imagePublicIds: [{ type: String, default: [] }],
         stock: { type: Number, default: 3, min: 0 },
         variants: [variantSchema],
         specs: { type: specsSchema, default: () => ({}) },

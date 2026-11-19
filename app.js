@@ -34,6 +34,8 @@ import adminCouponRoutes from "./routes/admin/coupon.routes.js";
 import adminOfferRoutes from "./routes/admin/offer.routes.js";
 import adminReportRoutes from "./routes/admin/report.routes.js";
 import adminReviewRoutes from "./routes/admin/review.routes.js";
+import adminCategoryRoutes from "./routes/admin/category.routes.js";
+import adminBannerRoutes from "./routes/admin/banner.routes.js";
 import { notFoundHandler, errorHandler } from "./middlewares/error.middleware.js";
 
 const __filename =
@@ -226,6 +228,16 @@ app.use(
 app.use(
     "/admin",
     adminReviewRoutes
+);
+
+app.use(
+    "/admin",
+    adminCategoryRoutes
+);
+
+app.use(
+    "/admin",
+    adminBannerRoutes
 );
 
 

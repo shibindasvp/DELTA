@@ -69,6 +69,16 @@ export const showBrands = async (req, res, next) => {
 export const addBrandHandler = async (req, res, next) => {
     const isAjax = req.xhr || req.headers.accept?.includes("json") || req.is("json");
     try {
+        if (req.fileValidationError) {
+            if (isAjax) {
+                return res.status(400).json({
+                    success: false,
+                    message: req.fileValidationError
+                });
+            }
+            return res.redirect(`/admin/brands?error=${encodeURIComponent(req.fileValidationError)}&openAdd=true`);
+        }
+
         const errors = validateBrand(req.body);
         const search = req.query.search || "";
         const status = req.query.status || "all";
@@ -87,13 +97,18 @@ export const addBrandHandler = async (req, res, next) => {
             return res.redirect(`/admin/brands?error=${encodeURIComponent(errorMsg)}&status=${encodeURIComponent(status)}&search=${encodeURIComponent(search)}&page=${page}&limit=${limit}&openAdd=true`);
         }
 
+        const logo = req.file?.cloudinaryUrl || req.file?.path || req.body.logo || "";
+        const logoPublicId = req.file?.cloudinaryPublicId || "";
+
         const brand = await addBrand({
             name: req.body.name,
             origin: req.body.origin,
             foundedYear: req.body.foundedYear,
             description: req.body.description,
             website: req.body.website,
-            isActive: req.body.isActive === "true" || req.body.isActive === true || req.body.isActive === "on"
+            isActive: req.body.isActive === "true" || req.body.isActive === true || req.body.isActive === "on",
+            logo,
+            logoPublicId
         });
 
         if (isAjax) {
@@ -116,6 +131,16 @@ export const addBrandHandler = async (req, res, next) => {
 export const editBrandHandler = async (req, res, next) => {
     const isAjax = req.xhr || req.headers.accept?.includes("json") || req.is("json");
     try {
+        if (req.fileValidationError) {
+            if (isAjax) {
+                return res.status(400).json({
+                    success: false,
+                    message: req.fileValidationError
+                });
+            }
+            return res.redirect(`/admin/brands?error=${encodeURIComponent(req.fileValidationError)}`);
+        }
+
         const { id } = req.params;
         const errors = validateBrand(req.body);
         const search = req.query.search || "";
@@ -135,14 +160,23 @@ export const editBrandHandler = async (req, res, next) => {
             return res.redirect(`/admin/brands?error=${encodeURIComponent(errorMsg)}&status=${encodeURIComponent(status)}&search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`);
         }
 
-        const updated = await editBrand(id, {
+        const logo = req.file?.cloudinaryUrl || req.file?.path || req.body.logo;
+        const logoPublicId = req.file?.cloudinaryPublicId;
+
+        const updateData = {
             name: req.body.name,
             origin: req.body.origin,
             foundedYear: req.body.foundedYear,
             description: req.body.description,
             website: req.body.website,
             isActive: req.body.isActive === "true" || req.body.isActive === true || req.body.isActive === "on"
-        });
+        };
+        if (logo) {
+            updateData.logo = logo;
+            updateData.logoPublicId = logoPublicId;
+        }
+
+        const updated = await editBrand(id, updateData);
 
         if (isAjax) {
             return res.json({

@@ -177,8 +177,12 @@
                             <div class="space-y-4">
                                 <div class="flex items-start justify-between gap-4">
                                     <div class="flex items-center gap-3.5">
-                                        <div class="w-12 h-12 rounded-2xl bg-zinc-50 border border-zinc-200/80 flex items-center justify-center text-lg font-serif font-bold text-[#0A4D2E] shadow-2xs group-hover:scale-105 transition-transform flex-shrink-0">
-                                            <%= b.name.charAt(0).toUpperCase() %>
+                                        <div class="w-12 h-12 rounded-2xl bg-zinc-50 border border-zinc-200/80 flex items-center justify-center text-lg font-serif font-bold text-[#0A4D2E] shadow-2xs group-hover:scale-105 transition-transform flex-shrink-0 overflow-hidden">
+                                            <% if (b.logo) { %>
+                                                <img src="<%= b.logo %>" alt="<%= b.name %>" class="w-full h-full object-contain p-1.5 rounded-2xl">
+                                            <% } else { %>
+                                                <%= b.name.charAt(0).toUpperCase() %>
+                                            <% } %>
                                         </div>
                                         <div>
                                             <h3 class="text-base sm:text-lg font-serif font-normal text-zinc-900 leading-snug">
@@ -281,6 +285,7 @@
                                             data-founded="<%= b.foundedYear || '' %>"
                                             data-description="<%= b.description || '' %>"
                                             data-website="<%= b.website || '' %>"
+                                            data-logo="<%= b.logo || '' %>"
                                             data-active="<%= b.isActive %>"
                                         >
                                             Edit
@@ -461,6 +466,18 @@
                 <p id="addWebsiteError" class="text-rose-600 text-[11px] font-medium mt-1.5 hidden"></p>
             </div>
 
+            <div>
+                <label class="block text-[11px] font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">Maison Logo (Cloudinary)</label>
+                <input 
+                    type="file" 
+                    name="logo" 
+                    id="addLogo" 
+                    accept="image/png,image/jpeg,image/webp" 
+                    class="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-[#0A4D2E] file:text-white hover:file:bg-[#083e25] cursor-pointer"
+                >
+                <p id="addLogoError" class="text-rose-600 text-[11px] font-medium mt-1.5 hidden"></p>
+            </div>
+
             <!-- Custom Toggle Switch for Active/Inactive in Modal -->
             <div class="flex items-center justify-between p-3.5 bg-zinc-50 rounded-2xl border border-zinc-200/70">
                 <div>
@@ -559,6 +576,21 @@
                     class="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs font-mono text-zinc-900 focus:outline-none focus:border-[#0A4D2E] focus:bg-white transition-colors"
                 >
                 <p id="editWebsiteError" class="text-rose-600 text-[11px] font-medium mt-1.5 hidden"></p>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">Maison Logo (Cloudinary)</label>
+                <div id="editLogoPreview" class="mb-2 hidden">
+                    <img id="editLogoImg" src="" alt="Current Logo" class="w-12 h-12 object-contain p-1 border border-zinc-200 rounded-xl bg-zinc-50">
+                </div>
+                <input 
+                    type="file" 
+                    name="logo" 
+                    id="editLogo" 
+                    accept="image/png,image/jpeg,image/webp" 
+                    class="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-[#0A4D2E] file:text-white hover:file:bg-[#083e25] cursor-pointer"
+                >
+                <p id="editLogoError" class="text-rose-600 text-[11px] font-medium mt-1.5 hidden"></p>
             </div>
 
             <!-- Custom Toggle Switch for Active/Inactive in Modal -->
@@ -988,14 +1020,30 @@
                     isActive: document.getElementById('addIsActive')?.checked ?? true
                 };
 
+                const logoFile = document.getElementById('addLogo')?.files[0];
+                let fetchBody;
+                let fetchHeaders = { 'Accept': 'application/json' };
+
+                if (logoFile) {
+                    const fd = new FormData();
+                    fd.append('name', payload.name);
+                    fd.append('origin', payload.origin);
+                    fd.append('foundedYear', payload.foundedYear);
+                    fd.append('description', payload.description);
+                    fd.append('website', payload.website);
+                    fd.append('isActive', payload.isActive);
+                    fd.append('logo', logoFile);
+                    fetchBody = fd;
+                } else {
+                    fetchHeaders['Content-Type'] = 'application/json';
+                    fetchBody = JSON.stringify(payload);
+                }
+
                 try {
                     const res = await fetch(addForm.action, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
+                        headers: fetchHeaders,
+                        body: fetchBody
                     });
                     const data = await res.json();
                     if (res.ok && data.success) {
@@ -1057,14 +1105,30 @@
                     isActive: document.getElementById('editIsActive')?.checked ?? true
                 };
 
+                const logoFile = document.getElementById('editLogo')?.files[0];
+                let fetchBody;
+                let fetchHeaders = { 'Accept': 'application/json' };
+
+                if (logoFile) {
+                    const fd = new FormData();
+                    fd.append('name', payload.name);
+                    fd.append('origin', payload.origin);
+                    fd.append('foundedYear', payload.foundedYear);
+                    fd.append('description', payload.description);
+                    fd.append('website', payload.website);
+                    fd.append('isActive', payload.isActive);
+                    fd.append('logo', logoFile);
+                    fetchBody = fd;
+                } else {
+                    fetchHeaders['Content-Type'] = 'application/json';
+                    fetchBody = JSON.stringify(payload);
+                }
+
                 try {
                     const res = await fetch(editForm.action, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
+                        headers: fetchHeaders,
+                        body: fetchBody
                     });
                     const data = await res.json();
                     if (res.ok && data.success) {
@@ -1104,9 +1168,10 @@
                 const founded = btn.dataset.founded || '';
                 const description = btn.dataset.description || '';
                 const website = btn.dataset.website || '';
+                const logo = btn.dataset.logo || '';
                 const isActive = btn.dataset.active === 'true';
 
-                ['editName', 'editOrigin', 'editFoundedYear', 'editDescription', 'editWebsite'].forEach(idKey => {
+                ['editName', 'editOrigin', 'editFoundedYear', 'editDescription', 'editWebsite', 'editLogo'].forEach(idKey => {
                     clearFieldError(idKey, idKey + 'Error');
                 });
                 const genErr = document.getElementById('editBrandGeneralError');
@@ -1118,6 +1183,17 @@
                 document.getElementById('editFoundedYear').value = founded;
                 document.getElementById('editDescription').value = description;
                 document.getElementById('editWebsite').value = website;
+
+                const editLogoInput = document.getElementById('editLogo');
+                if (editLogoInput) editLogoInput.value = '';
+                const editLogoPreview = document.getElementById('editLogoPreview');
+                const editLogoImg = document.getElementById('editLogoImg');
+                if (logo && editLogoPreview && editLogoImg) {
+                    editLogoImg.src = logo;
+                    editLogoPreview.classList.remove('hidden');
+                } else if (editLogoPreview) {
+                    editLogoPreview.classList.add('hidden');
+                }
                 
                 const editActiveBox = document.getElementById('editIsActive');
                 if (editActiveBox) {
