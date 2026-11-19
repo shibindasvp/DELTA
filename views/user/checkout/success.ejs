@@ -1,0 +1,447 @@
+<%- include('../partials/header', { title: 'Payment Success — ' + order.orderNumber + ' | DELTA' }) %>
+<%- include('../partials/navbar') %>
+
+<div class="bg-[#faf8f7] min-h-screen text-[#1b1c1c] py-12 sm:py-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 space-y-10">
+        
+        <!-- ========================================================= -->
+        <!-- LUXURY HOROLOGICAL SEAL & PAYMENT CONFIRMATION STATEMENT -->
+        <!-- ========================================================= -->
+        <div class="text-center space-y-6 max-w-2xl mx-auto">
+            
+            <!-- Bespoke Swiss Horological Mechanism / Vault Illustration -->
+            <div class="relative w-32 h-32 mx-auto flex items-center justify-center">
+                <!-- Outer Soft Pulsing Aura -->
+                <div class="absolute inset-0 rounded-full bg-emerald-100/70 animate-ping opacity-25"></div>
+                
+                <!-- Rotating Horological Bezel Ring (SVG) -->
+                <svg class="absolute inset-0 w-32 h-32 animate-[spin_30s_linear_infinite]" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="56" fill="none" stroke="#c5a059" stroke-width="1.5" stroke-dasharray="2 6" opacity="0.6"/>
+                    <circle cx="60" cy="60" r="50" fill="none" stroke="#0A4D2E" stroke-width="1" opacity="0.3"/>
+                    <!-- 12-Hour Bezel Indices -->
+                    <% for(let i = 0; i < 12; i++) { %>
+                        <% const angle = i * 30 * (Math.PI / 180); %>
+                        <% const x1 = 60 + 52 * Math.sin(angle); %>
+                        <% const y1 = 60 - 52 * Math.cos(angle); %>
+                        <% const x2 = 60 + 56 * Math.sin(angle); %>
+                        <% const y2 = 60 - 56 * Math.cos(angle); %>
+                        <line x1="<%= x1 %>" y1="<%= y1 %>" x2="<%= x2 %>" y2="<%= y2 %>" stroke="#c5a059" stroke-width="<%= i % 3 === 0 ? '2' : '1' %>" stroke-linecap="round"/>
+                    <% } %>
+                </svg>
+
+                <!-- Inner Vault Medallion -->
+                <div class="w-22 h-22 rounded-full bg-gradient-to-br from-[#0A4D2E] via-[#094227] to-[#052616] text-white flex flex-col items-center justify-center shadow-xl shadow-[#0A4D2E]/30 border-4 border-white relative z-10">
+                    <!-- Gold Luxury Verified Checkmark -->
+                    <svg class="w-10 h-10 text-[#c5a059] transform transition-transform duration-500 hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Confirmation Statement -->
+            <div class="space-y-3">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-50 border border-emerald-200">
+                    <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+                    <span class="text-[10px] uppercase font-mono tracking-[0.25em] text-[#0A4D2E] font-bold">
+                        PAYMENT SETTLED • ALLOCATION CONFIRMED
+                    </span>
+                </div>
+
+                <h1 class="text-3xl sm:text-5xl font-serif text-zinc-900 font-normal tracking-tight">
+                    Payment Successfully Processed
+                </h1>
+
+                <p class="text-xs sm:text-sm text-zinc-500 font-light leading-relaxed max-w-xl mx-auto">
+                    Thank you for your order, <strong class="font-semibold text-zinc-900"><%= order.collectorName || (user && user.name) || 'Valued Collector' %></strong>. Your transaction has been securely authenticated and recorded in the DELTA Private Vault. An official provenance receipt has been registered to your archive.
+                </p>
+            </div>
+
+            <!-- Order Reference Dossier Tag -->
+            <div class="inline-flex items-center gap-3 px-5 py-2.5 bg-white border border-zinc-200/80 rounded-2xl shadow-xs">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold">Order Dossier:</span>
+                <span class="font-mono font-bold text-zinc-900 text-sm tracking-wide"><%= order.orderNumber %></span>
+            </div>
+
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- ELECTRONIC PAYMENT SETTLEMENT STATEMENT CARD -->
+        <!-- ========================================================= -->
+        <div class="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-8 space-y-6 shadow-sm">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 pb-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-[#0A4D2E]/10 text-[#0A4D2E] border border-[#0A4D2E]/20 flex items-center justify-center text-lg flex-shrink-0">
+                        <svg class="w-5 h-5 text-[#0A4D2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-mono tracking-[0.25em] text-[#c5a059] font-bold block">
+                            OFFICIAL STATEMENT
+                        </span>
+                        <h2 class="text-xl font-serif text-zinc-900 font-normal">
+                            Electronic Payment Settlement Statement
+                        </h2>
+                    </div>
+                </div>
+
+                <!-- PDF Invoice Download Shortcut -->
+                <a 
+                    href="/orders/<%= order._id %>/invoice" 
+                    target="_blank"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-zinc-700 rounded-xl text-xs font-mono uppercase font-semibold transition-colors cursor-pointer shadow-2xs self-start sm:self-auto"
+                    title="Download Official PDF Statement"
+                >
+                    <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span>Download PDF Invoice</span>
+                </a>
+            </div>
+
+            <!-- Statement Metadata Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs font-mono">
+                
+                <!-- Statement Item 1: Reference No -->
+                <div class="p-4 rounded-2xl bg-[#faf8f7] border border-zinc-200/60 space-y-1">
+                    <span class="text-[10px] uppercase text-zinc-400 block tracking-wider">Statement Reference</span>
+                    <p class="font-bold text-zinc-900 truncate"><%= order.orderNumber %></p>
+                </div>
+
+                <!-- Statement Item 2: Date & Time -->
+                <div class="p-4 rounded-2xl bg-[#faf8f7] border border-zinc-200/60 space-y-1">
+                    <span class="text-[10px] uppercase text-zinc-400 block tracking-wider">Authorization Timestamp</span>
+                    <p class="font-medium text-zinc-800">
+                        <%= new Date(order.paidAt || order.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                    </p>
+                </div>
+
+                <!-- Statement Item 3: Payment Method -->
+                <div class="p-4 rounded-2xl bg-[#faf8f7] border border-zinc-200/60 space-y-1">
+                    <span class="text-[10px] uppercase text-zinc-400 block tracking-wider">Payment Method</span>
+                    <div class="flex items-center gap-1.5 font-bold text-zinc-900">
+                        <span><%= order.paymentMethod %></span>
+                    </div>
+                </div>
+
+                <!-- Statement Item 4: Settlement Status -->
+                <div class="p-4 rounded-2xl bg-[#faf8f7] border border-zinc-200/60 space-y-1">
+                    <span class="text-[10px] uppercase text-zinc-400 block tracking-wider">Settlement Status</span>
+                    <div>
+                        <% if (order.paymentStatus === 'Completed') { %>
+                            <span class="inline-flex items-center gap-1 text-[10px] uppercase font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                Authorized & Paid
+                            </span>
+                        <% } else { %>
+                            <span class="inline-flex items-center gap-1 text-[10px] uppercase font-bold text-[#0A4D2E] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                Pay Upon Delivery
+                            </span>
+                        <% } %>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Transaction Reference Detail Banner -->
+            <% if (order.paymentMethod === 'Wallet') { %>
+                <div class="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-7 h-7 rounded-lg bg-emerald-100 text-[#0A4D2E] flex items-center justify-center font-bold text-xs font-mono">
+                            VAULT
+                        </span>
+                        <div>
+                            <span class="text-[10px] uppercase font-mono text-zinc-500 font-semibold block">Settlement Channel</span>
+                            <span class="font-mono font-bold text-zinc-900">DELTA Vault Wallet (Direct Reserve Settlement)</span>
+                        </div>
+                    </div>
+                    <a href="/wallet" class="text-[11px] font-mono text-[#0A4D2E] hover:underline font-bold flex items-center gap-1">
+                        <span>View Vault Ledger</span>
+                        <span>→</span>
+                    </a>
+                </div>
+            <% } else if (order.razorpayPaymentId || order.paypalCaptureId) { %>
+                <div class="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs font-mono">
+                            <%= order.paymentMethod === 'Razorpay' ? 'RZP' : 'PP' %>
+                        </span>
+                        <div>
+                            <span class="text-[10px] uppercase font-mono text-zinc-500 font-semibold block">Gateway Transaction Reference</span>
+                            <span class="font-mono font-bold text-zinc-900"><%= order.razorpayPaymentId || order.paypalCaptureId %></span>
+                        </div>
+                    </div>
+                    <div class="text-[11px] font-mono text-emerald-800 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                        <span>256-Bit Encrypted & Verified</span>
+                    </div>
+                </div>
+            <% } %>
+
+            <!-- Collector Confirmation Notice -->
+            <p class="text-[11px] text-zinc-400 font-light leading-relaxed border-t border-zinc-100 pt-4">
+                A duplicate copy of this payment statement and your warranty provenance certificate have been securely dispatched to <strong class="text-zinc-600 font-medium font-mono"><%= (user && user.email) || order.collectorEmail || 'your registered email' %></strong>.
+            </p>
+
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- 2-COLUMN SUMMARY: LOGISTICS & DESTINATION CARDS -->
+        <!-- ========================================================= -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Logistics Card -->
+            <div class="bg-white rounded-3xl border border-zinc-200/80 p-6 space-y-2 shadow-xs">
+                <span class="text-[10px] uppercase tracking-[0.2em] font-mono text-[#c5a059] font-bold block">Logistics Allocation</span>
+                <h3 class="font-serif text-base text-zinc-900 font-semibold">White-Glove Insured Delivery</h3>
+                <p class="text-xs text-zinc-500 font-light">
+                    Estimated Transit: <span class="text-zinc-800 font-semibold font-mono">2–4 Business Days</span>
+                </p>
+                <p class="text-[11px] text-zinc-400 font-light pt-1">
+                    Supervised by private courier with tamper-proof security seals and GPS live telemetry.
+                </p>
+            </div>
+
+            <!-- Destination Snapshot -->
+            <div class="bg-white rounded-3xl border border-zinc-200/80 p-6 space-y-2 shadow-xs">
+                <span class="text-[10px] uppercase tracking-[0.2em] font-mono text-[#c5a059] font-bold block">Delivery Destination</span>
+                <h3 class="font-serif text-sm text-zinc-900 font-semibold truncate"><%= order.shippingAddress.fullName %></h3>
+                <p class="text-xs text-zinc-500 font-light">
+                    <%= order.shippingAddress.street %>, <%= order.shippingAddress.city %> — <%= order.shippingAddress.postalCode %>
+                </p>
+                <p class="text-[11px] font-mono text-zinc-400 pt-1">
+                    Contact: <%= order.shippingAddress.mobile %>
+                </p>
+            </div>
+
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TIMEPIECE LINE ITEMS & VALUATION SUMMARY -->
+        <!-- ========================================================= -->
+        <div class="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-8 space-y-6 shadow-sm">
+            <%
+                // Consolidate order items by product and variant so duplicate individual units are grouped with their total quantity
+                const groupedItemsMap = new Map();
+                (order.items || []).forEach(item => {
+                    const prodId = (item.product?._id || item.product || item.productName || '').toString();
+                    const varId = (item.variant?.variantId || item.variant?._id || item.variant?.sku || item.variant?.color || 'standard').toString();
+                    const groupKey = `${prodId}__${varId}`;
+
+                    const qty = Number(item.quantity) || 1;
+                    const price = Number(item.price) || 0;
+                    const itemTotal = Number(item.itemTotal) || (price * qty);
+
+                    if (!groupedItemsMap.has(groupKey)) {
+                        groupedItemsMap.set(groupKey, {
+                            product: item.product,
+                            productName: item.productName,
+                            brandName: item.brandName || "DELTA Manufacture",
+                            variant: item.variant || {},
+                            price: price,
+                            quantity: qty,
+                            itemTotal: itemTotal,
+                            status: item.status || 'Pending'
+                        });
+                    } else {
+                        const existing = groupedItemsMap.get(groupKey);
+                        existing.quantity += qty;
+                        existing.itemTotal += itemTotal;
+                    }
+                });
+
+                const displayItems = Array.from(groupedItemsMap.values());
+                const totalItemUnits = displayItems.reduce((sum, it) => sum + it.quantity, 0);
+            %>
+            <div class="flex items-center justify-between border-b border-zinc-100 pb-4">
+                <h2 class="text-xl font-serif text-zinc-900 font-normal">
+                    Acquired Horological Masterpieces
+                </h2>
+                <span class="text-xs font-mono text-zinc-500">
+                    <%= displayItems.length %> <%= displayItems.length === 1 ? 'Product' : 'Products' %> (<%= totalItemUnits %> <%= totalItemUnits === 1 ? 'Unit' : 'Units' %>)
+                </span>
+            </div>
+
+            <!-- Items -->
+            <div class="divide-y divide-zinc-100">
+                <% displayItems.forEach(item => { %>
+                    <div class="py-4 flex items-center justify-between gap-6">
+                        <div class="flex items-center gap-4">
+                            <div class="w-16 h-16 rounded-2xl bg-[#f2eeeb] overflow-hidden p-2 flex items-center justify-center flex-shrink-0 border border-zinc-200/60 shadow-2xs">
+                                <% if (item.variant && item.variant.image) { %>
+                                    <img src="<%= item.variant.image %>" alt="<%= item.productName %>" class="w-full h-full object-cover rounded-xl">
+                                <% } else { %>
+                                    <span class="text-zinc-300 text-xl">⏱</span>
+                                <% } %>
+                            </div>
+
+                            <div class="space-y-1">
+                                <p class="text-[9px] uppercase font-mono tracking-wider text-zinc-400 font-semibold">
+                                    <%= item.brandName %>
+                                </p>
+                                <h4 class="font-serif text-base text-zinc-900 font-normal">
+                                    <%= item.productName %>
+                                </h4>
+                                <div class="flex items-center gap-2 text-xs text-zinc-500 flex-wrap">
+                                    <span class="font-medium text-zinc-700"><%= item.variant ? item.variant.color : 'Standard' %></span>
+                                    <span>•</span>
+                                    <span class="font-mono font-semibold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded-md text-[11px] border border-zinc-200/60">
+                                        Qty: <%= item.quantity %>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-right">
+                            <p class="font-mono text-base font-semibold text-zinc-900">
+                                ₹<%= Number(item.itemTotal).toLocaleString('en-IN') %>
+                            </p>
+                            <% if (item.quantity > 1) { %>
+                                <span class="text-[10px] text-zinc-400 font-mono">₹<%= Number(item.price).toLocaleString('en-IN') %>/unit</span>
+                            <% } else { %>
+                                <span class="text-[10px] text-zinc-400 font-mono">₹<%= Number(item.price).toLocaleString('en-IN') %></span>
+                            <% } %>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+
+            <!-- Financial Recap -->
+            <div class="pt-6 border-t border-zinc-200/80 space-y-3 max-w-sm ml-auto text-xs">
+                <div class="flex justify-between text-zinc-600">
+                    <span>Subtotal Valuation</span>
+                    <span class="font-mono text-zinc-900 font-semibold">₹<%= Number(order.subtotal).toLocaleString('en-IN') %></span>
+                </div>
+
+                <% if (order.discountAmount && order.discountAmount > 0) { %>
+                    <div class="flex justify-between text-emerald-700 font-semibold">
+                        <span>Coupon Discount</span>
+                        <span class="font-mono">-₹<%= Number(order.discountAmount).toLocaleString('en-IN') %></span>
+                    </div>
+                <% } %>
+
+                <div class="flex justify-between text-zinc-600">
+                    <span>Insured White-Glove Transit</span>
+                    <span class="font-mono text-[#0A4D2E] font-semibold uppercase text-[10px]">Complimentary</span>
+                </div>
+
+                <div class="flex justify-between text-zinc-500 text-[11px]">
+                    <span>Taxes & Duties (GST 18%)</span>
+                    <span class="font-mono italic">Included in total</span>
+                </div>
+
+                <div class="pt-4 border-t border-zinc-200 flex justify-between items-baseline text-base">
+                    <span class="text-xs uppercase font-mono font-bold text-zinc-900">FINAL TOTAL PAID</span>
+                    <span class="text-2xl font-bold font-mono text-[#0A4D2E]">₹<%= Number(order.grandTotal).toLocaleString('en-IN') %></span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- ACTION CTAS: ORDER DETAILS & CONTINUE SHOPPING BUTTONS -->
+        <!-- ========================================================= -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 pb-12">
+            
+            <!-- Button 1: Order Details -->
+            <a 
+                href="/order/details/<%= order._id %>"
+                class="w-full sm:w-auto px-8 py-4 bg-[#0A4D2E] hover:bg-[#073620] text-white text-xs uppercase font-mono font-bold tracking-[0.2em] rounded-xl transition-all shadow-md text-center cursor-pointer flex items-center justify-center gap-2.5 hover:shadow-lg"
+            >
+                <svg class="w-4 h-4 text-[#c5a059]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <span>View Order Details</span>
+            </a>
+
+            <!-- Button 2: Continue Shopping -->
+            <a 
+                href="/shop"
+                class="w-full sm:w-auto px-8 py-4 bg-white hover:bg-zinc-50 text-zinc-900 border border-zinc-300 text-xs uppercase font-mono font-bold tracking-[0.2em] rounded-xl transition-all shadow-xs text-center cursor-pointer flex items-center justify-center gap-2.5 hover:border-zinc-400"
+            >
+                <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                </svg>
+                <span>Continue Shopping</span>
+                <span class="text-[#c5a059]">→</span>
+            </a>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- Celebratory Horological Particle Canvas -->
+<canvas id="successCelebrationCanvas" class="fixed inset-0 pointer-events-none z-50 w-full h-full"></canvas>
+
+<script>
+    (function() {
+        const canvas = document.getElementById('successCelebrationCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const colors = ['#c5a059', '#e8c97e', '#f5d896', '#0A4D2E', '#10b981', '#34d399', '#ffffff'];
+        const particles = [];
+
+        // Dual burst from left & right corners toward center
+        function addBurst(originX, originY, count, baseAngle, spread) {
+            for (let i = 0; i < count; i++) {
+                const angle = baseAngle + (Math.random() - 0.5) * spread;
+                const velocity = 5 + Math.random() * 10;
+                particles.push({
+                    x: originX,
+                    y: originY,
+                    vx: Math.cos(angle) * velocity,
+                    vy: Math.sin(angle) * velocity,
+                    size: 4 + Math.random() * 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    alpha: 1,
+                    decay: 0.008 + Math.random() * 0.012,
+                    rotation: Math.random() * 360,
+                    spin: (Math.random() - 0.5) * 10
+                });
+            }
+        }
+
+        addBurst(window.innerWidth * 0.25, window.innerHeight * 0.35, 45, -Math.PI / 2, Math.PI / 1.5);
+        addBurst(window.innerWidth * 0.75, window.innerHeight * 0.35, 45, -Math.PI / 2, Math.PI / 1.5);
+
+        let animId;
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let active = 0;
+            particles.forEach(p => {
+                if (p.alpha > 0) {
+                    active++;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.22; // gravity
+                    p.alpha = Math.max(0, p.alpha - p.decay);
+                    p.rotation += p.spin;
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rotation * Math.PI) / 180);
+                    ctx.globalAlpha = p.alpha;
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 1.5);
+                    ctx.restore();
+                }
+            });
+            if (active > 0) {
+                animId = requestAnimationFrame(render);
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+        render();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    })();
+</script>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title : 'DELTA Administration Portal' %></title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        cinzel: ['"Cinzel"', 'serif'],
+                        sans: ['"Montserrat"', 'sans-serif']
+                    },
+                    colors: {
+                        gold: {
+                            400: '#d4b348',
+                            500: '#c59b2c'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+        // Invalidate browser back-forward cache (bfcache) on logout / back navigation
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted || (window.performance && window.performance.navigation && window.performance.navigation.type === 2) || (window.performance && window.performance.getEntriesByType && window.performance.getEntriesByType("navigation")[0]?.type === "back_forward")) {
+                window.location.reload();
+            }
+        });
+    </script>
+
+    <script>
+        window.showToast = function(message, type = 'success', duration = 3500) {
+            let container = document.getElementById('deltaToastContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'deltaToastContainer';
+                container.className = 'fixed top-5 right-5 z-[99999] flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0';
+                document.body.appendChild(container);
+            }
+
+            const toast = document.createElement('div');
+            toast.className = 'pointer-events-auto flex items-center justify-between gap-3 p-4 rounded-2xl shadow-2xl backdrop-blur-xl border transition-all duration-300 transform translate-x-8 opacity-0 text-xs font-medium ' +
+                (type === 'success' ? 'bg-zinc-900/95 text-white border-zinc-700/60 shadow-black/40' :
+                 type === 'error' ? 'bg-rose-950/95 text-white border-rose-800/80 shadow-rose-950/50' :
+                 type === 'warning' ? 'bg-amber-950/95 text-amber-100 border-amber-800/80' :
+                 'bg-zinc-900/95 text-white border-zinc-700/60');
+
+            const iconSvg = type === 'success' 
+                ? '<div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 font-bold">✓</div>'
+                : type === 'error'
+                ? '<div class="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0 font-bold">✕</div>'
+                : type === 'warning'
+                ? '<div class="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0 font-bold">!</div>'
+                : '<div class="w-6 h-6 rounded-full bg-zinc-500/20 text-zinc-300 flex items-center justify-center flex-shrink-0 font-bold">ℹ</div>';
+
+            toast.innerHTML = `
+                <div class="flex items-center gap-3 flex-1 overflow-hidden">
+                    ${iconSvg}
+                    <span class="delta-toast-message leading-snug text-left"></span>
+                </div>
+                <button type="button" class="text-zinc-400 hover:text-white text-base font-bold ml-2 cursor-pointer transition-colors" onclick="this.parentElement.remove()">✕</button>
+            `;
+            toast.querySelector('.delta-toast-message').textContent = String(message ?? '');
+
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-x-8', 'opacity-0');
+                toast.classList.add('translate-x-0', 'opacity-100');
+            });
+
+            setTimeout(() => {
+                toast.classList.remove('translate-x-0', 'opacity-100');
+                toast.classList.add('translate-x-8', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        };
+
+        window.cleanAdminFlashParams = function() {
+            try {
+                if (!window.history || !window.history.replaceState) return;
+                const cleanUrl = new URL(window.location.href);
+                const flashKeys = ['added', 'updated', 'deleted', 'purged', 'purgedAll', 'restored', 'toggled', 'blocked', 'unblocked', 'success', 'error', 'warning', 'info'];
+                let changed = false;
+                flashKeys.forEach((key) => {
+                    if (cleanUrl.searchParams.has(key)) {
+                        cleanUrl.searchParams.delete(key);
+                        changed = true;
+                    }
+                });
+                if (changed) {
+                    const nextQuery = cleanUrl.searchParams.toString();
+                    const nextPath = cleanUrl.pathname + (nextQuery ? '?' + nextQuery : '') + cleanUrl.hash;
+                    window.history.replaceState({}, document.title, nextPath);
+                }
+            } catch (err) {}
+        };
+
+        window.showAdminFlash = function(successMsg, errorMsg, warningMsg) {
+            if (typeof window.showToast === 'function') {
+                if (successMsg) window.showToast(successMsg, 'success');
+                if (errorMsg) window.showToast(errorMsg, 'error');
+                if (warningMsg) window.showToast(warningMsg, 'warning');
+            }
+            window.cleanAdminFlashParams();
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            window.cleanAdminFlashParams();
+        });
+    </script>
+
+</head>
+<body class="bg-[#F8F9FA] text-zinc-900 font-sans antialiased min-h-screen flex flex-col selection:bg-[#0A4D2E] selection:text-white">

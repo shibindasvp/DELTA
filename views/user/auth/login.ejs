@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In — DELTA</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Libre Caslon Text"', 'serif'],
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Video Sizing & Positioning */
+        .bg-video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+        }
+
+        /* Modern Card Entrance */
+        @keyframes cardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .auth-card {
+            animation: cardFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Modern Button Shimmer on Hover */
+        @keyframes sweep {
+            0% { transform: translateX(-150%) skewX(-20deg); }
+            100% { transform: translateX(250%) skewX(-20deg); }
+        }
+
+        .btn-shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-shimmer::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            transform: translateX(-150%) skewX(-20deg);
+        }
+
+        .btn-shimmer:hover::after {
+            animation: sweep 1.3s ease-in-out infinite;
+        }
+
+        /* Error Shake Animation */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+        }
+
+        .input-error {
+            border-color: #f43f5e !important;
+            animation: shake 0.4s ease-in-out;
+        }
+    </style>
+
+    <script>
+        // Invalidate browser back-forward cache (bfcache) on back navigation / session change
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted || (window.performance && window.performance.getEntriesByType && window.performance.getEntriesByType("navigation")[0]?.type === "back_forward") || (window.performance && window.performance.navigation && window.performance.navigation.type === 2)) {
+                window.location.reload();
+            }
+        });
+    </script>
+</head>
+<body class="relative min-h-screen flex flex-col justify-between items-center py-8 px-4 font-sans text-zinc-900 antialiased selection:bg-zinc-900 selection:text-white overflow-x-hidden">
+
+    <!-- Live Rolex Video Background Layer -->
+    <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none bg-[#090a0c]">
+        <video 
+            class="bg-video" 
+            autoplay 
+            loop 
+            muted 
+            playsinline 
+            poster="https://media.rolex.com/image/upload/q_auto:eco/f_auto/c_limit,w_1920/v1773157318/rolexcom/094398bf1f99/watches/hub/videos/cover/rolex-watches-new-watches-2026-cover-autoplay-posterframe"
+        >
+            <source 
+                media="(max-width: 767px)" 
+                src="https://media.rolex.com/video/upload/c_limit,w_720/f_auto:video/q_auto:eco/v1/rolexcom/094398bf1f99/watches/hub/videos/cover/rolex-watches-new-watches-2026-cover-autoplay-portrait.mp4" 
+                type="video/mp4"
+            >
+            <source 
+                src="https://media.rolex.com/video/upload/c_limit,w_1920/f_auto:video/q_auto:eco/v1/rolexcom/094398bf1f99/watches/hub/videos/cover/rolex-watches-new-watches-2026-cover-autoplay.mp4" 
+                type="video/mp4"
+            >
+        </video>
+        <!-- Cinematic Dark Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/75"></div>
+    </div>
+
+    <!-- Top Spacer -->
+    <div class="w-full"></div>
+
+    <!-- Modern Luxury Modal Card -->
+    <div class="auth-card w-full max-w-[440px] bg-white/95 backdrop-blur-2xl p-8 sm:p-10 rounded-3xl shadow-[0_30px_70px_rgba(0,0,0,0.55)] border border-white/60 relative my-auto">
+        
+        <!-- Header: Logo & Title -->
+        <div class="text-center mb-7">
+            <div>
+                <span class="text-2xl font-serif select-none leading-none">δ</span>
+            </div>
+            <h1 class="text-2xl sm:text-[26px] font-serif text-zinc-900 font-normal tracking-tight">
+                Welcome Back
+            </h1>
+            <p class="text-xs text-zinc-500 font-normal mt-1">
+                Access your curated watch collection & vault.
+            </p>
+        </div>
+
+        <!-- Flash Messages -->
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="mb-5 bg-emerald-50/90 border border-emerald-200/80 text-emerald-800 px-4 py-2.5 rounded-xl text-xs flex items-center gap-2">
+                <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span><%= success %></span>
+            </div>
+        <% } %>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="mb-5 bg-rose-50/90 border border-rose-200/80 text-rose-800 px-4 py-2.5 rounded-xl text-xs flex items-center gap-2">
+                <svg class="w-4 h-4 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span><%= error %></span>
+            </div>
+        <% } %>
+
+        <!-- Modern Form -->
+        <form action="/login" method="POST" id="loginForm" class="space-y-4" novalidate>
+            
+            <!-- Email Address Field -->
+            <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                    <label class="block text-[11px] font-semibold text-zinc-700 tracking-wide">
+                        Email Address
+                    </label>
+                    <span id="savedEmailBadge" class="hidden text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full font-medium">
+                        Remembered Account
+                    </span>
+                </div>
+                <div class="relative flex items-center">
+                    <span class="absolute left-3.5 text-zinc-400 pointer-events-none">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                    </span>
+                    <input
+                        type="email"
+                        name="email"
+                        id="email"
+                        required
+                        autocomplete="username email"
+                        list="emailSuggestions"
+                        value="<%= typeof oldData !== 'undefined' && oldData.email ? oldData.email : '' %>"
+                        placeholder="name@example.com"
+                        class="w-full pl-10 pr-4 py-3 bg-zinc-50/80 hover:bg-zinc-50 focus:bg-white border border-zinc-200/90 rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all duration-200 shadow-sm"
+                    >
+                    <datalist id="emailSuggestions"></datalist>
+                </div>
+                
+                <!-- Quick Recent Email Suggestions Container -->
+                <div id="recentAccountsContainer" class="hidden pt-1">
+                    <p class="text-[10px] text-zinc-400 font-medium mb-1 uppercase tracking-wider">Suggested accounts:</p>
+                    <div id="recentAccountsChips" class="flex flex-wrap gap-1.5"></div>
+                </div>
+
+                <p id="emailError" class="text-rose-600 text-[11px] font-medium hidden flex items-center gap-1 mt-1"></p>
+            </div>
+
+            <!-- Password Field -->
+            <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                    <label class="block text-[11px] font-semibold text-zinc-700 tracking-wide">
+                        Password
+                    </label>
+                    <a href="/forgot-password" class="text-[11px] text-zinc-500 hover:text-zinc-900 transition-colors font-medium">
+                        Forgot Password?
+                    </a>
+                </div>
+                <div class="relative flex items-center">
+                    <span class="absolute left-3.5 text-zinc-400 pointer-events-none">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </span>
+                    <input
+                        type="password"
+                        name="password"
+                        id="password"
+                        required
+                        autocomplete="current-password"
+                        value="<%= typeof oldData !== 'undefined' && oldData.password ? oldData.password : '' %>"
+                        placeholder="••••••••"
+                        class="w-full pl-10 pr-11 py-3 bg-zinc-50/80 hover:bg-zinc-50 focus:bg-white border border-zinc-200/90 rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all duration-200 font-mono tracking-wider shadow-sm"
+                    >
+                    <button
+                        type="button"
+                        onclick="togglePasswordVisibility('password', 'passwordEye')"
+                        class="absolute right-3 p-1 text-zinc-400 hover:text-zinc-700 rounded-lg hover:bg-zinc-100 transition-colors focus:outline-none"
+                        aria-label="Toggle password"
+                    >
+                        <svg id="passwordEye" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </button>
+                </div>
+                <p id="passwordError" class="text-rose-600 text-[11px] font-medium hidden flex items-center gap-1 mt-1"></p>
+            </div>
+
+            <!-- Remember Me Checkbox -->
+            <div class="flex items-center pt-1">
+                <label class="flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" name="remember" id="rememberMe" <%= (typeof oldData !== 'undefined' && (oldData.remember === 'on' || oldData.remember === true || oldData.remember === 'true')) ? 'checked' : '' %> class="w-4 h-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 accent-zinc-900">
+                    <span class="text-xs text-zinc-600">Remember this device</span>
+                </label>
+            </div>
+
+            <!-- Modern Submit Button -->
+            <div class="pt-2">
+                <button
+                    type="submit"
+                    class="btn-shimmer group w-full bg-zinc-900 hover:bg-black text-white py-3.5 px-5 rounded-xl text-xs font-semibold uppercase tracking-[0.18em] transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-zinc-900/20 hover:shadow-zinc-900/30 active:scale-[0.99] cursor-pointer"
+                >
+                    <span>Sign In</span>
+                    <svg class="w-4 h-4 transform group-hover:translate-x-0.5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                </button>
+            </div>
+        </form>
+
+        <!-- Divider -->
+        <div class="relative my-6 text-center">
+            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-zinc-200/80"></div></div>
+            <span class="relative bg-white px-3 text-[11px] text-zinc-400 uppercase tracking-wider font-medium">or continue with</span>
+        </div>
+
+        <!-- Google OAuth Button -->
+        <div>
+            <a
+                href="/auth/google"
+                class="w-full flex items-center justify-center gap-3 bg-zinc-50 hover:bg-zinc-100/90 border border-zinc-200/90 py-3 px-4 rounded-xl text-xs font-semibold text-zinc-700 hover:text-zinc-900 transition-all duration-200 shadow-sm active:scale-[0.99]"
+            >
+                <svg class="w-4 h-4" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                </svg>
+                <span>Google</span>
+            </a>
+        </div>
+
+        <!-- Footer Link -->
+        <div class="mt-7 text-center text-xs text-zinc-500">
+            Don't have an account?
+            <a href="/signup<%= (typeof oldData !== 'undefined' && oldData && oldData.email) ? '?email=' + encodeURIComponent(oldData.email) : '' %>" class="text-zinc-900 font-semibold hover:underline ml-1">
+                Create an account
+            </a>
+        </div>
+    </div>
+
+    <!-- Bottom Footer Brand Mark -->
+    <div class="text-center text-[10px] uppercase tracking-[0.35em] text-zinc-300 font-medium py-4 select-none drop-shadow-md">
+        Precision • Heritage • Delta
+    </div>
+
+    <script>
+        // Password Visibility Toggle
+        function togglePasswordVisibility(inputId, eyeId) {
+            const input = document.getElementById(inputId);
+            const eye = document.getElementById(eyeId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                eye.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"></path>';
+            } else {
+                input.type = 'password';
+                eye.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
+            }
+        }
+
+        // Automatic Email Suggestion & History Handler
+        const STORAGE_KEY = 'delta_recent_emails';
+        const form = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const emailError = document.getElementById('emailError');
+        const passwordError = document.getElementById('passwordError');
+        const emailSuggestions = document.getElementById('emailSuggestions');
+        const recentContainer = document.getElementById('recentAccountsContainer');
+        const recentChips = document.getElementById('recentAccountsChips');
+        const savedBadge = document.getElementById('savedEmailBadge');
+        const rememberCheckbox = document.getElementById('rememberMe');
+        const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+
+        function getCookie(name) {
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? decodeURIComponent(match[2]) : null;
+        }
+
+        function getSavedEmails() {
+            try {
+                const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+                return Array.isArray(stored) ? stored : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveEmailToHistory(email) {
+            if (!email || !emailRegex.test(email)) return;
+            try {
+                let list = getSavedEmails().filter(e => e.toLowerCase() !== email.toLowerCase());
+                list.unshift(email.trim().toLowerCase());
+                list = list.slice(0, 5); // Keep up to 5 recent accounts
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+            } catch (e) {}
+        }
+
+        function selectEmailSuggestion(selectedEmail) {
+            emailInput.value = selectedEmail;
+            emailInput.classList.remove('input-error');
+            emailError.classList.add('hidden');
+            passwordInput.focus();
+        }
+
+        function renderEmailSuggestions() {
+            let emails = getSavedEmails();
+            const cookieEmail = getCookie('delta_remember_email') || getCookie('delta_saved_email');
+
+            if (cookieEmail && !emails.includes(cookieEmail)) {
+                emails.unshift(cookieEmail);
+            }
+
+            if (emails.length > 0) {
+                // Populate Datalist for automatic browser suggestions
+                emailSuggestions.innerHTML = '';
+                emails.forEach(em => {
+                    const opt = document.createElement('option');
+                    opt.value = em;
+                    emailSuggestions.appendChild(opt);
+                });
+
+                // Auto-fill input if currently empty
+                if (!emailInput.value.trim()) {
+                    emailInput.value = emails[0];
+                    if (rememberCheckbox) rememberCheckbox.checked = true;
+                }
+
+                if (emailInput.value.trim()) {
+                    savedBadge.classList.remove('hidden');
+                }
+
+                // Render quick clickable chips for multi-account convenience
+                recentChips.innerHTML = '';
+                emails.forEach(em => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-lg text-xs font-mono font-medium transition-colors cursor-pointer border border-zinc-200/80';
+                    btn.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span><span>${em}</span>`;
+                    btn.onclick = () => selectEmailSuggestion(em);
+                    recentChips.appendChild(btn);
+                });
+                recentContainer.classList.remove('hidden');
+            }
+        }
+
+        // Initialize suggestions on page load
+        document.addEventListener('DOMContentLoaded', renderEmailSuggestions);
+        // Also run immediately in case DOM is already parsed
+        renderEmailSuggestions();
+
+        emailInput.addEventListener('input', () => {
+            const val = emailInput.value.trim();
+            if (val) {
+                savedBadge.classList.add('hidden');
+            }
+            if (val && emailRegex.test(val)) {
+                emailError.textContent = '';
+                emailError.classList.add('hidden');
+                emailInput.classList.remove('input-error');
+            }
+        });
+
+        passwordInput.addEventListener('input', () => {
+            if (passwordInput.value) {
+                passwordError.textContent = '';
+                passwordError.classList.add('hidden');
+                passwordInput.classList.remove('input-error');
+            }
+        });
+
+        // Form Submit Validation & History Recording
+        form.addEventListener('submit', (e) => {
+            let hasError = false;
+            const enteredEmail = emailInput.value.trim();
+            
+            // Reset styles
+            emailError.classList.add('hidden');
+            passwordError.classList.add('hidden');
+            emailInput.classList.remove('input-error');
+            passwordInput.classList.remove('input-error');
+
+            if (!enteredEmail || !emailRegex.test(enteredEmail)) {
+                emailError.innerHTML = '<span>• Please enter a valid email address</span>';
+                emailError.classList.remove('hidden');
+                emailInput.classList.add('input-error');
+                hasError = true;
+            }
+
+            if (!passwordInput.value) {
+                passwordError.innerHTML = '<span>• Password is required</span>';
+                passwordError.classList.remove('hidden');
+                passwordInput.classList.add('input-error');
+                hasError = true;
+            }
+
+            if (hasError) {
+                e.preventDefault();
+            } else {
+                saveEmailToHistory(enteredEmail);
+            }
+        });
+    </script>
+</body>
+</html>

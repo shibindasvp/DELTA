@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title : 'DELTA — Haute Horlogerie & Luxury Watches' %></title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Libre Caslon Text"', 'serif'],
+                        sans: ['"Montserrat"', 'sans-serif']
+                    },
+                    colors: {
+                        gold: {
+                            400: '#d4b348',
+                            500: '#c59b2c'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="/css/style.css">
+    <script>
+        // Invalidate browser back-forward cache (bfcache) on logout / back navigation
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted || (window.performance && window.performance.getEntriesByType && window.performance.getEntriesByType("navigation")[0]?.type === "back_forward") || (window.performance && window.performance.navigation && window.performance.navigation.type === 2)) {
+                window.location.reload();
+            }
+        });
+    </script>
+
+    <script>
+        window.showToast = function(message, type = 'success', duration = 3500) {
+            let container = document.getElementById('deltaToastContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'deltaToastContainer';
+                container.className = 'fixed top-5 right-5 z-[99999] flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0';
+                document.body.appendChild(container);
+            }
+
+            const toast = document.createElement('div');
+            toast.className = 'pointer-events-auto flex items-center justify-between gap-3 p-4 rounded-2xl shadow-2xl backdrop-blur-xl border transition-all duration-300 transform translate-x-8 opacity-0 text-xs font-medium ' +
+                (type === 'success' ? 'bg-zinc-900/95 text-white border-zinc-700/60 shadow-black/40' :
+                 type === 'error' ? 'bg-rose-950/95 text-white border-rose-800/80 shadow-rose-950/50' :
+                 type === 'warning' ? 'bg-amber-950/95 text-amber-100 border-amber-800/80' :
+                 'bg-zinc-900/95 text-white border-zinc-700/60');
+
+            const iconSvg = type === 'success' 
+                ? '<div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 font-bold">✓</div>'
+                : type === 'error'
+                ? '<div class="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0 font-bold">✕</div>'
+                : type === 'warning'
+                ? '<div class="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0 font-bold">!</div>'
+                : '<div class="w-6 h-6 rounded-full bg-zinc-500/20 text-zinc-300 flex items-center justify-center flex-shrink-0 font-bold">ℹ</div>';
+
+            toast.innerHTML = `
+                <div class="flex items-center gap-3 flex-1 overflow-hidden">
+                    ${iconSvg}
+                    <span class="leading-snug text-left">${message}</span>
+                </div>
+                <button type="button" class="text-zinc-400 hover:text-white text-base font-bold ml-2 cursor-pointer transition-colors" onclick="this.parentElement.remove()">✕</button>
+            `;
+
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-x-8', 'opacity-0');
+                toast.classList.add('translate-x-0', 'opacity-100');
+            });
+
+            setTimeout(() => {
+                toast.classList.remove('translate-x-0', 'opacity-100');
+                toast.classList.add('translate-x-8', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        };
+
+        // Automatic URL Query Toast Dispatcher
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                if (!window.location.search) return;
+                const params = new URLSearchParams(window.location.search);
+                let message = null;
+                let toastType = 'success';
+                let shouldClean = false;
+
+                if (params.has('error')) {
+                    message = params.get('error');
+                    toastType = 'error';
+                    shouldClean = true;
+                } else if (params.has('warning')) {
+                    message = params.get('warning');
+                    toastType = 'warning';
+                    shouldClean = true;
+                } else if (params.has('success')) {
+                    message = params.get('success');
+                    toastType = 'success';
+                    shouldClean = true;
+                } else if (params.get('welcome') === 'true') {
+                    message = 'Welcome to DELTA. Your private horology vault is ready.';
+                    toastType = 'success';
+                    shouldClean = true;
+                } else if (params.get('cancelled') === 'true') {
+                    message = 'Your order has been cancelled and stock returned to vault.';
+                    toastType = 'success';
+                    shouldClean = true;
+                } else if (params.get('itemCancelled') === 'true') {
+                    message = 'The timepiece has been cancelled and stock restored to vault.';
+                    toastType = 'success';
+                    shouldClean = true;
+                } else if (params.get('returnRequested') === 'true') {
+                    message = 'Return request submitted. Concierge will contact you shortly.';
+                    toastType = 'success';
+                    shouldClean = true;
+                } else if (params.get('itemReturnRequested') === 'true') {
+                    message = 'Return request for the timepiece submitted successfully.';
+                    toastType = 'success';
+                    shouldClean = true;
+                } else if (params.get('added') === 'true') {
+                    message = 'Item successfully added.';
+                    toastType = 'success';
+                    shouldClean = true;
+                } else if (params.get('updated') === 'true' || params.get('updated') === 'success') {
+                    message = 'Profile updated successfully.';
+                    toastType = 'success';
+                    shouldClean = true;
+                } else if (params.get('deleted') === 'true') {
+                    const currentPath = window.location.pathname || '';
+                    if (currentPath.includes('/cart')) {
+                        message = 'Item removed from shopping bag successfully.';
+                    } else if (currentPath.includes('/wishlist')) {
+                        message = 'Item removed from wishlist successfully.';
+                    } else if (currentPath.includes('/address')) {
+                        message = 'Address deleted successfully.';
+                    } else {
+                        message = 'Deleted successfully.';
+                    }
+                    toastType = 'success';
+                    shouldClean = true;
+                } else if (params.get('password') === 'changed') {
+                    message = 'Password changed successfully.';
+                    toastType = 'success';
+                    shouldClean = true;
+                } else if (params.get('email') === 'changed') {
+                    message = 'Email verified and updated successfully.';
+                    toastType = 'success';
+                    shouldClean = true;
+                } else if (params.get('empty') === 'true') {
+                    message = 'Your shopping bag is currently empty.';
+                    toastType = 'warning';
+                    shouldClean = true;
+                }
+
+                if (message && typeof window.showToast === 'function') {
+                    window.showToast(message, toastType);
+                }
+
+                if (shouldClean && window.history && window.history.replaceState) {
+                    const cleanUrl = new URL(window.location);
+                    const flashKeys = ['success', 'error', 'warning', 'info', 'welcome', 'cancelled', 'itemCancelled', 'returnRequested', 'itemReturnRequested', 'added', 'updated', 'deleted', 'password', 'email', 'empty'];
+                    flashKeys.forEach(k => cleanUrl.searchParams.delete(k));
+                    const newQuery = cleanUrl.searchParams.toString();
+                    const newPath = cleanUrl.pathname + (newQuery ? '?' + newQuery : '') + cleanUrl.hash;
+                    window.history.replaceState({}, document.title, newPath);
+                }
+            } catch (err) {
+                console.warn('Toast bridge notification error:', err);
+            }
+        });
+    </script>
+
+</head>
+<body class="bg-[#faf8f7] text-[#1b1c1c] font-sans antialiased min-h-screen flex flex-col selection:bg-[#1c1c1c] selection:text-white">

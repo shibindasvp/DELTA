@@ -1,0 +1,1029 @@
+<%- include('../partials/header', { title: 'Edit ' + (product && product.name ? product.name : 'Timepiece') + ' — DELTA Admin' }) %>
+
+<%
+    const safeProduct = (typeof product !== "undefined" && product) ? product : {};
+    const safeErrors = (typeof errors !== "undefined" && errors) ? errors : {};
+    const safeBrands = (typeof brands !== "undefined" && Array.isArray(brands)) ? brands : [];
+%>
+
+<div class="flex flex-1 min-h-screen bg-[#F8F9FA]">
+    <!-- Admin Sidebar -->
+    <%- include('../partials/sidebar', { activePage: 'products' }) %>
+
+    <!-- Main Content Column -->
+    <div class="flex-1 flex flex-col min-w-0">
+        <!-- Top Navigation Header -->
+        <%- include('../partials/navbar', { pageTitle: 'Edit Master Timepiece' }) %>
+
+        <!-- Main Page Container -->
+        <main class="flex-grow p-6 sm:p-10 max-w-6xl w-full mx-auto space-y-8">
+            
+            <!-- Header & Breadcrumbs -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200/80 pb-6">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2 text-[10px] uppercase font-mono tracking-widest text-zinc-400">
+                        <a href="/admin/products" class="hover:text-zinc-900 transition-colors">Master Catalog</a>
+                        <span>/</span>
+                        <span class="text-zinc-900 font-bold">Edit Timepiece</span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-serif text-zinc-900">Modify Master Timepiece</h1>
+                    <p class="text-xs text-zinc-500 font-light">
+                        Update specifications, variant pricing (Max ₹20 Cr), and multi-angle photo studios for <%= safeProduct.name %>.
+                    </p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="/admin/products" class="px-5 py-2.5 bg-white border border-zinc-300 hover:border-zinc-900 rounded-xl text-xs font-semibold text-zinc-700 hover:text-black transition-colors shadow-2xs">
+                        ← Back to Catalog
+                    </a>
+                </div>
+            </div>
+
+            <%- include('../partials/flash-message') %>
+
+            <!-- Main Product Edit Form -->
+            <form action="/admin/products/<%= safeProduct._id %>/edit" method="POST" id="editProductForm" class="space-y-8" novalidate>
+                
+                <input type="hidden" name="variantsJson" id="variantsJsonInput">
+
+                <!-- 1. Model Identity & Heritage -->
+                <div class="bg-white border border-zinc-200/80 p-8 rounded-3xl shadow-sm space-y-6">
+                    <h2 class="text-base font-serif text-zinc-900 border-b border-zinc-100 pb-3">1. Timepiece Model Identity</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <!-- Model Name -->
+                        <div class="space-y-1.5 md:col-span-2">
+                            <div class="flex items-center justify-between">
+                                <label for="nameInput" class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600">
+                                    Timepiece Model Name <span class="text-rose-500">*</span>
+                                </label>
+                                <span id="nameCharCount" class="text-[10px] font-mono text-zinc-400">0/120</span>
+                            </div>
+                            <input
+                                type="text"
+                                name="name"
+                                id="nameInput"
+                                required
+                                value="<%= safeProduct.name || '' %>"
+                                placeholder="e.g. Cosmograph Daytona Platinum"
+                                class="w-full px-4 py-3 bg-zinc-50 border <%= safeErrors.name ? 'border-rose-500 bg-rose-50/20 ring-1 ring-rose-500' : 'border-zinc-200' %> rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E] focus:bg-white transition-colors"
+                            >
+                            <p id="nameError" class="text-rose-600 text-xs font-medium <%= safeErrors.name ? '' : 'hidden' %>">
+                                <%= safeErrors.name || '' %>
+                            </p>
+                        </div>
+
+                        <!-- Brand / Manufacture -->
+                        <div class="space-y-1.5">
+                            <label for="brandInput" class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600">
+                                Manufacture Maison / Brand <span class="text-rose-500">*</span>
+                            </label>
+                            <select
+                                name="brand"
+                                id="brandInput"
+                                required
+                                onchange="validateBrand()"
+                                class="w-full px-4 py-3 bg-zinc-50 border <%= safeErrors.brand ? 'border-rose-500 bg-rose-50/20 ring-1 ring-rose-500' : 'border-zinc-200' %> rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E] focus:bg-white transition-colors cursor-pointer"
+                            >
+                                <option value="">Select Manufacture Maison</option>
+                                <% safeBrands.forEach(b => { %>
+                                    <% 
+                                        const isBrandSelected = (safeProduct.brand && (
+                                            String(safeProduct.brand._id || safeProduct.brand) === String(b._id)
+                                        ));
+                                    %>
+                                    <option value="<%= b._id %>" <%= isBrandSelected ? 'selected' : '' %>>
+                                        <%= b.name %> (<%= b.origin || 'Switzerland' %>)
+                                    </option>
+                                <% }) %>
+                            </select>
+                            <p id="brandError" class="text-rose-600 text-xs font-medium <%= safeErrors.brand ? '' : 'hidden' %>">
+                                <%= safeErrors.brand || '' %>
+                            </p>
+                        </div>
+
+                        <!-- Model / Reference Number -->
+                        <div class="space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <label for="modelNumberInput" class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600">
+                                    Base Reference Number
+                                </label>
+                                <button type="button" onclick="generateClientReferenceNumber()" class="text-[10px] uppercase font-mono text-[#0A4D2E] hover:underline cursor-pointer">Auto-Gen Ref</button>
+                            </div>
+                            <input
+                                type="text"
+                                name="modelNumber"
+                                id="modelNumberInput"
+                                value="<%= safeProduct.modelNumber || '' %>"
+                                placeholder="e.g. REF-RLX-126506"
+                                class="w-full px-4 py-3 bg-zinc-50 border <%= safeErrors.modelNumber ? 'border-rose-500 bg-rose-50/20 ring-1 ring-rose-500' : 'border-zinc-200' %> rounded-xl text-xs font-mono text-zinc-900 focus:outline-none focus:border-[#0A4D2E] focus:bg-white transition-colors"
+                            >
+                            <p id="modelNumberError" class="text-rose-600 text-xs font-medium <%= safeErrors.modelNumber ? '' : 'hidden' %>">
+                                <%= safeErrors.modelNumber || '' %>
+                            </p>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="md:col-span-2 space-y-1.5">
+                            <label for="descriptionInput" class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600">
+                                Horology Heritage & Overview
+                            </label>
+                            <textarea
+                                name="description"
+                                id="descriptionInput"
+                                rows="3"
+                                placeholder="Heritage details on model history, calibre architecture, and hallmark prestige..."
+                                class="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E] focus:bg-white transition-colors leading-relaxed"
+                            ><%= safeProduct.description || '' %></textarea>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 2. Technical Specifications -->
+                <div class="bg-white border border-zinc-200/80 p-8 rounded-3xl shadow-sm space-y-6">
+                    <h2 class="text-base font-serif text-zinc-900 border-b border-zinc-100 pb-3">2. Technical Horology Specifications</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Case Material & Dimensions -->
+                        <div class="space-y-1.5">
+                            <label for="specCase" class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600">Case Dimension & Alloy</label>
+                            <input type="text" name="specCase" id="specCase" value="<%= (safeProduct.specCase || (safeProduct.specs && safeProduct.specs.case) || (safeProduct.specifications && safeProduct.specifications.case) || '') %>" placeholder="e.g. 40mm Oystersteel 904L with Triplock Crown" class="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E]">
+                        </div>
+
+                        <!-- Movement -->
+                        <div class="space-y-1.5">
+                            <label for="specMovement" class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600">Manufacture Calibre & Reserve</label>
+                            <input type="text" name="specMovement" id="specMovement" value="<%= (safeProduct.specMovement || (safeProduct.specs && safeProduct.specs.movement) || (safeProduct.specifications && safeProduct.specifications.movement) || '') %>" placeholder="e.g. Calibre 4131 Perpetual Chronograph, 72h Reserve" class="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E]">
+                        </div>
+
+                        <!-- Dial -->
+                        <div class="space-y-1.5">
+                            <label for="specDial" class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600">Dial Markers & Chromalight</label>
+                            <input type="text" name="specDial" id="specDial" value="<%= (safeProduct.specDial || (safeProduct.specs && safeProduct.specs.dial) || (safeProduct.specifications && safeProduct.specifications.dial) || '') %>" placeholder="e.g. Sunburst Baton Dial with 18k gold appliqués" class="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E]">
+                        </div>
+
+                        <!-- Bracelet -->
+                        <div class="space-y-1.5">
+                            <label for="specBracelet" class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600">Bracelet & Deployment Clasp</label>
+                            <input type="text" name="specBracelet" id="specBracelet" value="<%= (safeProduct.specBracelet || (safeProduct.specs && safeProduct.specs.bracelet) || (safeProduct.specifications && safeProduct.specifications.bracelet) || '') %>" placeholder="e.g. Oyster three-piece solid links with Easylink 5mm" class="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E]">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Timepiece Variants & Editions Studio -->
+                <div class="bg-white border border-zinc-200/80 p-8 rounded-3xl shadow-sm space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 pb-4">
+                        <div>
+                            <div class="flex items-center gap-3">
+                                <h2 class="text-base font-serif text-zinc-900">3. Timepiece Editions & Custom Variants Studio</h2>
+                                <span id="summaryBadgeVariants" class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-50 text-[#0A4D2E] border border-emerald-200">
+                                    <%= (safeProduct.variants && safeProduct.variants.length > 0) ? safeProduct.variants.length + ' Editions' : '1 Edition' %>
+                                </span>
+                            </div>
+                            <p class="text-xs text-zinc-500 font-light mt-0.5">
+                                Manage each edition with individual <strong>pricing (Max ₹20 Cr), vault stock, collector description, and 3+ multi-angle photos</strong>.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onclick="addVariantRow()"
+                            class="px-5 py-2.5 bg-zinc-900 hover:bg-black text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm self-start sm:self-auto cursor-pointer"
+                        >
+                            + Add Variant Edition
+                        </button>
+                    </div>
+
+                    <div id="variantsContainer" class="space-y-6"></div>
+                    <p id="variantsError" class="text-rose-600 text-xs font-medium hidden"></p>
+                </div>
+
+                <!-- Sticky Bottom Action Footer -->
+                <div class="sticky bottom-4 z-20 bg-white/95 backdrop-blur-md border border-zinc-200 p-4 sm:p-5 rounded-2xl shadow-xl flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="text-xs font-medium text-zinc-700">Ready to save modifications to catalog</span>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <a href="/admin/products" class="px-4 py-2 text-xs font-semibold text-zinc-600 hover:text-black">Cancel</a>
+                        <button
+                            type="submit"
+                            id="submitBtn"
+                            class="px-7 py-3 bg-[#0A4D2E] hover:bg-[#073822] text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                        >
+                            <span id="submitBtnSpinner" class="hidden w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                            <span id="submitBtnText">Save Changes</span>
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+        </main>
+    </div>
+</div>
+
+<!-- Precision Image Cropper Modal -->
+<div id="cropperModal" class="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+        <div class="p-5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50">
+            <div>
+                <h3 class="text-sm font-serif font-bold text-zinc-900">Crop Timepiece Photo</h3>
+                <p class="text-[10px] text-zinc-500 font-mono">1:1 Precision Aspect Ratio for Haute Horlogerie showcase (JPG & PNG supported)</p>
+            </div>
+            <button type="button" onclick="closeCropperModal()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-black flex items-center justify-center font-mono text-sm cursor-pointer transition-colors" title="Close Modal">✕</button>
+        </div>
+
+        <div class="p-4 overflow-hidden flex-1 flex items-center justify-center bg-zinc-950 min-h-[350px] max-h-[500px]">
+            <div class="w-full h-full flex items-center justify-center">
+                <img id="cropperImage" class="max-w-full max-h-[450px] block" src="" alt="Timepiece preview">
+            </div>
+        </div>
+
+        <div class="p-5 border-t border-zinc-100 flex flex-wrap items-center justify-between gap-3 bg-white">
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="if(cropper)cropper.rotate(-90)" class="px-3 py-2 border border-zinc-200 rounded-lg text-xs hover:bg-zinc-100 cursor-pointer font-medium text-zinc-700" title="Rotate 90° Left">↺ Rotate</button>
+                <button type="button" onclick="if(cropper)cropper.rotate(90)" class="px-3 py-2 border border-zinc-200 rounded-lg text-xs hover:bg-zinc-100 cursor-pointer font-medium text-zinc-700" title="Rotate 90° Right">↻ Rotate</button>
+                <button type="button" onclick="if(cropper)cropper.zoom(0.1)" class="px-3 py-2 border border-zinc-200 rounded-lg text-xs hover:bg-zinc-100 cursor-pointer font-medium text-zinc-700" title="Zoom In">+</button>
+                <button type="button" onclick="if(cropper)cropper.zoom(-0.1)" class="px-3 py-2 border border-zinc-200 rounded-lg text-xs hover:bg-zinc-100 cursor-pointer font-medium text-zinc-700" title="Zoom Out">-</button>
+                <button type="button" onclick="if(cropper)cropper.reset()" class="px-3 py-2 border border-zinc-200 rounded-lg text-xs hover:bg-zinc-100 cursor-pointer font-medium text-zinc-700">Reset</button>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="closeCropperModal()" class="px-4 py-2 border border-zinc-200 rounded-xl text-xs font-medium text-zinc-600 hover:text-black cursor-pointer">Cancel</button>
+                <button type="button" onclick="applyCrop()" class="px-5 py-2 bg-[#0A4D2E] hover:bg-[#083e25] text-white rounded-xl text-xs font-semibold uppercase tracking-wider shadow cursor-pointer">Crop & Save Image</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+
+<%
+    let editPageVariants = [{
+        color: "Oystersteel Silver",
+        colorCode: "#C0C0C0",
+        material: "Oystersteel 904L",
+        dial: "Sunburst Baton Dial",
+        price: "",
+        discountPercentage: "",
+        discountPrice: null,
+        stock: 3,
+        description: "Classic manufacture steel edition with sunburst dial finish.",
+        images: []
+    }];
+
+    if (safeProduct.variants && safeProduct.variants.length > 0) {
+        editPageVariants = safeProduct.variants.map(v => {
+            let discPct = (v.discountPercentage !== undefined && v.discountPercentage !== null && v.discountPercentage !== '') ? v.discountPercentage : null;
+            if (discPct === null && v.discountPrice && v.price && v.discountPrice < v.price) {
+                discPct = Math.round(((v.price - v.discountPrice) / v.price) * 100);
+                if (discPct > 75) discPct = 75;
+            }
+            return {
+                color: v.color || '',
+                colorCode: v.colorCode || '#C0C0C0',
+                material: v.material || '',
+                dial: v.dial || '',
+                price: (v.price !== undefined && v.price !== null && v.price !== '') ? v.price : '',
+                discountPercentage: discPct !== null ? discPct : '',
+                discountPrice: v.discountPrice || null,
+                stock: v.stock !== undefined ? v.stock : 0,
+                description: v.description || '',
+                images: Array.isArray(v.images) ? v.images : []
+            };
+        });
+    }
+%>
+
+<script>
+    const MAX_PRICE = 200000000; // ₹20 Crores
+
+    const productNameRegex = /^[A-Za-z0-9][A-Za-z0-9\s\-_'.,()&/+]{2,119}$/;
+    const modelNumberRegex = /^[A-Za-z0-9][A-Za-z0-9\-./]{1,49}$/;
+    const priceRegex = /^\d+(\.\d{1,2})?$/;
+    const integerRegex = /^\d+$/;
+    const hexColorRegex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+    const variantTextRegex = /^[A-Za-z0-9][A-Za-z0-9\s\-_'\x60".,:;()&/+%]{1,149}$/;
+
+    let variants = JSON.parse(decodeURIComponent("<%- encodeURIComponent(JSON.stringify(editPageVariants)) %>"));
+
+    const variantsContainer = document.getElementById('variantsContainer');
+    const variantsJsonInput = document.getElementById('variantsJsonInput');
+    const variantsError = document.getElementById('variantsError');
+    const summaryBadgeVariants = document.getElementById('summaryBadgeVariants');
+
+    let cropper = null;
+    let activeVariantIndexForCrop = 0;
+    let editingImageIndexForCrop = -1;
+    let activeCropMimeType = 'image/jpeg';
+
+    function formatINR(val) {
+        const num = parseFloat(val) || 0;
+        return '₹' + num.toLocaleString('en-IN');
+    }
+
+    function renderVariants() {
+        if (!variantsContainer) return;
+        variantsContainer.innerHTML = '';
+        if (variantsJsonInput) {
+            variantsJsonInput.value = JSON.stringify(variants);
+        }
+
+        if (summaryBadgeVariants) {
+            const totalStock = variants.reduce((sum, v) => sum + (parseInt(v.stock, 10) || 0), 0);
+            summaryBadgeVariants.textContent = variants.length + (variants.length === 1 ? ' Edition' : ' Editions') + ' • ' + totalStock + ' Total Units';
+        }
+
+        variants.forEach((v, index) => {
+            const card = document.createElement('div');
+            card.className = 'p-6 bg-zinc-50 border border-zinc-200/90 rounded-2xl space-y-5 relative transition-all';
+            card.id = 'variantCard_' + index;
+
+            const curPrice = parseFloat(v.price) || 0;
+
+            card.innerHTML = `
+                <div class="flex items-center justify-between border-b border-zinc-200/80 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-6 h-6 rounded-full bg-zinc-900 text-white font-mono text-xs flex items-center justify-center font-bold">#${index + 1}</span>
+                        <h4 class="text-xs font-serif font-bold text-zinc-900">${v.color || 'Timepiece Edition'}</h4>
+                        <span class="w-3.5 h-3.5 rounded-full border border-black/20 shadow-2xs inline-block" style="background-color: ${v.colorCode || '#C0C0C0'};"></span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        ${variants.length > 1 ? `
+                            <button type="button" onclick="removeVariantRow(${index})" class="text-[11px] text-rose-600 hover:text-rose-800 font-semibold px-2.5 py-1 rounded-lg hover:bg-rose-50 cursor-pointer transition-colors">
+                                ✕ Remove Edition
+                            </button>
+                        ` : '<span class="text-[10px] uppercase font-mono text-zinc-400 font-semibold">Primary Edition</span>'}
+                    </div>
+                </div>
+
+                <!-- Row 1: Edition Aesthetic Details -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-[9px] uppercase tracking-wider font-semibold text-zinc-600 mb-1">Color / Edition Title *</label>
+                        <input type="text" id="vColor_${index}" value="${v.color || ''}" oninput="updateVariant(${index}, 'color', this.value)" onblur="validateVariantField(${index}, 'color')" placeholder="e.g. Everose Gold" class="w-full px-3.5 py-2.5 bg-white border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E]">
+                        <p id="vColorErr_${index}" class="text-rose-600 text-[10px] mt-1 hidden"></p>
+                    </div>
+
+                    <div>
+                        <label class="block text-[9px] uppercase tracking-wider font-semibold text-zinc-600 mb-1">Color Code (Hex) *</label>
+                        <div class="flex items-center gap-2">
+                            <input type="color" value="${v.colorCode || '#C0C0C0'}" onchange="updateVariant(${index}, 'colorCode', this.value)" class="w-9 h-9 rounded-lg border border-zinc-200 p-0.5 cursor-pointer bg-white">
+                            <input type="text" id="vColorCode_${index}" value="${v.colorCode || '#C0C0C0'}" oninput="updateVariant(${index}, 'colorCode', this.value)" onblur="validateVariantField(${index}, 'colorCode')" placeholder="#C0C0C0" class="flex-1 px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-mono text-zinc-900 focus:outline-none focus:border-[#0A4D2E]">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[9px] uppercase tracking-wider font-semibold text-zinc-600 mb-1">Case Alloy / Material *</label>
+                        <input type="text" id="vMaterial_${index}" value="${v.material || ''}" oninput="updateVariant(${index}, 'material', this.value)" onblur="validateVariantField(${index}, 'material')" placeholder="e.g. 18k Everose Gold" class="w-full px-3.5 py-2.5 bg-white border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E]">
+                        <p id="vMaterialErr_${index}" class="text-rose-600 text-[10px] mt-1 hidden"></p>
+                    </div>
+
+                    <div>
+                        <label class="block text-[9px] uppercase tracking-wider font-semibold text-zinc-600 mb-1">Dial Finish *</label>
+                        <input type="text" id="vDial_${index}" value="${v.dial || ''}" oninput="updateVariant(${index}, 'dial', this.value)" onblur="validateVariantField(${index}, 'dial')" placeholder="e.g. Sundust Baton Dial" class="w-full px-3.5 py-2.5 bg-white border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E]">
+                        <p id="vDialErr_${index}" class="text-rose-600 text-[10px] mt-1 hidden"></p>
+                    </div>
+                </div>
+
+                <!-- Row 2: Pricing (Max 20 Cr) & Vault Stock -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-[9px] uppercase tracking-wider font-semibold text-zinc-600">Regular Price (₹) *</label>
+                            <span class="text-[9px] font-mono text-zinc-400">Max ₹20 Cr</span>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2.5 text-zinc-400 font-mono text-xs">₹</span>
+                            <input type="number" min="1" max="200000000" step="1" id="vPrice_${index}" value="${v.price !== undefined && v.price !== null ? v.price : ''}" oninput="handlePriceChange(${index}, this.value)" onblur="validateVariantField(${index}, 'price')" placeholder="e.g. 2450000" class="w-full pl-7 pr-3 py-2.5 bg-white border border-zinc-200 rounded-xl text-xs font-mono text-zinc-900 focus:outline-none focus:border-[#0A4D2E]">
+                        </div>
+                        <p id="vPriceErr_${index}" class="text-rose-600 text-[10px] mt-1 hidden"></p>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-[9px] uppercase tracking-wider font-semibold text-zinc-600">Vault Stock Quantity *</label>
+                            <span class="text-[9px] font-mono text-zinc-400">Units in Vault</span>
+                        </div>
+                        <input type="number" min="0" step="1" id="vStock_${index}" value="${v.stock !== undefined ? v.stock : 3}" oninput="updateVariant(${index}, 'stock', parseInt(this.value, 10) || 0)" onblur="validateVariantField(${index}, 'stock')" class="w-full px-3.5 py-2.5 bg-white border border-zinc-200 rounded-xl text-xs font-mono text-zinc-900 focus:outline-none focus:border-[#0A4D2E]">
+                        <p id="vStockErr_${index}" class="text-rose-600 text-[10px] mt-1 hidden"></p>
+                    </div>
+                </div>
+
+                <!-- Row 3: Description / Collector Notes -->
+                <div class="pt-2 border-t border-zinc-200/60 space-y-1.5">
+                    <label class="block text-[9px] uppercase tracking-wider font-semibold text-zinc-600">Edition Specific Description / Collector Notes</label>
+                    <input type="text" id="vDesc_${index}" value="${v.description || ''}" oninput="updateVariant(${index}, 'description', this.value)" placeholder="e.g. Exclusive fluted bezel in 18k Everose with sunburst finish." class="w-full px-3.5 py-2.5 bg-white border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E]">
+                </div>
+
+                <!-- Row 4: Dedicated Photo Studio -->
+                <div class="pt-3 border-t border-zinc-200/80 space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <label class="block text-[10px] uppercase tracking-wider font-semibold text-zinc-700">
+                                Dedicated Photo Studio for ${v.color || 'this Edition'} <span class="text-rose-500">*</span>
+                            </label>
+                            <span class="text-[10px] text-zinc-400 font-mono">${v.images.length}/3 Minimum Multi-Angle Photos (JPG, JPEG, PNG only)</span>
+                        </div>
+
+                        <button type="button" onclick="triggerVariantUpload(${index})" class="text-xs font-semibold text-[#0A4D2E] hover:text-[#083e25] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3.5 py-1.5 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5 self-start sm:self-auto">
+                            <span>+ Upload & Crop Photo</span>
+                        </button>
+                    </div>
+
+                    <input type="file" id="variantFileInput_${index}" accept="image/jpeg,image/png,image/jpg,image/webp,.jpg,.jpeg,.png,.webp" class="hidden" onchange="handleVariantFileInputChange(event, ${index})">
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                        ${v.images.map((src, imgIdx) => `
+                            <div class="relative group/vimg aspect-square rounded-2xl bg-white border border-zinc-200 overflow-hidden shadow-2xs">
+                                <img src="${src}" class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-black/60 opacity-0 group-hover/vimg:opacity-100 transition-opacity flex items-center justify-center gap-1 p-1">
+                                    <button type="button" onclick="reCropVariantImage(${index}, ${imgIdx})" class="px-2 py-1 bg-white text-zinc-900 rounded text-[9px] font-semibold cursor-pointer">Re-Crop</button>
+                                    <button type="button" onclick="removeVariantImage(${index}, ${imgIdx})" class="px-2 py-1 bg-rose-600 text-white rounded text-[9px] font-semibold cursor-pointer">✕</button>
+                                </div>
+                            </div>
+                        `).join('')}
+
+                        ${v.images.length === 0 ? `
+                            <div onclick="triggerVariantUpload(${index})" class="col-span-2 sm:col-span-3 border-2 border-dashed border-zinc-300 hover:border-zinc-500 rounded-2xl p-4 flex items-center justify-center gap-2 text-zinc-400 hover:text-zinc-600 text-xs cursor-pointer transition-colors bg-white">
+                                <span>📸</span>
+                                <span>Click to upload at least 3 JPG/PNG photos for this edition</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <p id="vImagesErr_${index}" class="text-rose-600 text-[10px] mt-1 hidden"></p>
+                </div>
+            `;
+            variantsContainer.appendChild(card);
+        });
+    }
+
+    function updateVariant(index, key, val) {
+        if (!variants[index]) return;
+        variants[index][key] = val;
+        if (variantsJsonInput) {
+            variantsJsonInput.value = JSON.stringify(variants);
+        }
+        if (key === 'color') {
+            const heading = document.querySelector('#variantCard_' + index + ' h4');
+            if (heading) heading.textContent = val || 'Timepiece Edition';
+        }
+    }
+
+    function handlePriceChange(index, val) {
+        updateVariant(index, 'price', val);
+    }
+
+    function validateVariantField(index, field) {
+        const v = variants[index];
+        if (!v) return true;
+
+        if (field === 'color') {
+            const err = document.getElementById('vColorErr_' + index);
+            const val = (v.color || '').trim();
+            if (!val) {
+                if (err) { err.textContent = 'Edition title / color is required.'; err.classList.remove('hidden'); }
+                return false;
+            }
+            if (val.length < 2 || val.length > 80 || !variantTextRegex.test(val)) {
+                if (err) { err.textContent = 'Must be 2-80 characters and start with alphanumeric.'; err.classList.remove('hidden'); }
+                return false;
+            }
+            const lowerColor = val.toLowerCase();
+            const dupIdx = variants.findIndex((vItem, i) => i !== index && String(vItem.color || '').trim().toLowerCase() === lowerColor);
+            if (dupIdx !== -1) {
+                if (err) {
+                    err.textContent = `Duplicate edition name: "${val}" is identical to Edition #${dupIdx + 1}. Each edition must have a unique color / title.`;
+                    err.classList.remove('hidden');
+                }
+                return false;
+            }
+            if (err) err.classList.add('hidden');
+            return true;
+        }
+
+        if (field === 'material') {
+            const err = document.getElementById('vMaterialErr_' + index);
+            const val = (v.material || '').trim();
+            if (!val) {
+                if (err) { err.textContent = 'Case alloy / material is required.'; err.classList.remove('hidden'); }
+                return false;
+            }
+            if (val.length < 2 || val.length > 150 || !variantTextRegex.test(val)) {
+                if (err) { err.textContent = 'Must be 2-150 valid characters.'; err.classList.remove('hidden'); }
+                return false;
+            }
+            const curColor = (v.color || '').trim().toLowerCase();
+            const curMat = val.toLowerCase();
+            const curDial = (v.dial || '').trim().toLowerCase();
+            if (curColor && curMat && curDial) {
+                const dupComboIdx = variants.findIndex((vItem, i) => 
+                    i !== index &&
+                    String(vItem.color || '').trim().toLowerCase() === curColor &&
+                    String(vItem.material || '').trim().toLowerCase() === curMat &&
+                    String(vItem.dial || '').trim().toLowerCase() === curDial
+                );
+                if (dupComboIdx !== -1) {
+                    if (err) {
+                        err.textContent = `Duplicate configuration: Identical to Edition #${dupComboIdx + 1} (Same Color, Material & Dial).`;
+                        err.classList.remove('hidden');
+                    }
+                    return false;
+                }
+            }
+            if (err) err.classList.add('hidden');
+            return true;
+        }
+
+        if (field === 'dial') {
+            const err = document.getElementById('vDialErr_' + index);
+            const val = (v.dial || '').trim();
+            if (!val) {
+                if (err) { err.textContent = 'Dial finish description is required.'; err.classList.remove('hidden'); }
+                return false;
+            }
+            if (val.length < 2 || val.length > 150 || !variantTextRegex.test(val)) {
+                if (err) { err.textContent = 'Must be 2-150 valid characters.'; err.classList.remove('hidden'); }
+                return false;
+            }
+            const curColor = (v.color || '').trim().toLowerCase();
+            const curMat = (v.material || '').trim().toLowerCase();
+            const curDial = val.toLowerCase();
+            if (curColor && curMat && curDial) {
+                const dupComboIdx = variants.findIndex((vItem, i) => 
+                    i !== index &&
+                    String(vItem.color || '').trim().toLowerCase() === curColor &&
+                    String(vItem.material || '').trim().toLowerCase() === curMat &&
+                    String(vItem.dial || '').trim().toLowerCase() === curDial
+                );
+                if (dupComboIdx !== -1) {
+                    if (err) {
+                        err.textContent = `Duplicate configuration: Identical to Edition #${dupComboIdx + 1} (Same Color, Material & Dial).`;
+                        err.classList.remove('hidden');
+                    }
+                    return false;
+                }
+            }
+            if (err) err.classList.add('hidden');
+            return true;
+        }
+
+        if (field === 'price') {
+            const err = document.getElementById('vPriceErr_' + index);
+            const val = String(v.price || '').trim();
+            if (!val || isNaN(val) || Number(val) <= 0) {
+                if (err) { err.textContent = 'Price must be a valid positive amount greater than ₹0.'; err.classList.remove('hidden'); }
+                return false;
+            }
+            if (Number(val) > MAX_PRICE) {
+                if (err) { err.textContent = 'Price cannot exceed ₹20,00,00,000 (20 Crores).'; err.classList.remove('hidden'); }
+                return false;
+            }
+            if (err) err.classList.add('hidden');
+            return true;
+        }
+
+        if (field === 'stock') {
+            const err = document.getElementById('vStockErr_' + index);
+            const val = String(v.stock !== undefined && v.stock !== null ? v.stock : '').trim();
+            if (val === '' || isNaN(val) || parseInt(val, 10) < 0) {
+                if (err) { err.textContent = 'Stock must be a non-negative integer (0 or greater).'; err.classList.remove('hidden'); }
+                return false;
+            }
+            if (err) err.classList.add('hidden');
+            return true;
+        }
+
+        return true;
+    }
+
+    function validateAllVariants() {
+        if (!variants || variants.length === 0) {
+            if (variantsError) {
+                variantsError.textContent = 'At least 1 timepiece edition/variant is required.';
+                variantsError.classList.remove('hidden');
+            }
+            return false;
+        }
+
+        let allValid = true;
+        const seenColors = new Map();
+        const seenCombos = new Map();
+        let duplicateFound = false;
+
+        for (let i = 0; i < variants.length; i++) {
+            const cOk = validateVariantField(i, 'color');
+            const mOk = validateVariantField(i, 'material');
+            const dOk = validateVariantField(i, 'dial');
+            const pOk = validateVariantField(i, 'price');
+            const sOk = validateVariantField(i, 'stock');
+
+            const imagesErr = document.getElementById('vImagesErr_' + i);
+            let imgOk = true;
+            if (!variants[i].images || variants[i].images.length < 3) {
+                if (imagesErr) {
+                    imagesErr.textContent = 'Please upload at least 3 cropped photos for this edition (JPG/PNG only).';
+                    imagesErr.classList.remove('hidden');
+                }
+                imgOk = false;
+            } else if (imagesErr) {
+                imagesErr.classList.add('hidden');
+            }
+
+            // Cross-variant duplicate validation
+            const vColor = (variants[i].color || '').trim().toLowerCase();
+            const vMat = (variants[i].material || '').trim().toLowerCase();
+            const vDial = (variants[i].dial || '').trim().toLowerCase();
+
+            if (vColor) {
+                if (seenColors.has(vColor)) {
+                    const firstIdx = seenColors.get(vColor);
+                    const colorErr = document.getElementById('vColorErr_' + i);
+                    if (colorErr) {
+                        colorErr.textContent = `Duplicate edition name: "${variants[i].color.trim()}" is identical to Edition #${firstIdx + 1}. Each edition must have a unique color / title.`;
+                        colorErr.classList.remove('hidden');
+                    }
+                    duplicateFound = true;
+                    allValid = false;
+                } else {
+                    seenColors.set(vColor, i);
+                }
+            }
+
+            if (vColor && vMat && vDial) {
+                const comboKey = `${vColor}|${vMat}|${vDial}`;
+                if (seenCombos.has(comboKey)) {
+                    const firstIdx = seenCombos.get(comboKey);
+                    const matErr = document.getElementById('vMaterialErr_' + i);
+                    if (matErr) {
+                        matErr.textContent = `Duplicate variant configuration: Identical to Edition #${firstIdx + 1} (Same Color, Material & Dial).`;
+                        matErr.classList.remove('hidden');
+                    }
+                    duplicateFound = true;
+                    allValid = false;
+                } else {
+                    seenCombos.set(comboKey, i);
+                }
+            }
+
+            if (!cOk || !mOk || !dOk || !pOk || !sOk || !imgOk) {
+                allValid = false;
+            }
+        }
+
+        if (!allValid && variantsError) {
+            if (duplicateFound) {
+                variantsError.textContent = 'Duplicate variants detected! Each edition must have a unique color/title and distinct specifications.';
+            } else {
+                variantsError.textContent = 'Please complete all required fields (Price <= ₹20 Cr and 3+ photos per edition).';
+            }
+            variantsError.classList.remove('hidden');
+        } else if (variantsError) {
+            variantsError.classList.add('hidden');
+        }
+        return allValid;
+    }
+
+    function addVariantRow() {
+        const newIndex = variants.length;
+
+        // Append a completely fresh, distinct variant with empty photos and unique color
+        variants.push({
+            color: "",
+            colorCode: newIndex === 1 ? "#E6C687" : newIndex === 2 ? "#1B1C1C" : "#A8D8EA",
+            material: "",
+            dial: "",
+            price: "",
+            stock: 3,
+            description: "",
+            images: []
+        });
+
+        renderVariants();
+
+        // Smoothly scroll and focus on the newly added variant's color title
+        setTimeout(() => {
+            const newCard = document.getElementById('variantCard_' + newIndex);
+            if (newCard) {
+                newCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                newCard.classList.add('ring-2', 'ring-[#0A4D2E]', 'ring-offset-2');
+                setTimeout(() => {
+                    newCard.classList.remove('ring-2', 'ring-[#0A4D2E]', 'ring-offset-2');
+                }, 1200);
+                const firstInput = document.getElementById('vColor_' + newIndex);
+                if (firstInput) firstInput.focus();
+            }
+        }, 60);
+    }
+
+    function removeVariantRow(index) {
+        if (variants.length <= 1) return;
+        variants.splice(index, 1);
+        renderVariants();
+    }
+
+    function triggerVariantUpload(idx) {
+        activeVariantIndexForCrop = idx;
+        editingImageIndexForCrop = -1;
+        const fileInput = document.getElementById('variantFileInput_' + idx);
+        if (fileInput) fileInput.click();
+    }
+
+    function handleVariantFileInputChange(event, idx) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        const fileName = (file.name || '').toLowerCase();
+        const hasValidExt = fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png') || fileName.endsWith('.webp');
+
+        if (!allowedMimeTypes.includes(file.type.toLowerCase()) && !hasValidExt) {
+            if (window.showToast) {
+                window.showToast('Invalid file format. Only JPG, JPEG, PNG, and WebP images are supported.', 'warning');
+            } else {
+                alert('Invalid file format. Only JPG, JPEG, PNG, and WebP images are supported.');
+            }
+            event.target.value = '';
+            return;
+        }
+
+        activeVariantIndexForCrop = idx;
+        if (file.type === 'image/webp' || fileName.endsWith('.webp')) {
+            activeCropMimeType = 'image/webp';
+        } else if (file.type === 'image/png' || fileName.endsWith('.png')) {
+            activeCropMimeType = 'image/png';
+        } else {
+            activeCropMimeType = 'image/jpeg';
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            openCropperWithImage(e.target.result);
+        };
+        reader.readAsDataURL(file);
+        event.target.value = '';
+    }
+
+    function reCropVariantImage(variantIdx, imgIdx) {
+        activeVariantIndexForCrop = variantIdx;
+        editingImageIndexForCrop = imgIdx;
+        const currentSrc = variants[variantIdx].images[imgIdx] || '';
+        if (currentSrc.includes('.webp') || currentSrc.startsWith('data:image/webp')) {
+            activeCropMimeType = 'image/webp';
+        } else if (currentSrc.includes('.png') || currentSrc.startsWith('data:image/png')) {
+            activeCropMimeType = 'image/png';
+        } else {
+            activeCropMimeType = 'image/jpeg';
+        }
+        openCropperWithImage(currentSrc);
+    }
+
+    function removeVariantImage(variantIdx, imgIdx) {
+        variants[variantIdx].images.splice(imgIdx, 1);
+        renderVariants();
+    }
+
+    function openCropperWithImage(src) {
+        const modal = document.getElementById('cropperModal');
+        const img = document.getElementById('cropperImage');
+        if (!modal || !img) return;
+
+        if (cropper) {
+            try { cropper.destroy(); } catch (e) {}
+            cropper = null;
+        }
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        const startCropper = () => {
+            if (typeof Cropper === 'undefined') {
+                console.warn("Cropper library not loaded yet, adding image directly.");
+                if (editingImageIndexForCrop >= 0) {
+                    variants[activeVariantIndexForCrop].images[editingImageIndexForCrop] = src;
+                } else {
+                    variants[activeVariantIndexForCrop].images.push(src);
+                }
+                closeCropperModal();
+                renderVariants();
+                return;
+            }
+
+            if (cropper) {
+                try { cropper.destroy(); } catch (e) {}
+                cropper = null;
+            }
+
+            try {
+                cropper = new Cropper(img, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 0.9,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false
+                });
+            } catch (err) {
+                console.error("Error creating Cropper:", err);
+            }
+        };
+
+        img.onload = () => {
+            setTimeout(startCropper, 50);
+        };
+        img.src = src;
+        if (img.complete) {
+            setTimeout(startCropper, 50);
+        }
+    }
+
+    function closeCropperModal() {
+        const modal = document.getElementById('cropperModal');
+        if (modal) {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+        if (cropper) {
+            try { cropper.destroy(); } catch (e) {}
+            cropper = null;
+        }
+    }
+
+    function applyCrop() {
+        if (!cropper) return;
+        const canvas = cropper.getCroppedCanvas({ width: 1000, height: 1000, imageSmoothingQuality: 'high' });
+        const mime = activeCropMimeType || 'image/jpeg';
+        const base64 = canvas.toDataURL(mime, 0.92);
+
+        if (editingImageIndexForCrop >= 0) {
+            variants[activeVariantIndexForCrop].images[editingImageIndexForCrop] = base64;
+        } else {
+            variants[activeVariantIndexForCrop].images.push(base64);
+        }
+
+        closeCropperModal();
+        renderVariants();
+    }
+
+    function generateClientReferenceNumber() {
+        const brandSel = document.getElementById('brandInput');
+        let prefix = 'DLT';
+        const selectedText = brandSel ? (brandSel.options[brandSel.selectedIndex]?.text || '') : '';
+        if (selectedText.includes('Rolex')) prefix = 'RLX';
+        else if (selectedText.includes('Patek')) prefix = 'PP';
+        else if (selectedText.includes('Audemars')) prefix = 'AP';
+        else if (selectedText.includes('Vacheron')) prefix = 'VC';
+        else if (selectedText.includes('Omega')) prefix = 'OMG';
+        else if (selectedText.trim() && selectedText !== 'Select Manufacture Maison') {
+            prefix = selectedText.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase() || 'DLT';
+        }
+        const randomDigits = Math.floor(100000 + Math.random() * 900000);
+        const modelInput = document.getElementById('modelNumberInput');
+        if (modelInput) {
+            modelInput.value = 'REF-' + prefix + '-' + randomDigits;
+        }
+        validateModelNumber();
+    }
+
+    // Model identity validation
+    const nameInput = document.getElementById('nameInput');
+    const brandInput = document.getElementById('brandInput');
+    const modelNumberInput = document.getElementById('modelNumberInput');
+    const nameCharCount = document.getElementById('nameCharCount');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitBtnText = document.getElementById('submitBtnText');
+    const submitBtnSpinner = document.getElementById('submitBtnSpinner');
+
+    function updateNameCounter() {
+        if (!nameInput) return;
+        const len = nameInput.value.length;
+        if (nameCharCount) {
+            nameCharCount.textContent = len + '/120';
+            if (len >= 110) nameCharCount.className = 'text-[10px] font-mono text-amber-600 font-bold';
+            else nameCharCount.className = 'text-[10px] font-mono text-zinc-400';
+        }
+    }
+
+    function validateName() {
+        if (!nameInput) return true;
+        updateNameCounter();
+        const val = nameInput.value.trim();
+        const err = document.getElementById('nameError');
+        if (!val) {
+            if (err) { err.textContent = 'Timepiece model name is required.'; err.classList.remove('hidden'); }
+            nameInput.className = 'w-full px-4 py-3 bg-zinc-50 border border-rose-500 bg-rose-50/20 ring-1 ring-rose-500 rounded-xl text-xs text-zinc-900 focus:outline-none transition-colors';
+            return false;
+        }
+        if (val.length < 3 || val.length > 120) {
+            if (err) { err.textContent = 'Model name must be between 3 and 120 characters.'; err.classList.remove('hidden'); }
+            nameInput.className = 'w-full px-4 py-3 bg-zinc-50 border border-rose-500 bg-rose-50/20 ring-1 ring-rose-500 rounded-xl text-xs text-zinc-900 focus:outline-none transition-colors';
+            return false;
+        }
+        if (!productNameRegex.test(val)) {
+            if (err) { err.textContent = 'Model name contains invalid characters. Use letters, numbers, and standard punctuation.'; err.classList.remove('hidden'); }
+            nameInput.className = 'w-full px-4 py-3 bg-zinc-50 border border-rose-500 bg-rose-50/20 ring-1 ring-rose-500 rounded-xl text-xs text-zinc-900 focus:outline-none transition-colors';
+            return false;
+        }
+        if (err) err.classList.add('hidden');
+        nameInput.className = 'w-full px-4 py-3 bg-zinc-50 border border-emerald-500/80 focus:border-[#0A4D2E] focus:bg-white rounded-xl text-xs text-zinc-900 focus:outline-none transition-colors';
+        return true;
+    }
+
+    function validateBrand() {
+        if (!brandInput) return true;
+        const val = brandInput.value.trim();
+        const err = document.getElementById('brandError');
+        if (!val) {
+            if (err) { err.textContent = 'Please select a Manufacture Maison / Brand.'; err.classList.remove('hidden'); }
+            brandInput.className = 'w-full px-4 py-3 bg-zinc-50 border border-rose-500 bg-rose-50/20 ring-1 ring-rose-500 rounded-xl text-xs text-zinc-900 focus:outline-none transition-colors cursor-pointer';
+            return false;
+        }
+        if (err) err.classList.add('hidden');
+        brandInput.className = 'w-full px-4 py-3 bg-zinc-50 border border-emerald-500/80 focus:border-[#0A4D2E] focus:bg-white rounded-xl text-xs text-zinc-900 focus:outline-none transition-colors cursor-pointer';
+        return true;
+    }
+
+    function validateModelNumber() {
+        if (!modelNumberInput) return true;
+        const val = modelNumberInput.value.trim();
+        const err = document.getElementById('modelNumberError');
+        if (val && !modelNumberRegex.test(val)) {
+            if (err) { err.textContent = 'Reference number format is invalid. Use alphanumeric characters, hyphens or dots.'; err.classList.remove('hidden'); }
+            modelNumberInput.className = 'w-full px-4 py-3 bg-zinc-50 border border-rose-500 bg-rose-50/20 ring-1 ring-rose-500 rounded-xl text-xs font-mono text-zinc-900 focus:outline-none transition-colors';
+            return false;
+        }
+        if (err) err.classList.add('hidden');
+        modelNumberInput.className = 'w-full px-4 py-3 bg-zinc-50 border border-zinc-200 focus:border-[#0A4D2E] focus:bg-white rounded-xl text-xs font-mono text-zinc-900 focus:outline-none transition-colors';
+        return true;
+    }
+
+    // Attach listeners
+    if (nameInput) {
+        nameInput.addEventListener('input', validateName);
+        nameInput.addEventListener('blur', validateName);
+        updateNameCounter();
+    }
+    if (brandInput) brandInput.addEventListener('change', validateBrand);
+    if (modelNumberInput) {
+        modelNumberInput.addEventListener('input', validateModelNumber);
+        modelNumberInput.addEventListener('blur', validateModelNumber);
+    }
+
+    // Form submission
+    const form = document.getElementById('editProductForm');
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            const isNameValid = validateName();
+            const isBrandValid = validateBrand();
+            const isModelValid = validateModelNumber();
+            const areVariantsValid = validateAllVariants();
+
+            if (!isNameValid || !isBrandValid || !isModelValid || !areVariantsValid) {
+                e.preventDefault();
+                window.scrollTo({ top: form.offsetTop - 80, behavior: 'smooth' });
+                return false;
+            }
+
+            // Sync variants json
+            if (variantsJsonInput) {
+                variantsJsonInput.value = JSON.stringify(variants);
+            }
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-80', 'cursor-not-allowed');
+                if (submitBtnSpinner) submitBtnSpinner.classList.remove('hidden');
+                if (submitBtnText) submitBtnText.textContent = 'Saving Changes...';
+            }
+        });
+    }
+
+    // Explicit Window Scope Export for inline onclick handlers
+    window.addVariantRow = addVariantRow;
+    window.removeVariantRow = removeVariantRow;
+    window.triggerVariantUpload = triggerVariantUpload;
+    window.handleVariantFileInputChange = handleVariantFileInputChange;
+    window.reCropVariantImage = reCropVariantImage;
+    window.removeVariantImage = removeVariantImage;
+    window.openCropperWithImage = openCropperWithImage;
+    window.closeCropperModal = closeCropperModal;
+    window.applyCrop = applyCrop;
+    window.handlePriceChange = handlePriceChange;
+    window.updateVariant = updateVariant;
+    window.validateVariantField = validateVariantField;
+    window.validateAllVariants = validateAllVariants;
+    window.generateClientReferenceNumber = generateClientReferenceNumber;
+
+    // Initial render
+    renderVariants();
+</script>
+
+<%- include('../partials/footer') %>

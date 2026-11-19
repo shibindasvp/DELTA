@@ -1,0 +1,2929 @@
+<%- include('../partials/header', { title: 'Secure Checkout — DELTA' }) %>
+<%- include('../partials/navbar', { activeNav: 'cart' }) %>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<div class="bg-[#faf8f7] min-h-screen text-[#1b1c1c] py-12">
+    <div class="max-w-7xl mx-auto px-6 space-y-10">
+        
+        <!-- Breadcrumb / Order Step Indicator -->
+        <div class="flex items-center justify-between border-b border-zinc-200/80 pb-6">
+            <div>
+                <span class="text-[10px] uppercase font-mono tracking-[0.25em] text-[#c5a059] font-bold block mb-1">
+                    BESPOKE ORDER
+                </span>
+                <h1 class="text-3xl sm:text-4xl font-serif text-zinc-900 font-normal">
+                    Secure Vault Checkout
+                </h1>
+            </div>
+
+            <!-- Steps Flow -->
+            <div class="hidden sm:flex items-center gap-3 text-xs font-mono">
+                <a href="/cart" class="text-zinc-400 hover:text-black transition-colors">1. Shopping Bag</a>
+                <span class="text-zinc-300">/</span>
+                <span class="text-zinc-900 font-bold border-b border-black pb-0.5">2. Destination & Payment</span>
+                <span class="text-zinc-300">/</span>
+                <span class="text-zinc-400">3. Confirmation</span>
+            </div>
+        </div>
+
+        <!-- Flash Alert -->
+        <%- include('../partials/flash-message') %>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            
+            <!-- Left Column: Delivery Address & Payment Selection (7 Cols) -->
+            <div class="lg:col-span-7 space-y-10">
+                
+                <!-- 1. Destination Address Section -->
+                <section class="bg-white rounded-3xl border border-zinc-200/80 p-8 space-y-6 shadow-sm">
+                    <div class="flex items-center justify-between border-b border-zinc-100 pb-4">
+                        <div class="flex items-center gap-3">
+                            <span class="w-6 h-6 rounded-full bg-[#1c1c1c] text-white text-[11px] font-mono flex items-center justify-center font-bold">1</span>
+                            <h2 class="text-xl font-serif text-zinc-900 font-normal">
+                                Delivery Destination
+                            </h2>
+                        </div>
+
+                        <button 
+                            type="button" 
+                            onclick="openAddAddressModal()"
+                            class="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.15em] text-[#0A4D2E] hover:text-[#06331e] transition-colors cursor-pointer"
+                        >
+                            <span>+ Add New Address</span>
+                        </button>
+                    </div>
+
+                    <!-- Addresses List Grid -->
+                    <div id="checkoutAddressesList" class="space-y-4">
+                        <% if (addresses && addresses.length > 0) { %>
+                            <% addresses.forEach((addr, idx) => { %>
+                                <% 
+                                    const isChecked = (defaultAddress && defaultAddress._id.toString() === addr._id.toString()) || (idx === 0 && !defaultAddress);
+                                %>
+                                <label 
+                                    id="address-card-<%= addr._id %>"
+                                    class="address-option-card relative block p-5 rounded-2xl border-2 transition-all cursor-pointer <%= isChecked ? 'border-[#0A4D2E] bg-emerald-50/20 ring-1 ring-[#0A4D2E]/20 shadow-xs' : 'border-zinc-200 hover:border-zinc-300 bg-white' %>"
+                                >
+                                    <div class="flex items-start gap-4">
+                                        <!-- Radio -->
+                                        <div class="pt-0.5">
+                                            <input 
+                                                type="radio" 
+                                                name="selectedAddressId" 
+                                                value="<%= addr._id %>" 
+                                                <%= isChecked ? 'checked' : '' %>
+                                                onchange="selectAddressCard('<%= addr._id %>')"
+                                                class="w-4 h-4 text-[#0A4D2E] focus:ring-[#0A4D2E] accent-[#0A4D2E] cursor-pointer"
+                                            >
+                                        </div>
+
+                                        <!-- Address Info -->
+                                        <div class="flex-1 space-y-1">
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <h3 class="font-serif text-base font-semibold text-zinc-900">
+                                                    <%= addr.fullName %>
+                                                </h3>
+                                                <span class="text-[9px] uppercase font-mono px-2 py-0.5 rounded bg-zinc-100 text-zinc-600 font-semibold">
+                                                    <%= addr.addressType || 'Home' %>
+                                                </span>
+                                                <% if (addr.isDefault) { %>
+                                                    <span class="text-[9px] uppercase font-mono px-2 py-0.5 rounded bg-[#0A4D2E] text-white font-bold">
+                                                        Primary
+                                                    </span>
+                                                <% } %>
+                                            </div>
+
+                                            <p class="text-xs text-zinc-600 leading-relaxed font-light">
+                                                <%= addr.addressLine %>, <%= addr.city %>, <%= addr.state %> — <span class="font-mono font-medium text-zinc-800"><%= addr.pincode %></span>
+                                            </p>
+                                            
+                                            <p class="text-xs text-zinc-500 font-mono pt-1">
+                                                Phone: <%= addr.phone %>
+                                            </p>
+                                        </div>
+
+                                        <!-- Edit & Default Actions -->
+                                        <div class="flex items-center gap-3 pt-0.5 text-[11px] font-semibold">
+                                            <button 
+                                                type="button" 
+                                                onclick="openEditAddressModal('<%= addr._id %>')"
+                                                class="text-zinc-600 hover:text-black uppercase tracking-wider transition-colors cursor-pointer"
+                                            >
+                                                Edit
+                                            </button>
+                                        </div>
+                                    </div>
+                                </label>
+                            <% }) %>
+                        <% } else { %>
+                            <!-- Empty Addresses State -->
+                            <div id="noAddressesNotice" class="p-8 border border-dashed border-zinc-300 rounded-2xl text-center space-y-4 bg-zinc-50/50">
+                                <p class="text-xs text-zinc-600 font-light">
+                                    No delivery destination is currently saved in your address book.
+                                </p>
+                                <button 
+                                    type="button" 
+                                    onclick="openAddAddressModal()"
+                                    class="inline-block px-6 py-3 bg-[#1c1c1c] text-white rounded-xl text-xs uppercase font-semibold tracking-[0.15em] hover:bg-black transition-colors cursor-pointer"
+                                >
+                                    + Add Delivery Address
+                                </button>
+                            </div>
+                        <% } %>
+                    </div>
+                </section>
+
+                <!-- 2. Payment Method Selection (Razorpay Secure Gateway, Vault Wallet, Cash on Delivery) -->
+                <section class="bg-white rounded-3xl border border-zinc-200/80 p-8 space-y-6 shadow-sm">
+                    <div class="flex items-center gap-3 border-b border-zinc-100 pb-4">
+                        <span class="w-6 h-6 rounded-full bg-[#1c1c1c] text-white text-[11px] font-mono flex items-center justify-center font-bold">2</span>
+                        <h2 class="text-xl font-serif text-zinc-900 font-normal">
+                            Order Payment Method
+                        </h2>
+                    </div>
+
+                    <div class="space-y-4">
+                        
+                        <!-- Option 1: Razorpay Online Gateway (Primary Gateway) -->
+                        <label 
+                            id="payment-option-razorpay"
+                            class="payment-option-card relative block p-5 rounded-2xl border-2 border-[#0A4D2E] bg-emerald-50/20 ring-1 ring-[#0A4D2E]/20 transition-all cursor-pointer shadow-xs"
+                        >
+                            <div class="flex items-start gap-4">
+                                <div class="pt-0.5">
+                                    <input 
+                                        type="radio" 
+                                        name="paymentMethod" 
+                                        value="Razorpay" 
+                                        checked 
+                                        onchange="selectPaymentOption('Razorpay')"
+                                        class="w-4 h-4 text-[#0A4D2E] focus:ring-[#0A4D2E] accent-[#0A4D2E] cursor-pointer"
+                                    >
+                                </div>
+                                <div class="space-y-1.5 flex-1">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <h3 class="font-serif text-base font-semibold text-zinc-900">
+                                                Razorpay Secure Gateway
+                                            </h3>
+                                            <span class="text-[9px] uppercase font-mono px-2.5 py-0.5 rounded-full bg-[#0A4D2E] text-white font-bold">
+                                                Recommended
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 text-[10px] font-mono text-zinc-500">
+                                            <span class="px-2 py-0.5 rounded bg-zinc-100 border border-zinc-200 font-semibold text-zinc-700">UPI</span>
+                                            <span class="px-2 py-0.5 rounded bg-zinc-100 border border-zinc-200 font-semibold text-zinc-700">Cards</span>
+                                            <span class="px-2 py-0.5 rounded bg-zinc-100 border border-zinc-200 font-semibold text-zinc-700">NetBanking</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-zinc-600 font-light leading-relaxed">
+                                        Instant 256-bit encrypted settlement via Visa, MasterCard, RuPay, UPI (GPay, PhonePe, Paytm), or NetBanking.
+                                    </p>
+                                </div>
+                            </div>
+                        </label>
+
+                        <!-- Option: DELTA Vault Wallet -->
+                        <% 
+                            const vaultBalance = Number(typeof walletBalance !== 'undefined' ? walletBalance : (typeof wallet !== 'undefined' && wallet ? wallet.balance : 0));
+                            const canPayWithWallet = vaultBalance >= Number(summary.grandTotal || 0) && Number(summary.grandTotal || 0) > 0;
+                        %>
+                        <label 
+                            id="payment-option-wallet"
+                            class="payment-option-card relative block p-5 rounded-2xl border-2 <%= canPayWithWallet ? 'border-zinc-200 hover:border-zinc-300 bg-white cursor-pointer' : 'border-zinc-200/60 bg-zinc-50/70 opacity-80 cursor-not-allowed' %> transition-all"
+                        >
+                            <div class="flex items-start gap-4">
+                                <div class="pt-0.5">
+                                    <input 
+                                        type="radio" 
+                                        name="paymentMethod" 
+                                        id="payment-radio-wallet"
+                                        value="Wallet" 
+                                        <%= canPayWithWallet ? '' : 'disabled' %>
+                                        onchange="selectPaymentOption('Wallet')"
+                                        class="w-4 h-4 text-[#0A4D2E] focus:ring-[#0A4D2E] accent-[#0A4D2E] <%= canPayWithWallet ? 'cursor-pointer' : 'cursor-not-allowed' %>"
+                                    >
+                                </div>
+                                <div class="space-y-1.5 flex-1">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <h3 class="font-serif text-base font-semibold text-zinc-900 flex items-center gap-2">
+                                                <span>DELTA Vault Wallet</span>
+                                                <span class="text-[9px] uppercase font-mono px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-bold">
+                                                    Reserve Balance
+                                                </span>
+                                            </h3>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 text-xs font-mono">
+                                            <span class="text-zinc-500">Available:</span>
+                                            <span class="font-bold <%= vaultBalance > 0 ? 'text-[#0A4D2E]' : 'text-zinc-700' %>">
+                                                ₹<%= vaultBalance.toLocaleString('en-IN') %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <p id="payment-wallet-desc" class="text-xs text-zinc-600 font-light leading-relaxed">
+                                        <% if (canPayWithWallet) { %>
+                                            Instant one-click timepiece allocation deducted directly from your verified Vault liquidity reserve.
+                                        <% } else { %>
+                                            <span class="text-amber-800 font-medium">
+                                                Insufficient reserve balance for full settlement (Available: ₹<%= vaultBalance.toLocaleString('en-IN') %> • Shortfall: ₹<%= (Math.max(0, Number(summary.grandTotal || 0) - vaultBalance)).toLocaleString('en-IN') %>).
+                                            </span>
+                                            Please choose Razorpay, Vault Wallet, or Cash on Delivery.
+                                        <% } %>
+                                    </p>
+                                </div>
+                            </div>
+                        </label>
+
+                        <!-- Option 3: Cash on Delivery (COD) -->
+                        <label 
+                            id="payment-option-cod"
+                            class="payment-option-card relative block p-5 rounded-2xl border-2 border-zinc-200 hover:border-zinc-300 bg-white transition-all cursor-pointer"
+                        >
+                            <div class="flex items-start gap-4">
+                                <div class="pt-0.5">
+                                    <input 
+                                        type="radio" 
+                                        name="paymentMethod" 
+                                        value="Cash on Delivery" 
+                                        onchange="selectPaymentOption('Cash on Delivery')"
+                                        class="w-4 h-4 text-[#0A4D2E] focus:ring-[#0A4D2E] accent-[#0A4D2E] cursor-pointer"
+                                    >
+                                </div>
+                                <div class="space-y-1.5 flex-1">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <h3 class="font-serif text-base font-semibold text-zinc-900">
+                                                Cash on Delivery (White-Glove)
+                                            </h3>
+                                            <span class="text-[9px] uppercase font-mono px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 font-medium">
+                                                Courier Escort
+                                            </span>
+                                        </div>
+                                        <span class="text-[10px] font-mono text-zinc-500">Pay Upon Delivery</span>
+                                    </div>
+                                    <p class="text-xs text-zinc-600 font-light leading-relaxed">
+                                        Pay via cash, certified bank cheque, or UPI upon white-glove personal delivery and physical timepiece inspection.
+                                    </p>
+                                </div>
+                            </div>
+                        </label>
+
+                    </div>
+
+                    <!-- Delivery Instructions / Notes -->
+                    <div class="pt-2 space-y-2">
+                        <label for="orderNotes" class="block text-[10px] uppercase font-mono tracking-wider font-semibold text-zinc-500">
+                            White-Glove Delivery Instructions (Optional)
+                        </label>
+                        <textarea 
+                            id="orderNotes" 
+                            name="orderNotes" 
+                            rows="2" 
+                            placeholder="e.g., Deliver to private reception / Call upon arrival at residence..."
+                            class="w-full text-xs p-3.5 rounded-xl border border-zinc-200 focus:border-[#0A4D2E] focus:ring-1 focus:ring-[#0A4D2E] outline-none transition-colors font-light bg-zinc-50/50"
+                        ></textarea>
+                    </div>
+
+                </section>
+
+            </div>
+
+            <!-- Right Column: Order Summary & Review (5 Cols) -->
+            <div class="lg:col-span-5 space-y-6 sticky top-28">
+                
+                <div class="bg-white rounded-3xl border border-zinc-200/80 p-8 space-y-6 shadow-sm">
+                    
+                    <div class="border-b border-zinc-100 pb-4 flex items-center justify-between">
+                        <h2 class="text-xl font-serif text-zinc-900 font-normal">
+                            Order Summary
+                        </h2>
+                        <span class="text-xs font-mono text-zinc-500 font-semibold">
+                            <%= cart.activeItemCount %> <%= cart.activeItemCount === 1 ? 'Timepiece' : 'Timepieces' %>
+                        </span>
+                    </div>
+
+                    <!-- Products List -->
+                    <div class="space-y-4 max-h-[380px] overflow-y-auto pr-1 scrollbar-thin">
+                        <% cart.items.forEach(item => { %>
+                            <% 
+                                const p = item.product;
+                                const v = item.variant || {};
+                                const imgSrc = (v.images && v.images.length > 0) ? v.images[0] : ((p.images && p.images.length > 0) ? p.images[0] : '');
+                            %>
+                            <div class="flex items-center gap-4 py-2 border-b border-zinc-100 last:border-0">
+                                <!-- Thumbnail -->
+                                <div class="w-16 h-16 rounded-xl bg-[#f2eeeb] overflow-hidden p-2 flex items-center justify-center flex-shrink-0 border border-zinc-200/60">
+                                    <% if (imgSrc) { %>
+                                        <img src="<%= imgSrc %>" alt="<%= p.name %>" class="w-full h-full object-cover">
+                                    <% } else { %>
+                                        <span class="text-zinc-300 text-lg">⏱</span>
+                                    <% } %>
+                                </div>
+
+                                <!-- Info -->
+                                <div class="flex-1 min-w-0 space-y-0.5">
+                                    <p class="text-[9px] uppercase font-mono tracking-wider text-zinc-400 font-semibold truncate">
+                                        <%= p.brand ? p.brand.name : 'Manufacture' %>
+                                    </p>
+                                    <h4 class="font-serif text-sm font-semibold text-zinc-900 truncate">
+                                        <%= p.name %>
+                                    </h4>
+                                    
+                                    <!-- Variant Pill -->
+                                    <div class="flex items-center gap-1.5 text-[10px] text-zinc-500">
+                                        <span class="w-2 h-2 rounded-full border border-black/20 inline-block" style="background-color: <%= v.colorCode || '#1b1c1c' %>;"></span>
+                                        <span class="font-medium text-zinc-700 truncate"><%= v.color || 'Standard Edition' %></span>
+                                        <span class="font-mono text-zinc-400">× <%= item.quantity %></span>
+                                    </div>
+                                </div>
+
+                                <!-- Price -->
+                                <div class="text-right flex-shrink-0 space-y-0.5">
+                                    <p class="font-mono text-xs font-semibold text-zinc-900">
+                                        ₹<%= Number(item.itemTotal || (item.price * item.quantity)).toLocaleString('en-IN') %>
+                                    </p>
+                                    <% if (item.originalPrice && item.originalPrice > item.price) { %>
+                                        <p class="font-mono text-[10px] text-zinc-400 line-through">
+                                            ₹<%= Number(item.originalPrice * item.quantity).toLocaleString('en-IN') %>
+                                        </p>
+                                        <span class="inline-block text-[8px] font-mono uppercase bg-emerald-50 text-emerald-800 border border-emerald-200 px-1 py-0.2 rounded font-semibold">
+                                            Save ₹<%= Number((item.originalPrice - item.price) * item.quantity).toLocaleString('en-IN') %>
+                                        </span>
+                                    <% } else if (item.quantity > 1) { %>
+                                        <p class="font-mono text-[9px] text-zinc-400">
+                                            ₹<%= Number(item.price).toLocaleString('en-IN') %>/ea
+                                        </p>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+
+                    <!-- Coupon Redemption Section -->
+                    <div class="pt-4 border-t border-zinc-100 space-y-3" id="checkoutCouponSection">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-[10px] uppercase font-mono tracking-[0.2em] font-semibold text-zinc-700">
+                                Coupon / Promo Code
+                            </label>
+                            <button 
+                                type="button" 
+                                onclick="openAvailableCouponsModal()"
+                                class="text-[10px] uppercase font-mono tracking-wider text-[#c5a059] hover:text-[#9e7a32] font-bold inline-flex items-center gap-1 cursor-pointer transition-colors"
+                            >
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                                <span>Available Coupons</span>
+                            </button>
+                        </div>
+
+                        <% const hasActiveCoupon = Boolean(appliedCoupon && appliedCoupon.code); %>
+
+                        <!-- Input Form (Always available to add multiple coupons) -->
+                        <div id="couponInputContainer" class="flex gap-2 items-center">
+                            <div class="relative flex-1">
+                                <input 
+                                    type="text" 
+                                    id="checkoutCouponCode" 
+                                    placeholder="e.g. DELTA10, ROYAL5" 
+                                    class="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-300 rounded-xl text-xs font-mono uppercase text-zinc-900 placeholder:normal-case placeholder:font-sans placeholder:text-zinc-400 focus:outline-none focus:border-[#0A4D2E] focus:bg-white transition-all"
+                                    onkeydown="if(event.key === 'Enter'){ event.preventDefault(); applyCouponFromCheckout(); }"
+                                >
+                            </div>
+                            <button 
+                                type="button" 
+                                id="applyCouponBtn"
+                                onclick="applyCouponFromCheckout()" 
+                                class="px-4 py-2.5 bg-[#0A4D2E] hover:bg-[#073822] text-white rounded-xl text-[10px] uppercase font-mono font-bold tracking-wider transition-colors cursor-pointer flex-shrink-0 flex items-center justify-center min-w-[72px]"
+                            >
+                                <span id="applyCouponBtnText">Apply</span>
+                                <span id="applyCouponSpinner" class="hidden animate-spin h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full"></span>
+                            </button>
+                        </div>
+
+                        <!-- Applied Coupons List (Multiple coupons supported) -->
+                        <% const initialCheckoutCoupons = (typeof appliedCoupons !== 'undefined' && Array.isArray(appliedCoupons) && appliedCoupons.length > 0) ? appliedCoupons : ((typeof appliedCoupon !== 'undefined' && appliedCoupon && appliedCoupon.code) ? [appliedCoupon] : []); %>
+                        <div id="appliedCouponsList" class="space-y-2 <%= initialCheckoutCoupons.length > 0 ? '' : 'hidden' %>">
+                            <% initialCheckoutCoupons.forEach(function(c) { %>
+                                <div class="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200/90 text-emerald-900 transition-all">
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <span class="font-mono font-bold text-xs uppercase tracking-wider text-[#0A4D2E]"><%= c.code %></span>
+                                        <span class="text-[10px] font-mono text-emerald-800">(-₹<%= Number(c.discountAmount || 0).toLocaleString('en-IN') %>)</span>
+                                    </div>
+                                    <button 
+                                        type="button" 
+                                        onclick="removeCouponFromCheckout('<%= c.code %>')"
+                                        class="text-[10px] uppercase font-mono tracking-wider font-bold text-rose-700 hover:text-rose-900 bg-white hover:bg-rose-50 px-2 py-1 rounded-lg border border-rose-200 transition-colors cursor-pointer flex-shrink-0"
+                                        title="Remove Coupon Code"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            <% }); %>
+                        </div>
+
+                        <!-- Fallback container for legacy script references -->
+                        <div id="appliedCouponContainer" class="hidden"></div>
+
+                        <!-- Initial SSR Inactivated/Invalidated Coupon Warning Banner -->
+                        <% if (typeof couponWarnings !== 'undefined' && Array.isArray(couponWarnings) && couponWarnings.length > 0) { %>
+                            <div id="initialCouponWarningsBanner" class="p-3 mb-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2">
+                                <svg class="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                                <div class="space-y-1">
+                                    <% couponWarnings.forEach(function(w) { %>
+                                        <p class="font-medium"><%= w.message %></p>
+                                    <% }); %>
+                                </div>
+                            </div>
+                        <% } %>
+
+                        <!-- Inline Notification Feedback Box -->
+                        <div id="couponFeedback" class="hidden text-xs rounded-xl p-2.5"></div>
+                    </div>
+
+                    <!-- Financial Breakdown -->
+                    <div class="space-y-3.5 pt-5 border-t border-zinc-100 text-xs">
+                        
+                        <!-- Header / Section Title -->
+                        <div class="flex items-center justify-between pb-1 border-b border-zinc-100/80">
+                            <span class="text-[10px] uppercase font-mono tracking-[0.2em] font-bold text-zinc-400">
+                                Valuation Breakdown
+                            </span>
+                            <span class="text-[10px] font-mono text-zinc-400">
+                                Currency: INR (₹)
+                            </span>
+                        </div>
+
+                        <!-- 1. Catalog / Retail Value (If product discount exists) -->
+                        <% 
+                            const origSubtotal = summary.originalSubtotal || summary.subtotal; 
+                            const prodDiscount = (summary.productDiscount !== undefined) ? summary.productDiscount : Math.max(0, origSubtotal - summary.subtotal);
+                        %>
+                        <div id="summaryOriginalRow" class="flex justify-between text-zinc-500 <%= prodDiscount > 0 ? '' : 'hidden' %>">
+                            <span>Catalog Value (MSRP)</span>
+                            <span id="summaryOriginalVal" class="font-mono line-through text-zinc-400">
+                                ₹<%= Number(origSubtotal).toLocaleString('en-IN') %>
+                            </span>
+                        </div>
+
+                        <!-- 2. Catalog / Timepiece Discount -->
+                        <div id="summaryProductDiscountRow" class="flex justify-between text-emerald-800 font-medium <%= prodDiscount > 0 ? '' : 'hidden' %>">
+                            <span class="flex items-center gap-1.5">
+                                <span>Vault Catalog Offer</span>
+                                <span class="text-[9px] uppercase font-mono px-1.5 py-0.2 bg-emerald-100/70 text-emerald-800 rounded font-semibold">Special Edition</span>
+                            </span>
+                            <span id="summaryProductDiscountVal" class="font-mono text-emerald-700">
+                                -₹<%= Number(prodDiscount).toLocaleString('en-IN') %>
+                            </span>
+                        </div>
+
+                        <!-- 3. Bag / Timepiece Subtotal -->
+                        <div class="flex justify-between text-zinc-700">
+                            <span>Timepiece Subtotal</span>
+                            <span id="summarySubtotalVal" class="font-mono font-semibold text-zinc-900">
+                                ₹<%= Number(summary.subtotal).toLocaleString('en-IN') %>
+                            </span>
+                        </div>
+
+                        <!-- 4. Coupon Discount Row -->
+                        <div id="summaryDiscountRow" class="flex justify-between items-center text-emerald-800 bg-emerald-50/70 border border-emerald-200/60 p-2.5 rounded-xl transition-all <%= (summary.discount && summary.discount > 0) ? '' : 'hidden' %>">
+                            <div class="space-y-0.5">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-semibold text-emerald-900">Coupon Discount</span>
+                                    <span id="summaryDiscountCodeBadge" class="text-[10px] font-mono font-bold uppercase tracking-wider bg-zinc-900 text-[#c5a059] px-1.5 py-0.5 rounded">
+                                        <%= hasActiveCoupon ? appliedCoupon.code : '' %>
+                                    </span>
+                                </div>
+                                <span id="summaryDiscountRateLabel" class="text-[10px] font-mono text-emerald-700 block">
+                                    <%= (hasActiveCoupon && appliedCoupon.discountType === 'percentage') 
+                                        ? `${appliedCoupon.discountValue}% applied to allocation` 
+                                        : 'Direct credit applied' %>
+                                </span>
+                            </div>
+                            <span id="summaryDiscountVal" class="font-mono text-sm font-bold text-[#0A4D2E]">
+                                -₹<%= Number(summary.discount || 0).toLocaleString('en-IN') %>
+                            </span>
+                        </div>
+
+                        <!-- 5. Shipping / Delivery -->
+                        <div class="flex justify-between text-zinc-600">
+                            <span class="flex items-center gap-1.5">
+                                <span>White-Glove Insured Courier</span>
+                                <span class="text-[9px] uppercase font-mono text-zinc-400">Armoured Transit</span>
+                            </span>
+                            <div class="text-right">
+                                <span class="text-[#0A4D2E] font-semibold uppercase text-[10px] font-mono block">Complimentary</span>
+                                <span class="text-[9px] font-mono text-zinc-400 line-through">₹5,000</span>
+                            </div>
+                        </div>
+
+                        <!-- 6. Taxes & Duties Breakdown -->
+                        <% const estimatedTaxVal = summary.tax || Math.round(summary.subtotal * 0.18); %>
+                        <div class="flex justify-between text-zinc-500 text-[11px] pt-1 border-t border-zinc-100">
+                            <span class="flex items-center gap-1">
+                                <span>GST (18% Statutory Levies)</span>
+                            </span>
+                            <span class="font-mono text-zinc-600">
+                                ₹<span id="summaryTaxVal"><%= Number(estimatedTaxVal).toLocaleString('en-IN') %></span>
+                                <span class="italic text-[10px] text-zinc-400 ml-1">(Included)</span>
+                            </span>
+                        </div>
+
+                        <!-- 7. Total Savings Callout Banner -->
+                        <% 
+                            const totalSavingsVal = prodDiscount + (summary.discount || 0); 
+                        %>
+                        <div id="summaryTotalSavingsBanner" class="p-3 bg-gradient-to-r from-emerald-50 via-emerald-50/50 to-amber-50/40 border border-emerald-200/80 rounded-2xl flex items-center justify-between text-xs transition-all <%= totalSavingsVal > 0 ? '' : 'hidden' %>">
+                            <div class="flex items-center gap-2">
+                                <span class="text-base">✨</span>
+                                <div>
+                                    <span class="font-semibold text-emerald-900 block text-[11px]">Total Coupon Savings</span>
+                                    <span class="text-[9px] text-emerald-700 font-mono">Catalog + Coupon Code</span>
+                                </div>
+                            </div>
+                            <span id="summaryTotalSavingsVal" class="font-mono font-bold text-sm text-[#0A4D2E]">
+                                ₹<%= Number(totalSavingsVal).toLocaleString('en-IN') %>
+                            </span>
+                        </div>
+
+                        <!-- 8. Final Valuation Total -->
+                        <div class="pt-4 border-t-2 border-zinc-900 flex items-baseline justify-between">
+                            <div>
+                                <span class="text-xs uppercase tracking-[0.15em] font-mono font-bold text-zinc-900 block">TOTAL VALUATION</span>
+                                <span id="paymentStatusSubtext" class="text-[10px] text-zinc-400 font-mono">White-Glove Insured Settlement</span>
+                            </div>
+                            <div class="text-right">
+                                <span id="summaryGrandTotalVal" class="text-2xl sm:text-3xl font-bold font-mono text-[#0A4D2E] block">
+                                    ₹<%= Number(summary.grandTotal).toLocaleString('en-IN') %>
+                                </span>
+                                <span class="text-[9px] font-mono text-zinc-400 uppercase tracking-wider block">Net All-Inclusive</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- CTA Button -->
+                    <div class="pt-2">
+                        <button 
+                            type="button" 
+                            id="placeOrderBtn"
+                            onclick="submitOrder()"
+                            class="w-full py-4 px-6 bg-[#0A4D2E] hover:bg-[#083e25] text-white rounded-xl text-xs uppercase font-semibold tracking-[0.2em] transition-all shadow-lg shadow-[#0A4D2E]/20 active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                            <span id="placeOrderBtnText">Pay via Razorpay • ₹<%= Number(summary.grandTotal).toLocaleString('en-IN') %></span>
+                        </button>
+                    </div>
+
+                    <!-- Security Badge -->
+                    <div class="space-y-1 text-center text-[10px] text-zinc-400 font-mono pt-2">
+                        <p class="flex items-center justify-center gap-1.5 text-zinc-600 font-semibold">
+                            <span>🛡 SECURE 256-BIT ENCRYPTED SETTLEMENT</span>
+                        </p>
+                        <p class="font-sans text-zinc-400">Delta Concierge is available for personal assistance at 1-800-DELTA-H</p>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- ========================================================= -->
+<!-- ADD ADDRESS MODAL -->
+<!-- ========================================================= -->
+<div id="addAddressModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-8 space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-zinc-100 pb-4">
+            <div>
+                <h3 class="text-xl font-serif text-zinc-900">Add Delivery Address</h3>
+                <p class="text-xs text-zinc-400 font-light mt-0.5">Please provide accurate residential or office destination details.</p>
+            </div>
+            <button type="button" onclick="closeAddAddressModal()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-500 flex items-center justify-center transition-colors cursor-pointer">✕</button>
+        </div>
+
+        <form id="addAddressForm" onsubmit="submitNewAddress(event)" novalidate class="space-y-4 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-600">Full Name *</label>
+                    <input 
+                        type="text" 
+                        name="fullName" 
+                        id="newAddrFullName" 
+                        placeholder="Collector Full Name" 
+                        class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none transition-colors"
+                    >
+                    <span id="newAddrFullNameErr" class="text-rose-600 text-[10px] font-medium hidden"></span>
+                </div>
+                <div class="space-y-1">
+                    <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-600">Mobile Phone *</label>
+                    <input 
+                        type="tel" 
+                        name="phone" 
+                        id="newAddrPhone" 
+                        maxlength="10" 
+                        placeholder="10-digit number (e.g. 9876543210)" 
+                        oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                        class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none transition-colors"
+                    >
+                    <span id="newAddrPhoneErr" class="text-rose-600 text-[10px] font-medium hidden"></span>
+                </div>
+            </div>
+
+            <div class="space-y-1">
+                <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-600">Street Address / Residence *</label>
+                <input 
+                    type="text" 
+                    name="addressLine" 
+                    id="newAddrAddressLine" 
+                    placeholder="Penthouse, Villa, Street, Landmark" 
+                    class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none transition-colors"
+                >
+                <span id="newAddrAddressLineErr" class="text-rose-600 text-[10px] font-medium hidden"></span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="space-y-1">
+                    <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-600">Pincode *</label>
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            name="pincode" 
+                            id="newAddrPincode" 
+                            maxlength="6" 
+                            placeholder="6 digits (e.g. 400001)" 
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                            class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none transition-colors font-mono"
+                        >
+                        <div id="newAddrPincodeSpinner" class="absolute right-3 top-1/2 -translate-y-1/2 hidden">
+                            <svg class="animate-spin h-3.5 w-3.5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <span id="newAddrPincodeErr" class="text-rose-600 text-[10px] font-medium hidden"></span>
+                </div>
+                <div class="space-y-1">
+                    <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-600">City *</label>
+                    <input 
+                        type="text" 
+                        name="city" 
+                        id="newAddrCity" 
+                        placeholder="City" 
+                        class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none transition-colors"
+                    >
+                    <span id="newAddrCityErr" class="text-rose-600 text-[10px] font-medium hidden"></span>
+                </div>
+                <div class="space-y-1">
+                    <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-600">State *</label>
+                    <input 
+                        type="text" 
+                        name="state" 
+                        id="newAddrState" 
+                        placeholder="State" 
+                        class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none transition-colors"
+                    >
+                    <span id="newAddrStateErr" class="text-rose-600 text-[10px] font-medium hidden"></span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <div class="space-y-1">
+                    <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-600">Address Type</label>
+                    <select name="addressType" id="newAddrType" class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none bg-white">
+                        <option value="home">Home (Master Residence)</option>
+                        <option value="work">Office / Corporate</option>
+                        <option value="other">Private Vault / Other</option>
+                    </select>
+                </div>
+                <div class="flex items-center pt-6 gap-2">
+                    <input type="checkbox" name="isDefault" id="newAddrDefault" class="w-4 h-4 text-[#0A4D2E] accent-[#0A4D2E] rounded cursor-pointer">
+                    <label for="newAddrDefault" class="text-zinc-700 cursor-pointer select-none">Set as Primary Destination</label>
+                </div>
+            </div>
+
+            <div id="addAddressError" class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs hidden"></div>
+
+            <div class="pt-4 flex items-center justify-end gap-3 border-t border-zinc-100">
+                <button type="button" onclick="closeAddAddressModal()" class="px-5 py-3 border border-zinc-200 rounded-xl text-zinc-700 hover:bg-zinc-50 uppercase tracking-wider font-semibold cursor-pointer">Cancel</button>
+                <button type="submit" id="saveAddressBtn" class="px-6 py-3 bg-[#0A4D2E] hover:bg-[#083e25] text-white rounded-xl uppercase tracking-wider font-semibold shadow-sm cursor-pointer">Save Address</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- EDIT ADDRESS MODAL -->
+<!-- ========================================================= -->
+<div id="editAddressModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-8 space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-zinc-100 pb-4">
+            <div>
+                <h3 class="text-xl font-serif text-zinc-900">Edit Delivery Address</h3>
+                <p class="text-xs text-zinc-400 font-light mt-0.5">Modify residential or delivery destination coordinates.</p>
+            </div>
+            <button type="button" onclick="closeEditAddressModal()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-500 flex items-center justify-center transition-colors cursor-pointer">✕</button>
+        </div>
+
+        <form id="editAddressForm" onsubmit="submitEditAddress(event)" novalidate class="space-y-4 text-xs">
+            <input type="hidden" name="editAddressId" id="editAddressId">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-600">Full Name *</label>
+                    <input 
+                        type="text" 
+                        name="fullName" 
+                        id="editFullName" 
+                        placeholder="Collector Full Name" 
+                        class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none transition-colors"
+                    >
+                    <span id="editFullNameErr" class="text-rose-600 text-[10px] font-medium hidden"></span>
+                </div>
+                <div class="space-y-1">
+                    <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-600">Mobile Phone *</label>
+                    <input 
+                        type="tel" 
+                        name="phone" 
+                        id="editPhone" 
+                        maxlength="10" 
+                        placeholder="10-digit number" 
+                        oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                        class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none transition-colors"
+                    >
+                    <span id="editPhoneErr" class="text-rose-600 text-[10px] font-medium hidden"></span>
+                </div>
+            </div>
+
+            <div class="space-y-1">
+                <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-600">Street Address / Residence *</label>
+                <input 
+                    type="text" 
+                    name="addressLine" 
+                    id="editAddressLine" 
+                    placeholder="Penthouse, Villa, Street" 
+                    class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none transition-colors"
+                >
+                <span id="editAddressLineErr" class="text-rose-600 text-[10px] font-medium hidden"></span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="space-y-1">
+                    <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-600">Pincode *</label>
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            name="pincode" 
+                            id="editPincode" 
+                            maxlength="6" 
+                            placeholder="6 digits" 
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                            class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none transition-colors font-mono"
+                        >
+                        <div id="editPincodeSpinner" class="absolute right-3 top-1/2 -translate-y-1/2 hidden">
+                            <svg class="animate-spin h-3.5 w-3.5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <span id="editPincodeErr" class="text-rose-600 text-[10px] font-medium hidden"></span>
+                </div>
+                <div class="space-y-1">
+                    <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-600">City *</label>
+                    <input 
+                        type="text" 
+                        name="city" 
+                        id="editCity" 
+                        placeholder="City" 
+                        class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none transition-colors"
+                    >
+                    <span id="editCityErr" class="text-rose-600 text-[10px] font-medium hidden"></span>
+                </div>
+                <div class="space-y-1">
+                    <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-600">State *</label>
+                    <input 
+                        type="text" 
+                        name="state" 
+                        id="editState" 
+                        placeholder="State" 
+                        class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none transition-colors"
+                    >
+                    <span id="editStateErr" class="text-rose-600 text-[10px] font-medium hidden"></span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <div class="space-y-1">
+                    <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-600">Address Type</label>
+                    <select name="addressType" id="editAddressType" class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none bg-white">
+                        <option value="home">Home (Master Residence)</option>
+                        <option value="work">Office / Corporate</option>
+                        <option value="other">Private Vault / Other</option>
+                    </select>
+                </div>
+                <div class="flex items-center pt-6 gap-2">
+                    <input type="checkbox" name="isDefault" id="editIsDefault" class="w-4 h-4 text-[#0A4D2E] accent-[#0A4D2E] rounded cursor-pointer">
+                    <label for="editIsDefault" class="text-zinc-700 cursor-pointer select-none">Set as Primary Destination</label>
+                </div>
+            </div>
+
+            <div id="editAddressError" class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs hidden"></div>
+
+            <div class="pt-4 flex items-center justify-end gap-3 border-t border-zinc-100">
+                <button type="button" onclick="closeEditAddressModal()" class="px-5 py-3 border border-zinc-200 rounded-xl text-zinc-700 hover:bg-zinc-50 uppercase tracking-wider font-semibold cursor-pointer">Cancel</button>
+                <button type="submit" id="updateAddressBtn" class="px-6 py-3 bg-[#0A4D2E] hover:bg-[#083e25] text-white rounded-xl uppercase tracking-wider font-semibold shadow-sm cursor-pointer">Update Address</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- RAZORPAY SECURE GATEWAY CHECKOUT MODAL -->
+<!-- ========================================================= -->
+<div id="razorpaySimulationModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl relative border border-zinc-200 overflow-hidden my-auto animate-in fade-in zoom-in duration-150">
+        <!-- Top Razorpay Trust Bar -->
+        <div class="bg-[#0b1424] text-white px-5 py-3.5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm font-mono shadow-xs">
+                    R
+                </div>
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-xs tracking-wider uppercase font-sans">Razorpay Trusted Checkout</span>
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">SECURE 256-BIT</span>
+                    </div>
+                    <p class="text-[10px] text-zinc-400 font-mono">DELTA Luxury Horology Vault Settlement</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeRazorpaySimulationModal()" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer text-sm">✕</button>
+        </div>
+
+        <!-- Order Summary Strip -->
+        <div class="bg-zinc-50 border-b border-zinc-200/80 px-5 py-3 flex items-center justify-between text-xs">
+            <div>
+                <span class="text-[10px] uppercase font-mono tracking-wider text-zinc-400 block">Allocation Order</span>
+                <span id="rzpModalOrderId" class="font-mono font-bold text-zinc-800 text-[11px] truncate max-w-[200px] block">...</span>
+            </div>
+            <div class="text-right">
+                <span class="text-[10px] uppercase font-mono tracking-wider text-zinc-400 block">Total Valuation</span>
+                <span id="rzpModalAmount" class="font-mono font-bold text-[#0A4D2E] text-base">₹0</span>
+            </div>
+        </div>
+
+        <!-- Method Navigation Tabs -->
+        <div class="p-5 space-y-4">
+            <div>
+                <label class="block text-[10px] font-mono uppercase tracking-widest text-zinc-400 font-semibold mb-2">Select Payment Instrument</label>
+                <div class="grid grid-cols-4 gap-1 p-1 bg-zinc-100 rounded-2xl text-xs font-medium">
+                    <button type="button" onclick="switchRzpTab('upi')" id="rzpTabBtn_upi" class="py-2 px-1 text-center rounded-xl transition-all cursor-pointer bg-white text-zinc-900 shadow-xs font-semibold flex flex-col items-center gap-1">
+                        <svg class="w-4 h-4 text-[#0A4D2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        <span class="text-[11px]">UPI / QR</span>
+                    </button>
+                    <button type="button" onclick="switchRzpTab('card')" id="rzpTabBtn_card" class="py-2 px-1 text-center rounded-xl transition-all cursor-pointer text-zinc-500 hover:text-zinc-900 flex flex-col items-center gap-1">
+                        <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                        <span class="text-[11px]">Cards</span>
+                    </button>
+                    <button type="button" onclick="switchRzpTab('netbanking')" id="rzpTabBtn_netbanking" class="py-2 px-1 text-center rounded-xl transition-all cursor-pointer text-zinc-500 hover:text-zinc-900 flex flex-col items-center gap-1">
+                        <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        <span class="text-[11px]">NetBanking</span>
+                    </button>
+                    <button type="button" onclick="switchRzpTab('wallet')" id="rzpTabBtn_wallet" class="py-2 px-1 text-center rounded-xl transition-all cursor-pointer text-zinc-500 hover:text-zinc-900 flex flex-col items-center gap-1">
+                        <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        <span class="text-[11px]">Wallets</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 1: UPI / QR -->
+            <div id="rzpPanel_upi" class="space-y-3.5">
+                <div class="p-3.5 bg-gradient-to-br from-emerald-50/50 to-zinc-50 rounded-2xl border border-emerald-100 flex items-center gap-3.5">
+                    <div class="w-16 h-16 bg-white p-1 rounded-xl border border-zinc-200 shrink-0 shadow-2xs flex items-center justify-center">
+                        <svg class="w-14 h-14 text-zinc-900" viewBox="0 0 100 100" fill="currentColor">
+                            <rect x="10" y="10" width="30" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="8"/>
+                            <rect x="20" y="20" width="10" height="10"/>
+                            <rect x="60" y="10" width="30" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="8"/>
+                            <rect x="70" y="20" width="10" height="10"/>
+                            <rect x="10" y="60" width="30" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="8"/>
+                            <rect x="20" y="70" width="10" height="10"/>
+                            <rect x="55" y="55" width="12" height="12"/>
+                            <rect x="75" y="55" width="15" height="8"/>
+                            <rect x="55" y="75" width="18" height="15"/>
+                            <rect x="80" y="75" width="10" height="15"/>
+                        </svg>
+                    </div>
+                    <div class="space-y-1 text-xs">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-bold text-zinc-900 font-sans">Scan & Pay via any UPI App</span>
+                            <span class="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-emerald-100 text-[#0A4D2E] font-bold">FAST</span>
+                        </div>
+                        <p class="text-[11px] text-zinc-500 font-light leading-relaxed">
+                            Google Pay, PhonePe, Paytm, BHIM, or any banking UPI app. Instant zero-fee verification.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">Quick Select UPI Application</span>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button type="button" onclick="selectRzpUpiApp('Google Pay', 'collector@okhdfcbank')" id="rzpUpiApp_gpay" class="p-2 rounded-xl border-2 border-[#0A4D2E] bg-emerald-50/40 flex flex-col items-center justify-center gap-1 text-[11px] font-bold text-zinc-900 transition-all cursor-pointer">
+                            <span class="w-6 h-6 rounded-full bg-white shadow-2xs flex items-center justify-center font-bold text-blue-600 text-xs">G</span>
+                            <span>GPay</span>
+                        </button>
+                        <button type="button" onclick="selectRzpUpiApp('PhonePe', 'collector@ybl')" id="rzpUpiApp_phonepe" class="p-2 rounded-xl border border-zinc-200 bg-white flex flex-col items-center justify-center gap-1 text-[11px] font-semibold text-zinc-600 transition-all cursor-pointer hover:border-purple-600">
+                            <span class="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-xs">पे</span>
+                            <span>PhonePe</span>
+                        </button>
+                        <button type="button" onclick="selectRzpUpiApp('Paytm', 'collector@paytm')" id="rzpUpiApp_paytm" class="p-2 rounded-xl border border-zinc-200 bg-white flex flex-col items-center justify-center gap-1 text-[11px] font-semibold text-zinc-600 transition-all cursor-pointer hover:border-sky-500">
+                            <span class="w-6 h-6 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold text-xs">P</span>
+                            <span>Paytm</span>
+                        </button>
+                        <button type="button" onclick="selectRzpUpiApp('BHIM', 'collector@upi')" id="rzpUpiApp_bhim" class="p-2 rounded-xl border border-zinc-200 bg-white flex flex-col items-center justify-center gap-1 text-[11px] font-semibold text-zinc-600 transition-all cursor-pointer hover:border-amber-600">
+                            <span class="w-6 h-6 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-xs">B</span>
+                            <span>BHIM</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5 pt-1">
+                    <label class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">Or Enter UPI ID / VPA</label>
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="rzpUpiVpaInput" 
+                            value="collector@okhdfcbank"
+                            placeholder="e.g. yourname@okhdfcbank"
+                            oninput="updateRzpUpiVpa(this.value)"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs font-mono font-medium text-zinc-900 focus:outline-none focus:border-[#0A4D2E] focus:ring-1 focus:ring-[#0A4D2E]"
+                        >
+                        <span class="absolute right-3 top-2.5 text-[10px] text-emerald-700 font-mono font-bold">VERIFIED</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Credit / Debit Cards -->
+            <div id="rzpPanel_card" class="space-y-3.5 hidden">
+                <div class="p-4 bg-gradient-to-br from-[#0A4D2E] via-[#06331e] to-black rounded-2xl text-white shadow-md relative overflow-hidden space-y-3">
+                    <div class="absolute -right-10 -bottom-10 w-32 h-32 rounded-full bg-emerald-500/10 pointer-events-none"></div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-7 h-5 rounded bg-amber-400/80 inline-block shadow-2xs"></span>
+                            <span class="text-[10px] font-mono tracking-widest text-emerald-200 uppercase font-semibold">DELTA VAULT CARD</span>
+                        </div>
+                        <span class="text-[11px] font-mono font-bold tracking-wider text-zinc-300">VISA / MASTERCARD</span>
+                    </div>
+                    <div class="font-mono text-sm tracking-widest text-white/90 font-bold pt-1" id="rzpCardPreviewNumber">
+                        4532 •••• •••• 8892
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] font-mono text-zinc-300 pt-1">
+                        <div>
+                            <span class="text-[8px] uppercase text-zinc-400 block tracking-wider">Card Holder</span>
+                            <span id="rzpCardPreviewName" class="font-semibold text-white">VALUED COLLECTOR</span>
+                        </div>
+                        <div>
+                            <span class="text-[8px] uppercase text-zinc-400 block tracking-wider">Expires</span>
+                            <span id="rzpCardPreviewExpiry" class="font-semibold text-white">12/28</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2.5 text-xs">
+                    <div>
+                        <label class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block mb-1">Card Number</label>
+                        <input 
+                            type="text" 
+                            id="rzpCardNumInput" 
+                            value="4532 8910 2345 8892" 
+                            maxlength="19"
+                            oninput="formatRzpCardNumber(this)"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 font-mono text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E]"
+                        >
+                    </div>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block mb-1">Expiry (MM/YY)</label>
+                            <input 
+                                type="text" 
+                                id="rzpCardExpInput" 
+                                value="12/28" 
+                                maxlength="5"
+                                oninput="formatRzpCardExpiry(this)"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 font-mono text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E]"
+                            >
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block mb-1">CVV / CVC</label>
+                            <input 
+                                type="password" 
+                                id="rzpCardCvvInput" 
+                                value="892" 
+                                maxlength="4"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 font-mono text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E]"
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: NetBanking -->
+            <div id="rzpPanel_netbanking" class="space-y-3.5 hidden">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">Select Popular Bank</span>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" onclick="selectRzpBank('HDFC Bank')" id="rzpBank_HDFC" class="p-2.5 rounded-xl border-2 border-[#0A4D2E] bg-emerald-50/40 text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">01</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">HDFC Bank</span>
+                    </button>
+                    <button type="button" onclick="selectRzpBank('ICICI Bank')" id="rzpBank_ICICI" class="p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">02</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">ICICI Bank</span>
+                    </button>
+                    <button type="button" onclick="selectRzpBank('State Bank of India')" id="rzpBank_SBI" class="p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">03</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">SBI</span>
+                    </button>
+                    <button type="button" onclick="selectRzpBank('Axis Bank')" id="rzpBank_Axis" class="p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">04</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">Axis Bank</span>
+                    </button>
+                    <button type="button" onclick="selectRzpBank('Kotak Mahindra Bank')" id="rzpBank_Kotak" class="p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">05</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">Kotak</span>
+                    </button>
+                    <button type="button" onclick="selectRzpBank('Punjab National Bank')" id="rzpBank_PNB" class="p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">06</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">PNB</span>
+                    </button>
+                </div>
+
+                <div class="space-y-1.5 pt-1">
+                    <label class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">Or Select Any Other Bank</label>
+                    <select id="rzpOtherBanksSelect" onchange="selectRzpOtherBank(this.value)" class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs font-sans text-zinc-800 bg-white focus:outline-none focus:border-[#0A4D2E]">
+                        <option value="">-- Choose from 40+ Indian Scheduled Banks --</option>
+                        <option value="Bank of Baroda">Bank of Baroda</option>
+                        <option value="Canara Bank">Canara Bank</option>
+                        <option value="Union Bank of India">Union Bank of India</option>
+                        <option value="IndusInd Bank">IndusInd Bank</option>
+                        <option value="Yes Bank">Yes Bank</option>
+                        <option value="Federal Bank">Federal Bank</option>
+                        <option value="IDBI Bank">IDBI Bank</option>
+                        <option value="Central Bank of India">Central Bank of India</option>
+                        <option value="Indian Bank">Indian Bank</option>
+                        <option value="Standard Chartered India">Standard Chartered Bank India</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Tab 4: Wallets -->
+            <div id="rzpPanel_wallet" class="space-y-3 hidden">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">Select Digital Wallet</span>
+                <div class="space-y-2">
+                    <label onclick="selectRzpWallet('Amazon Pay')" class="p-3 rounded-xl border-2 border-[#0A4D2E] bg-emerald-50/30 flex items-center justify-between cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <input type="radio" name="rzpWalletRadio" checked class="text-[#0A4D2E]">
+                            <span class="text-xs font-bold text-zinc-900">Amazon Pay</span>
+                        </div>
+                        <span class="text-[10px] font-mono text-emerald-800 font-semibold">Ready</span>
+                    </label>
+                    <label onclick="selectRzpWallet('PhonePe Wallet')" class="p-3 rounded-xl border border-zinc-200 bg-white flex items-center justify-between cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <input type="radio" name="rzpWalletRadio" class="text-[#0A4D2E]">
+                            <span class="text-xs font-bold text-zinc-900">PhonePe Wallet</span>
+                        </div>
+                        <span class="text-[10px] font-mono text-zinc-500">Ready</span>
+                    </label>
+                    <label onclick="selectRzpWallet('Paytm Wallet')" class="p-3 rounded-xl border border-zinc-200 bg-white flex items-center justify-between cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <input type="radio" name="rzpWalletRadio" class="text-[#0A4D2E]">
+                            <span class="text-xs font-bold text-zinc-900">Paytm Wallet</span>
+                        </div>
+                        <span class="text-[10px] font-mono text-zinc-500">Ready</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-2 pt-2 border-t border-zinc-100">
+                <button 
+                    type="button" 
+                    id="rzpSimulateSuccessBtn"
+                    onclick="openRzpConfirmPayModal()"
+                    class="w-full py-3.5 px-4 bg-[#0A4D2E] hover:bg-[#083e25] text-white rounded-xl text-xs uppercase font-mono tracking-wider font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                    <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    <span id="rzpPayBtnLabel">Authorize & Pay via UPI</span>
+                </button>
+                <button 
+                    type="button" 
+                    onclick="openRzpConfirmDeclineModal()"
+                    class="w-full py-2.5 px-4 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs uppercase font-mono tracking-wider font-semibold transition-colors cursor-pointer text-center"
+                >
+                    ✕ Simulate Bank Decline
+                </button>
+            </div>
+
+            <!-- Trust Footer -->
+            <div class="pt-1 flex items-center justify-center gap-3 text-[10px] text-zinc-400 font-mono">
+                <span>🛡️ PCI-DSS Level 1</span>
+                <span>•</span>
+                <span>256-bit SSL</span>
+                <span>•</span>
+                <span>RBI Tokenized</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- RAZORPAY CONFIRM PAY MODAL -->
+<!-- ========================================================= -->
+<div id="rzpConfirmPayModal" class="fixed inset-0 z-[60] bg-black/75 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-5 shadow-2xl relative border border-emerald-100 text-center animate-in fade-in zoom-in duration-150">
+        <!-- Horological Seal -->
+        <div class="w-16 h-16 rounded-full bg-emerald-50 text-[#0A4D2E] mx-auto flex items-center justify-center border-2 border-emerald-200 shadow-xs">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+        </div>
+
+        <div class="space-y-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-emerald-50 text-[#0A4D2E] border border-emerald-200">
+                CONFIRM PAYMENT SETTLEMENT
+            </span>
+            <h3 class="text-xl font-serif font-bold text-zinc-900">Authorize Payment?</h3>
+            <p class="text-xs text-zinc-500 font-light leading-relaxed">
+                You are about to authorize immediate settlement for your timepiece order.
+            </p>
+        </div>
+
+        <!-- Valuation & Method Breakdown -->
+        <div class="p-3.5 bg-zinc-50 rounded-2xl border border-zinc-200/80 text-xs space-y-2 text-left font-mono">
+            <div class="flex items-center justify-between text-zinc-500 text-[11px]">
+                <span>Settlement Instrument:</span>
+                <span id="rzpConfirmPayMethod" class="font-bold text-zinc-800">UPI</span>
+            </div>
+            <div class="flex items-center justify-between text-zinc-500 text-[11px]">
+                <span>Order Reference:</span>
+                <span id="rzpConfirmPayOrderRef" class="font-bold text-zinc-800 truncate max-w-[150px]">...</span>
+            </div>
+            <div class="flex items-center justify-between pt-2 border-t border-zinc-200 text-sm">
+                <span class="text-zinc-600 font-sans font-semibold">Total Debit:</span>
+                <span id="rzpConfirmPayAmount" class="font-bold text-[#0A4D2E] text-base">₹0</span>
+            </div>
+        </div>
+
+        <!-- Confirm Actions -->
+        <div class="space-y-2 pt-1">
+            <button 
+                type="button" 
+                onclick="executeConfirmedRazorpayPayment()" 
+                class="w-full py-3.5 px-4 bg-[#0A4D2E] hover:bg-[#073620] text-white rounded-xl text-xs uppercase font-mono tracking-wider font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+                <span>Yes, Authorize & Pay</span>
+                <span>✓</span>
+            </button>
+            <button 
+                type="button" 
+                onclick="closeRzpConfirmPayModal()" 
+                class="w-full py-3 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl text-xs uppercase font-mono tracking-wider font-semibold transition-colors cursor-pointer"
+            >
+                Cancel / Return
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- RAZORPAY CONFIRM DECLINE MODAL -->
+<!-- ========================================================= -->
+<div id="rzpConfirmDeclineModal" class="fixed inset-0 z-[60] bg-black/75 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-5 shadow-2xl relative border border-rose-200 text-center animate-in fade-in zoom-in duration-150">
+        <!-- Rose Decline Medallion -->
+        <div class="w-16 h-16 rounded-full bg-rose-50 text-rose-700 mx-auto flex items-center justify-center border-2 border-rose-200 shadow-xs">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+        </div>
+
+        <div class="space-y-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                SIMULATE BANK DECLINE
+            </span>
+            <h3 class="text-xl font-serif font-bold text-zinc-900">Decline Payment?</h3>
+            <p class="text-xs text-zinc-500 font-light leading-relaxed">
+                This will simulate an issuing bank refusal (3DS timeout). In accordance with security policy, you can re-buy this timepiece only after 5 minutes.
+            </p>
+        </div>
+
+        <!-- Order Snapshot -->
+        <div class="p-3.5 bg-rose-50/50 rounded-2xl border border-rose-200/60 text-xs space-y-2 text-left font-mono">
+            <div class="flex items-center justify-between text-zinc-500 text-[11px]">
+                <span>Simulation Type:</span>
+                <span class="font-bold text-rose-700">Bank Decline / 3DS Refusal</span>
+            </div>
+            <div class="flex items-center justify-between text-zinc-500 text-[11px]">
+                <span>Order Reference:</span>
+                <span id="rzpConfirmDeclineOrderRef" class="font-bold text-zinc-800 truncate max-w-[150px]">...</span>
+            </div>
+            <div class="flex items-center justify-between pt-2 border-t border-rose-200 text-sm">
+                <span class="text-zinc-600 font-sans font-semibold">Unpaid Amount:</span>
+                <span id="rzpConfirmDeclineAmount" class="font-bold text-rose-700 text-base">₹0</span>
+            </div>
+        </div>
+
+        <!-- Decline Actions -->
+        <div class="space-y-2 pt-1">
+            <button 
+                type="button" 
+                onclick="executeConfirmedRazorpayDecline()" 
+                class="w-full py-3.5 px-4 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs uppercase font-mono tracking-wider font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+                <span>Yes, Decline Settlement</span>
+                <span>✕</span>
+            </button>
+            <button 
+                type="button" 
+                onclick="closeRzpConfirmDeclineModal()" 
+                class="w-full py-3 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl text-xs uppercase font-mono tracking-wider font-semibold transition-colors cursor-pointer"
+            >
+                Cancel / Return
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ========================================================= -->
+<!-- PAYMENT FAILURE MODAL -->
+<!-- ========================================================= -->
+<div id="paymentFailureModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+        <div class="flex items-center justify-between border-b border-zinc-100 pb-3">
+            <div class="flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-sm">✕</span>
+                <div>
+                    <span class="text-[10px] uppercase font-mono tracking-widest text-rose-600 font-bold block">Gateway Response</span>
+                    <h3 class="text-base font-serif text-zinc-900 font-bold">Payment Incomplete</h3>
+                </div>
+            </div>
+            <button type="button" onclick="closePaymentFailureModal()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-500 flex items-center justify-center transition-colors cursor-pointer">✕</button>
+        </div>
+
+        <div class="p-4 bg-rose-50 border border-rose-200/80 rounded-2xl text-xs text-rose-900 space-y-1">
+            <strong class="block font-semibold">Payment was not completed:</strong>
+            <p id="paymentFailureMessage" class="font-mono text-[11px]"></p>
+        </div>
+
+        <p class="text-xs text-zinc-600 font-light leading-relaxed">
+            Your shopping bag and reserved timepiece allocation remain safe. You can retry with another payment method or choose Cash on Delivery.
+        </p>
+
+        <div class="space-y-2 pt-1">
+            <button 
+                type="button" 
+                onclick="retryPaymentFromFailureModal()"
+                class="w-full py-3 px-4 bg-[#0A4D2E] hover:bg-[#083e25] text-white rounded-xl text-xs uppercase font-mono tracking-wider font-semibold shadow-xs transition-colors cursor-pointer"
+            >
+                Retry Payment Now
+            </button>
+            <a 
+                id="paymentFailureViewOrderBtn"
+                href="#"
+                class="hidden block text-center w-full py-2.5 px-4 bg-zinc-900 hover:bg-black text-white rounded-xl text-xs uppercase font-mono tracking-wider font-semibold transition-colors cursor-pointer"
+            >
+                View Order & Retry Options
+            </a>
+            <button 
+                type="button" 
+                onclick="switchFailedOrderToCod()"
+                class="w-full py-2.5 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-xl text-xs uppercase font-mono tracking-wider font-semibold transition-colors cursor-pointer"
+            >
+                Switch to Cash on Delivery
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Available Coupons Modal -->
+<div id="availableCouponsModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-zinc-200/80 animate-in fade-in zoom-in duration-150 max-h-[90vh] flex flex-col">
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-zinc-100 pb-4">
+            <div class="flex items-center gap-3">
+                <span class="w-8 h-8 rounded-full bg-emerald-50 text-[#0A4D2E] flex items-center justify-center text-sm font-bold">🏷️</span>
+                <div>
+                    <h3 class="font-serif text-lg font-normal text-zinc-900">Available Coupon Codes</h3>
+                    <p class="text-[11px] text-zinc-500 font-mono">Exclusive courtesies for private collectors</p>
+                </div>
+            </div>
+            <button 
+                type="button" 
+                onclick="closeAvailableCouponsModal()"
+                class="text-zinc-400 hover:text-zinc-800 text-2xl font-light cursor-pointer w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-100 transition-colors"
+            >
+                &times;
+            </button>
+        </div>
+
+        <!-- Coupons List Container -->
+        <div id="availableCouponsList" class="flex-1 overflow-y-auto space-y-3.5 pr-1">
+            <div class="text-center py-8 text-zinc-400 text-xs font-mono">
+                <span class="inline-block animate-spin h-5 w-5 border-2 border-[#0A4D2E] border-t-transparent rounded-full mb-2"></span>
+                <p>Consulting catalog for available coupons...</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="border-t border-zinc-100 pt-4 flex justify-end">
+            <button 
+                type="button" 
+                onclick="closeAvailableCouponsModal()"
+                class="px-5 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer"
+            >
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/payment-animation') %>
+
+<%- include('../partials/footer') %>
+
+<script>
+    let currentSelectedAddressId = '<%= (defaultAddress && defaultAddress._id) ? defaultAddress._id : (addresses && addresses[0] ? addresses[0]._id : "") %>';
+    let currentSelectedPaymentMethod = 'Razorpay';
+    let currentGrandTotal = <%= Number(summary.grandTotal || 0) %>;
+    let currentSubtotal = <%= Number(summary.subtotal || 0) %>;
+    let currentDiscount = <%= Number(summary.discount || 0) %>;
+    let currentAppliedCoupon = <%- JSON.stringify(appliedCoupon || null) %>;
+    let currentAppliedCoupons = <%- JSON.stringify(typeof appliedCoupons !== 'undefined' && Array.isArray(appliedCoupons) ? appliedCoupons : (appliedCoupon && appliedCoupon.code ? [appliedCoupon] : [])) %>;
+    const initialCouponWarnings = <%- JSON.stringify(typeof couponWarnings !== 'undefined' && Array.isArray(couponWarnings) ? couponWarnings : []) %>;
+
+    function handleCheckoutOrderError(data, fallbackMessage) {
+        const msg = (data && data.message) || fallbackMessage;
+        if (data && data.couponUpdate && data.couponUpdate.summary) {
+            updateCheckoutTotals(
+                data.couponUpdate.summary,
+                data.couponUpdate.appliedCoupon,
+                data.couponUpdate.appliedCoupons
+            );
+        }
+        if (data && (data.code === 'COUPON_BLOCKED' || data.code === 'COUPON_REMOVED')) {
+            showCouponFeedback(msg, 'error');
+        }
+        if (window.showToast) window.showToast(msg, 'error', 6000);
+        else alert(msg);
+    }
+
+    function updatePayButtonText() {
+        const btnText = document.getElementById('placeOrderBtnText');
+        if (!btnText) return;
+        if (currentSelectedPaymentMethod === 'Razorpay') {
+            btnText.textContent = 'Pay via Razorpay • ₹' + currentGrandTotal.toLocaleString('en-IN');
+        } else if (currentSelectedPaymentMethod === 'Wallet') {
+            btnText.textContent = 'Pay via Vault Wallet • ₹' + currentGrandTotal.toLocaleString('en-IN');
+        } else {
+            btnText.textContent = 'Confirm & Place Order (COD) • ₹' + currentGrandTotal.toLocaleString('en-IN');
+        }
+    }
+
+    // Strict regex matchers aligned with backend constants
+    const ADDR_REGEX = {
+        name: /^[A-Za-z][A-Za-z\s.'-]{1,49}$/,
+        phone: /^[6-9]\d{9}$/,
+        pincode: /^[1-9][0-9]{5}$/,
+        cityState: /^[A-Za-z][A-Za-z .'-]{1,49}$/,
+        addressLine: /^[A-Za-z0-9\s,.'/#&()\-]{5,200}$/
+    };
+
+    function validateAddressFields(prefix) {
+        let isValid = true;
+
+        const isAdd = prefix === 'newAddr';
+        const fullNameInput = document.getElementById(isAdd ? 'newAddrFullName' : 'editFullName');
+        const fullNameErr = document.getElementById(isAdd ? 'newAddrFullNameErr' : 'editFullNameErr');
+
+        const phoneInput = document.getElementById(isAdd ? 'newAddrPhone' : 'editPhone');
+        const phoneErr = document.getElementById(isAdd ? 'newAddrPhoneErr' : 'editPhoneErr');
+
+        const addrLineInput = document.getElementById(isAdd ? 'newAddrAddressLine' : 'editAddressLine');
+        const addrLineErr = document.getElementById(isAdd ? 'newAddrAddressLineErr' : 'editAddressLineErr');
+
+        const cityInput = document.getElementById(isAdd ? 'newAddrCity' : 'editCity');
+        const cityErr = document.getElementById(isAdd ? 'newAddrCityErr' : 'editCityErr');
+
+        const stateInput = document.getElementById(isAdd ? 'newAddrState' : 'editState');
+        const stateErr = document.getElementById(isAdd ? 'newAddrStateErr' : 'editStateErr');
+
+        const pincodeInput = document.getElementById(isAdd ? 'newAddrPincode' : 'editPincode');
+        const pincodeErr = document.getElementById(isAdd ? 'newAddrPincodeErr' : 'editPincodeErr');
+
+        const checkField = (input, errSpan, validator, emptyMsg, invalidMsg) => {
+            if (!input || !errSpan) return true;
+            const val = (input.value || '').trim();
+            if (!val) {
+                errSpan.textContent = emptyMsg;
+                errSpan.classList.remove('hidden');
+                input.classList.add('border-rose-500', 'ring-1', 'ring-rose-500');
+                input.classList.remove('border-zinc-200');
+                return false;
+            }
+            if (validator && !validator(val)) {
+                errSpan.textContent = invalidMsg;
+                errSpan.classList.remove('hidden');
+                input.classList.add('border-rose-500', 'ring-1', 'ring-rose-500');
+                input.classList.remove('border-zinc-200');
+                return false;
+            }
+            errSpan.textContent = '';
+            errSpan.classList.add('hidden');
+            input.classList.remove('border-rose-500', 'ring-1', 'ring-rose-500');
+            input.classList.add('border-zinc-200');
+            return true;
+        };
+
+        const f1 = checkField(
+            fullNameInput,
+            fullNameErr,
+            (v) => ADDR_REGEX.name.test(v),
+            'Full name is required.',
+            'Enter a valid name (at least 2 alphabetic characters, only letters & spaces).'
+        );
+
+        const f2 = checkField(
+            phoneInput,
+            phoneErr,
+            (v) => ADDR_REGEX.phone.test(v),
+            'Mobile phone number is required.',
+            'Enter a valid 10-digit Indian phone number starting with 6, 7, 8, or 9.'
+        );
+
+        const f3 = checkField(
+            addrLineInput,
+            addrLineErr,
+            (v) => ADDR_REGEX.addressLine.test(v) && v.length >= 5,
+            'Street address is required.',
+            'Address must be at least 5 characters long and contain valid street details.'
+        );
+
+        const f4 = checkField(
+            cityInput,
+            cityErr,
+            (v) => ADDR_REGEX.cityState.test(v),
+            'City is required.',
+            'Enter a valid city name (letters & spaces only).'
+        );
+
+        const f5 = checkField(
+            stateInput,
+            stateErr,
+            (v) => ADDR_REGEX.cityState.test(v),
+            'State is required.',
+            'Enter a valid state name (letters & spaces only).'
+        );
+
+        const f6 = checkField(
+            pincodeInput,
+            pincodeErr,
+            (v) => ADDR_REGEX.pincode.test(v),
+            'Pincode is required.',
+            'Enter a valid 6-digit Indian pincode (cannot start with 0).'
+        );
+
+        return f1 && f2 && f3 && f4 && f5 && f6;
+    }
+
+    // Attach real-time input listeners to clear errors on typing
+    function setupRealTimeValidation(prefix) {
+        const isAdd = prefix === 'newAddr';
+        const fields = [
+            { id: isAdd ? 'newAddrFullName' : 'editFullName', err: isAdd ? 'newAddrFullNameErr' : 'editFullNameErr', rule: ADDR_REGEX.name, empty: 'Full name is required.', inv: 'Enter a valid name (letters only).' },
+            { id: isAdd ? 'newAddrPhone' : 'editPhone', err: isAdd ? 'newAddrPhoneErr' : 'editPhoneErr', rule: ADDR_REGEX.phone, empty: 'Mobile phone number is required.', inv: 'Enter 10-digit mobile number starting with 6-9.' },
+            { id: isAdd ? 'newAddrAddressLine' : 'editAddressLine', err: isAdd ? 'newAddrAddressLineErr' : 'editAddressLineErr', rule: ADDR_REGEX.addressLine, empty: 'Street address is required.', inv: 'Address must be at least 5 characters.' },
+            { id: isAdd ? 'newAddrCity' : 'editCity', err: isAdd ? 'newAddrCityErr' : 'editCityErr', rule: ADDR_REGEX.cityState, empty: 'City is required.', inv: 'Enter a valid city name.' },
+            { id: isAdd ? 'newAddrState' : 'editState', err: isAdd ? 'newAddrStateErr' : 'editStateErr', rule: ADDR_REGEX.cityState, empty: 'State is required.', inv: 'Enter a valid state name.' },
+            { id: isAdd ? 'newAddrPincode' : 'editPincode', err: isAdd ? 'newAddrPincodeErr' : 'editPincodeErr', rule: ADDR_REGEX.pincode, empty: 'Pincode is required.', inv: 'Enter a valid 6-digit pincode.' }
+        ];
+
+        fields.forEach(f => {
+            const input = document.getElementById(f.id);
+            const errSpan = document.getElementById(f.err);
+            if (input && errSpan) {
+                input.addEventListener('input', () => {
+                    if (f.id.toLowerCase().includes('phone') || f.id.toLowerCase().includes('pincode')) {
+                        input.value = input.value.replace(/[^0-9]/g, '');
+                    }
+                    const val = input.value.trim();
+                    if (val && f.rule.test(val)) {
+                        errSpan.textContent = '';
+                        errSpan.classList.add('hidden');
+                        input.classList.remove('border-rose-500', 'ring-1', 'ring-rose-500');
+                        input.classList.add('border-zinc-200');
+                    }
+                });
+                input.addEventListener('blur', () => {
+                    const val = input.value.trim();
+                    if (!val) {
+                        errSpan.textContent = f.empty;
+                        errSpan.classList.remove('hidden');
+                        input.classList.add('border-rose-500', 'ring-1', 'ring-rose-500');
+                        input.classList.remove('border-zinc-200');
+                    } else if (!f.rule.test(val)) {
+                        errSpan.textContent = f.inv;
+                        errSpan.classList.remove('hidden');
+                        input.classList.add('border-rose-500', 'ring-1', 'ring-rose-500');
+                        input.classList.remove('border-zinc-200');
+                    }
+                });
+            }
+        });
+    }
+
+    function setupPincodeAutoLookup(prefix) {
+        const isAdd = prefix === 'newAddr';
+        const pinInput = document.getElementById(isAdd ? 'newAddrPincode' : 'editPincode');
+        const cityInput = document.getElementById(isAdd ? 'newAddrCity' : 'editCity');
+        const stateInput = document.getElementById(isAdd ? 'newAddrState' : 'editState');
+        const pinErr = document.getElementById(isAdd ? 'newAddrPincodeErr' : 'editPincodeErr');
+        const cityErr = document.getElementById(isAdd ? 'newAddrCityErr' : 'editCityErr');
+        const stateErr = document.getElementById(isAdd ? 'newAddrStateErr' : 'editStateErr');
+
+        const spinner = document.getElementById(isAdd ? 'newAddrPincodeSpinner' : 'editPincodeSpinner');
+
+        if (!pinInput || !cityInput || !stateInput) return;
+
+        let timer = null;
+        let lastQuery = (pinInput.value || '').trim();
+
+        const doLookup = async () => {
+            const val = (pinInput.value || '').replace(/\D/g, '').slice(0, 6);
+            pinInput.value = val;
+
+            if (val.length < 6) {
+                lastQuery = "";
+                return;
+            }
+
+            if (!ADDR_REGEX.pincode.test(val)) {
+                if (pinErr) {
+                    pinErr.textContent = 'Enter a valid 6-digit Indian pincode (cannot start with 0).';
+                    pinErr.classList.remove('hidden');
+                }
+                pinInput.classList.add('border-rose-500', 'ring-1', 'ring-rose-500');
+                return;
+            }
+
+            if (val === lastQuery) return;
+
+            if (pinErr) pinErr.classList.add('hidden');
+            pinInput.classList.remove('border-rose-500', 'ring-1', 'ring-rose-500');
+            if (spinner) spinner.classList.remove('hidden');
+
+            try {
+                const res = await fetch('/addresses/pincode/' + val);
+                const data = await res.json();
+
+                if (data.success && data.city && data.state) {
+                    lastQuery = val;
+                    cityInput.value = data.city;
+                    stateInput.value = data.state;
+
+                    if (cityErr) cityErr.classList.add('hidden');
+                    cityInput.classList.remove('border-rose-500', 'ring-1', 'ring-rose-500');
+                    cityInput.classList.add('border-zinc-200');
+
+                    if (stateErr) stateErr.classList.add('hidden');
+                    stateInput.classList.remove('border-rose-500', 'ring-1', 'ring-rose-500');
+                    stateInput.classList.add('border-zinc-200');
+
+                    [cityInput, stateInput].forEach(inp => {
+                        inp.classList.add('border-emerald-500', 'ring-1', 'ring-emerald-500');
+                        setTimeout(() => {
+                            inp.classList.remove('border-emerald-500', 'ring-1', 'ring-emerald-500');
+                        }, 1200);
+                    });
+                } else {
+                    if (pinErr) {
+                        pinErr.textContent = data.message || 'Invalid or unrecognized pincode.';
+                        pinErr.classList.remove('hidden');
+                    }
+                    pinInput.classList.add('border-rose-500', 'ring-1', 'ring-rose-500');
+                }
+            } catch {
+                // Silently fail lookup errors on network glitch
+            } finally {
+                if (spinner) spinner.classList.add('hidden');
+            }
+        };
+
+        pinInput.addEventListener('input', () => {
+            clearTimeout(timer);
+            timer = setTimeout(doLookup, 200);
+        });
+        pinInput.addEventListener('change', doLookup);
+        pinInput.addEventListener('blur', doLookup);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setupRealTimeValidation('newAddr');
+        setupRealTimeValidation('edit');
+        setupPincodeAutoLookup('newAddr');
+        setupPincodeAutoLookup('edit');
+    });
+
+    function selectAddressCard(addrId) {
+        currentSelectedAddressId = addrId;
+        document.querySelectorAll('.address-option-card').forEach(card => {
+            card.classList.remove('border-[#0A4D2E]', 'bg-emerald-50/20', 'ring-1', 'ring-[#0A4D2E]/20', 'shadow-xs');
+            card.classList.add('border-zinc-200', 'bg-white');
+        });
+        const activeCard = document.getElementById('address-card-' + addrId);
+        if (activeCard) {
+            activeCard.classList.add('border-[#0A4D2E]', 'bg-emerald-50/20', 'ring-1', 'ring-[#0A4D2E]/20', 'shadow-xs');
+            activeCard.classList.remove('border-zinc-200', 'bg-white');
+            const radio = activeCard.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+        }
+    }
+
+    function selectPaymentOption(method) {
+        currentSelectedPaymentMethod = method;
+        document.querySelectorAll('.payment-option-card').forEach(c => {
+            c.classList.remove('border-[#0A4D2E]', 'bg-emerald-50/20', 'ring-1', 'ring-[#0A4D2E]/20', 'shadow-xs');
+            c.classList.add('border-zinc-200', 'bg-white');
+        });
+
+        let elId = 'payment-option-razorpay';
+        if (method === 'Cash on Delivery') elId = 'payment-option-cod';
+        else if (method === 'Wallet') elId = 'payment-option-wallet';
+
+        const el = document.getElementById(elId);
+        if (el) {
+            el.classList.add('border-[#0A4D2E]', 'bg-emerald-50/20', 'ring-1', 'ring-[#0A4D2E]/20', 'shadow-xs');
+            el.classList.remove('border-zinc-200', 'bg-white');
+            const radio = el.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+        }
+
+        const btnText = document.getElementById('placeOrderBtnText');
+        if (btnText) {
+            updatePayButtonText();
+        }
+    }
+
+    function openAddAddressModal() {
+        const modal = document.getElementById('addAddressModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            const form = document.getElementById('addAddressForm');
+            if (form) form.reset();
+            const errEl = document.getElementById('addAddressError');
+            if (errEl) errEl.classList.add('hidden');
+            // Clear all field error states
+            document.querySelectorAll('#addAddressForm input').forEach(input => {
+                input.classList.remove('border-rose-500', 'ring-1', 'ring-rose-500');
+                input.classList.add('border-zinc-200');
+            });
+            document.querySelectorAll('#addAddressForm span[id$="Err"]').forEach(span => {
+                span.textContent = '';
+                span.classList.add('hidden');
+            });
+        }
+    }
+
+    function closeAddAddressModal() {
+        const modal = document.getElementById('addAddressModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+
+    async function openEditAddressModal(addrId) {
+        try {
+            const res = await fetch('/addresses/' + addrId + '/edit', {
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await res.json();
+            if (data && data.address) {
+                const a = data.address;
+                document.getElementById('editAddressId').value = a._id;
+                document.getElementById('editFullName').value = a.fullName || '';
+                document.getElementById('editPhone').value = a.phone || '';
+                document.getElementById('editAddressLine').value = a.addressLine || '';
+                document.getElementById('editCity').value = a.city || '';
+                document.getElementById('editState').value = a.state || '';
+                document.getElementById('editPincode').value = a.pincode || '';
+                document.getElementById('editAddressType').value = a.addressType || 'home';
+                document.getElementById('editIsDefault').checked = Boolean(a.isDefault);
+
+                // Clear prior errors
+                const errEl = document.getElementById('editAddressError');
+                if (errEl) errEl.classList.add('hidden');
+                document.querySelectorAll('#editAddressForm input').forEach(input => {
+                    input.classList.remove('border-rose-500', 'ring-1', 'ring-rose-500');
+                    input.classList.add('border-zinc-200');
+                });
+                document.querySelectorAll('#editAddressForm span[id$="Err"]').forEach(span => {
+                    span.textContent = '';
+                    span.classList.add('hidden');
+                });
+
+                const modal = document.getElementById('editAddressModal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                }
+            }
+        } catch (e) {
+            if (window.showToast) window.showToast('Unable to load address details.', 'error');
+        }
+    }
+
+    function closeEditAddressModal() {
+        const modal = document.getElementById('editAddressModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+
+    async function submitNewAddress(e) {
+        e.preventDefault();
+
+        // 1. Run rigorous client-side validation
+        const isValid = validateAddressFields('newAddr');
+        if (!isValid) {
+            const errEl = document.getElementById('addAddressError');
+            if (errEl) {
+                errEl.textContent = 'Please correct the highlighted fields before submitting.';
+                errEl.classList.remove('hidden');
+            }
+            return;
+        }
+
+        const form = document.getElementById('addAddressForm');
+        const btn = document.getElementById('saveAddressBtn');
+        const errEl = document.getElementById('addAddressError');
+        const formData = new FormData(form);
+        const dataObj = Object.fromEntries(formData.entries());
+        dataObj.isDefault = Boolean(formData.get('isDefault'));
+
+        if (btn) btn.disabled = true;
+        try {
+            const res = await fetch('/addresses/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(dataObj)
+            });
+            const data = await res.json();
+            if (res.ok && data.success && data.address) {
+                closeAddAddressModal();
+                if (window.showToast) window.showToast('New delivery address added.', 'success');
+                window.location.reload();
+            } else {
+                if (data.errors) {
+                    // Map field errors to individual fields
+                    if (data.errors.fullName) {
+                        const el = document.getElementById('newAddrFullNameErr');
+                        if (el) { el.textContent = data.errors.fullName; el.classList.remove('hidden'); }
+                    }
+                    if (data.errors.phone) {
+                        const el = document.getElementById('newAddrPhoneErr');
+                        if (el) { el.textContent = data.errors.phone; el.classList.remove('hidden'); }
+                    }
+                    if (data.errors.addressLine) {
+                        const el = document.getElementById('newAddrAddressLineErr');
+                        if (el) { el.textContent = data.errors.addressLine; el.classList.remove('hidden'); }
+                    }
+                    if (data.errors.city) {
+                        const el = document.getElementById('newAddrCityErr');
+                        if (el) { el.textContent = data.errors.city; el.classList.remove('hidden'); }
+                    }
+                    if (data.errors.state) {
+                        const el = document.getElementById('newAddrStateErr');
+                        if (el) { el.textContent = data.errors.state; el.classList.remove('hidden'); }
+                    }
+                    if (data.errors.pincode) {
+                        const el = document.getElementById('newAddrPincodeErr');
+                        if (el) { el.textContent = data.errors.pincode; el.classList.remove('hidden'); }
+                    }
+                }
+                if (errEl) {
+                    errEl.textContent = data.message || 'Please verify highlighted address fields.';
+                    errEl.classList.remove('hidden');
+                }
+            }
+        } catch (err) {
+            if (errEl) {
+                errEl.textContent = 'Connection error saving address.';
+                errEl.classList.remove('hidden');
+            }
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    async function submitEditAddress(e) {
+        e.preventDefault();
+
+        // 1. Run rigorous client-side validation
+        const isValid = validateAddressFields('edit');
+        if (!isValid) {
+            const errEl = document.getElementById('editAddressError');
+            if (errEl) {
+                errEl.textContent = 'Please correct the highlighted fields before submitting.';
+                errEl.classList.remove('hidden');
+            }
+            return;
+        }
+
+        const form = document.getElementById('editAddressForm');
+        const btn = document.getElementById('updateAddressBtn');
+        const errEl = document.getElementById('editAddressError');
+        const addrId = document.getElementById('editAddressId').value;
+        const formData = new FormData(form);
+        const dataObj = Object.fromEntries(formData.entries());
+        dataObj.isDefault = Boolean(formData.get('isDefault'));
+
+        if (btn) btn.disabled = true;
+        try {
+            const res = await fetch('/addresses/' + addrId + '/edit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(dataObj)
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                closeEditAddressModal();
+                if (window.showToast) window.showToast('Address updated successfully.', 'success');
+                window.location.reload();
+            } else {
+                if (data.errors) {
+                    if (data.errors.fullName) {
+                        const el = document.getElementById('editFullNameErr');
+                        if (el) { el.textContent = data.errors.fullName; el.classList.remove('hidden'); }
+                    }
+                    if (data.errors.phone) {
+                        const el = document.getElementById('editPhoneErr');
+                        if (el) { el.textContent = data.errors.phone; el.classList.remove('hidden'); }
+                    }
+                    if (data.errors.addressLine) {
+                        const el = document.getElementById('editAddressLineErr');
+                        if (el) { el.textContent = data.errors.addressLine; el.classList.remove('hidden'); }
+                    }
+                    if (data.errors.city) {
+                        const el = document.getElementById('editCityErr');
+                        if (el) { el.textContent = data.errors.city; el.classList.remove('hidden'); }
+                    }
+                    if (data.errors.state) {
+                        const el = document.getElementById('editStateErr');
+                        if (el) { el.textContent = data.errors.state; el.classList.remove('hidden'); }
+                    }
+                    if (data.errors.pincode) {
+                        const el = document.getElementById('editPincodeErr');
+                        if (el) { el.textContent = data.errors.pincode; el.classList.remove('hidden'); }
+                    }
+                }
+                if (errEl) {
+                    errEl.textContent = data.message || 'Please verify highlighted address fields.';
+                    errEl.classList.remove('hidden');
+                }
+            }
+        } catch (err) {
+            if (errEl) {
+                errEl.textContent = 'Connection error updating address.';
+                errEl.classList.remove('hidden');
+            }
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    // --- Online Payment Gateway State & Modals ---
+    let activeRzpSession = null;
+    let lastFailedPaymentDetails = null;
+
+    function resetOrderBtn() {
+        const btn = document.getElementById('placeOrderBtn');
+        if (btn) btn.disabled = false;
+        updatePayButtonText();
+    }
+
+    // Razorpay Tab and Method State
+    let currentRzpTab = 'upi';
+    let currentRzpSubMethod = 'UPI';
+
+    function switchRzpTab(tab) {
+        currentRzpTab = tab;
+        ['upi', 'card', 'netbanking', 'wallet'].forEach(t => {
+            const btn = document.getElementById(`rzpTabBtn_${t}`);
+            const panel = document.getElementById(`rzpPanel_${t}`);
+            if (btn) {
+                if (t === tab) {
+                    btn.className = "py-2 px-1 text-center rounded-xl transition-all cursor-pointer bg-white text-zinc-900 shadow-xs font-semibold flex flex-col items-center gap-1";
+                    const svg = btn.querySelector('svg');
+                    if (svg) svg.classList.add('text-[#0A4D2E]');
+                } else {
+                    btn.className = "py-2 px-1 text-center rounded-xl transition-all cursor-pointer text-zinc-500 hover:text-zinc-900 flex flex-col items-center gap-1";
+                    const svg = btn.querySelector('svg');
+                    if (svg) svg.classList.remove('text-[#0A4D2E]');
+                }
+            }
+            if (panel) {
+                if (t === tab) panel.classList.remove('hidden');
+                else panel.classList.add('hidden');
+            }
+        });
+        updateRzpPayButtonText();
+    }
+
+    function selectRzpUpiApp(app, vpa) {
+        currentRzpSubMethod = app;
+        const vpaInput = document.getElementById('rzpUpiVpaInput');
+        if (vpaInput) vpaInput.value = vpa;
+        ['gpay', 'phonepe', 'paytm', 'bhim'].forEach(a => {
+            const btn = document.getElementById(`rzpUpiApp_${a}`);
+            if (btn) {
+                btn.className = "p-2 rounded-xl border border-zinc-200 bg-white flex flex-col items-center justify-center gap-1 text-[11px] font-semibold text-zinc-600 transition-all cursor-pointer";
+            }
+        });
+        const activeKey = app === 'Google Pay' ? 'gpay' : app === 'PhonePe' ? 'phonepe' : app === 'Paytm' ? 'paytm' : 'bhim';
+        const activeBtn = document.getElementById(`rzpUpiApp_${activeKey}`);
+        if (activeBtn) {
+            activeBtn.className = "p-2 rounded-xl border-2 border-[#0A4D2E] bg-emerald-50/40 flex flex-col items-center justify-center gap-1 text-[11px] font-bold text-zinc-900 transition-all cursor-pointer";
+        }
+        updateRzpPayButtonText();
+    }
+
+    function updateRzpUpiVpa(val) {
+        currentRzpSubMethod = val ? `UPI (${val.split('@')[0]})` : 'UPI';
+        updateRzpPayButtonText();
+    }
+
+    function formatRzpCardNumber(input) {
+        let v = input.value.replace(/\D/g, '').slice(0, 16);
+        let formatted = v.match(/.{1,4}/g)?.join(' ') || v;
+        input.value = formatted;
+        const prev = document.getElementById('rzpCardPreviewNumber');
+        if (prev) prev.textContent = formatted || '•••• •••• •••• ••••';
+    }
+
+    function formatRzpCardExpiry(input) {
+        let v = input.value.replace(/\D/g, '').slice(0, 4);
+        if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2);
+        input.value = v;
+        const prev = document.getElementById('rzpCardPreviewExpiry');
+        if (prev) prev.textContent = v || 'MM/YY';
+    }
+
+    function selectRzpBank(bank) {
+        currentRzpSubMethod = bank;
+        ['HDFC', 'ICICI', 'SBI', 'Axis', 'Kotak', 'PNB'].forEach(b => {
+            const btn = document.getElementById(`rzpBank_${b}`);
+            if (btn) {
+                btn.className = "p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]";
+            }
+        });
+        const key = bank.includes('HDFC') ? 'HDFC' : bank.includes('ICICI') ? 'ICICI' : bank.includes('State') ? 'SBI' : bank.includes('Axis') ? 'Axis' : bank.includes('Kotak') ? 'Kotak' : 'PNB';
+        const activeBtn = document.getElementById(`rzpBank_${key}`);
+        if (activeBtn) {
+            activeBtn.className = "p-2.5 rounded-xl border-2 border-[#0A4D2E] bg-emerald-50/40 text-left transition-all cursor-pointer";
+        }
+        const otherSel = document.getElementById('rzpOtherBanksSelect');
+        if (otherSel) otherSel.value = '';
+        updateRzpPayButtonText();
+    }
+
+    function selectRzpOtherBank(bank) {
+        if (!bank) return;
+        currentRzpSubMethod = bank;
+        ['HDFC', 'ICICI', 'SBI', 'Axis', 'Kotak', 'PNB'].forEach(b => {
+            const btn = document.getElementById(`rzpBank_${b}`);
+            if (btn) btn.className = "p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]";
+        });
+        updateRzpPayButtonText();
+    }
+
+    function selectRzpWallet(wallet) {
+        currentRzpSubMethod = wallet;
+        updateRzpPayButtonText();
+    }
+
+    function updateRzpPayButtonText() {
+        const btn = document.getElementById('rzpPayBtnLabel');
+        if (!btn || !activeRzpSession) return;
+        const amountStr = '₹' + Number(activeRzpSession.initData.grandTotal).toLocaleString('en-IN');
+        let methodLabel = 'UPI';
+        if (currentRzpTab === 'upi') methodLabel = currentRzpSubMethod || 'UPI';
+        else if (currentRzpTab === 'card') methodLabel = 'Card';
+        else if (currentRzpTab === 'netbanking') methodLabel = currentRzpSubMethod || 'NetBanking';
+        else if (currentRzpTab === 'wallet') methodLabel = currentRzpSubMethod || 'Wallet';
+        btn.textContent = `Authorize & Pay ${amountStr} via ${methodLabel}`;
+    }
+
+    // Razorpay Simulation Handlers
+    function openRazorpaySimulationModal(initData, addressId, notes) {
+        activeRzpSession = { initData, addressId, notes };
+        const modal = document.getElementById('razorpaySimulationModal');
+        const orderIdEl = document.getElementById('rzpModalOrderId');
+        const amountEl = document.getElementById('rzpModalAmount');
+        const cardNamePreview = document.getElementById('rzpCardPreviewName');
+        if (orderIdEl) orderIdEl.textContent = initData.razorpayOrderId;
+        if (amountEl) amountEl.textContent = '₹' + Number(initData.grandTotal).toLocaleString('en-IN');
+        const userName = (initData.user?.name || 'Valued Collector').toUpperCase();
+        if (cardNamePreview) cardNamePreview.textContent = userName;
+        switchRzpTab('upi');
+        if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+    }
+
+    function closeRazorpaySimulationModal() {
+        closeRzpConfirmPayModal();
+        closeRzpConfirmDeclineModal();
+        const modal = document.getElementById('razorpaySimulationModal');
+        if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+        resetOrderBtn();
+    }
+
+    function openRzpConfirmPayModal() {
+        if (!activeRzpSession) return;
+        const modal = document.getElementById('rzpConfirmPayModal');
+        const methodEl = document.getElementById('rzpConfirmPayMethod');
+        const orderRefEl = document.getElementById('rzpConfirmPayOrderRef');
+        const amountEl = document.getElementById('rzpConfirmPayAmount');
+
+        let methodLabel = 'UPI';
+        if (currentRzpTab === 'upi') methodLabel = currentRzpSubMethod || 'UPI';
+        else if (currentRzpTab === 'card') methodLabel = 'Credit / Debit Card';
+        else if (currentRzpTab === 'netbanking') methodLabel = currentRzpSubMethod || 'NetBanking';
+        else if (currentRzpTab === 'wallet') methodLabel = currentRzpSubMethod || 'Digital Wallet';
+
+        if (methodEl) methodEl.textContent = methodLabel;
+        if (orderRefEl) orderRefEl.textContent = activeRzpSession.initData.razorpayOrderId;
+        if (amountEl) amountEl.textContent = '₹' + Number(activeRzpSession.initData.grandTotal).toLocaleString('en-IN');
+
+        if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+    }
+
+    function closeRzpConfirmPayModal() {
+        const modal = document.getElementById('rzpConfirmPayModal');
+        if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+    }
+
+    async function executeConfirmedRazorpayPayment() {
+        closeRzpConfirmPayModal();
+        await confirmRazorpaySimulatedPayment();
+    }
+
+    function openRzpConfirmDeclineModal() {
+        if (!activeRzpSession) return;
+        const modal = document.getElementById('rzpConfirmDeclineModal');
+        const orderRefEl = document.getElementById('rzpConfirmDeclineOrderRef');
+        const amountEl = document.getElementById('rzpConfirmDeclineAmount');
+
+        if (orderRefEl) orderRefEl.textContent = activeRzpSession.initData.razorpayOrderId;
+        if (amountEl) amountEl.textContent = '₹' + Number(activeRzpSession.initData.grandTotal).toLocaleString('en-IN');
+
+        if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+    }
+
+    function closeRzpConfirmDeclineModal() {
+        const modal = document.getElementById('rzpConfirmDeclineModal');
+        if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+    }
+
+    async function executeConfirmedRazorpayDecline() {
+        closeRzpConfirmDeclineModal();
+        await simulateRazorpayFailure('Transaction authorization was declined by cardholder bank / 3DS timeout.');
+    }
+
+    async function confirmRazorpaySimulatedPayment() {
+        if (!activeRzpSession) return;
+        const btn = document.getElementById('rzpSimulateSuccessBtn');
+        if (btn) btn.disabled = true;
+
+        if (window.DeltaPaymentAnimation) {
+            window.DeltaPaymentAnimation.start({
+                title: 'Authorizing Razorpay Settlement',
+                subtitle: 'Verifying ' + (currentRzpSubMethod || 'payment instrument') + ' with bank...',
+                amount: activeRzpSession.initData.grandTotal,
+                method: 'Razorpay ' + (currentRzpSubMethod || 'Secure')
+            });
+        }
+
+        try {
+            const verifyRes = await fetch('/checkout/razorpay/verify-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({
+                    addressId: activeRzpSession.addressId,
+                    notes: activeRzpSession.notes,
+                    razorpay_order_id: activeRzpSession.initData.razorpayOrderId,
+                    razorpay_payment_id: activeRzpSession.initData.testPaymentId,
+                    razorpay_signature: activeRzpSession.initData.testSignature
+                })
+            });
+            const data = await verifyRes.json();
+            if (data.success && data.redirect) {
+                if (window.updateNavbarCounters) window.updateNavbarCounters(0);
+                if (window.DeltaPaymentAnimation) {
+                    window.DeltaPaymentAnimation.success({
+                        title: 'Payment Successfully Settled',
+                        subtitle: 'Allocation confirmed & recorded in DELTA Private Vault.',
+                        redirectUrl: data.redirect,
+                        delayMs: 1200
+                    });
+                } else {
+                    window.location.href = data.redirect;
+                }
+            } else {
+                if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+                closeRazorpaySimulationModal();
+                showPaymentFailureModal(data.message || 'Signature verification failed.', activeRzpSession.addressId, activeRzpSession.notes, 'Razorpay', activeRzpSession.initData.razorpayOrderId);
+            }
+        } catch (e) {
+            if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+            closeRazorpaySimulationModal();
+            showPaymentFailureModal('Network connection error during Razorpay authorization.', activeRzpSession.addressId, activeRzpSession.notes, 'Razorpay', activeRzpSession.initData.razorpayOrderId);
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    async function recordAndRedirectPaymentFailure(addressId, notes, reason, razorpayOrderId) {
+        try {
+            const failRes = await fetch('/checkout/payment-failed', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({
+                    addressId,
+                    notes,
+                    paymentMethod: 'Razorpay',
+                    failureReason: reason,
+                    razorpayOrderId
+                })
+            });
+            const failData = await failRes.json();
+            if (failData && failData.orderId) {
+                window.location.href = failData.redirect || `/checkout/payment-failed/${failData.orderId}?reason=${encodeURIComponent(reason)}`;
+                return true;
+            }
+        } catch (e) {}
+        return false;
+    }
+
+    async function simulateRazorpayFailure(reason) {
+        if (!activeRzpSession) return;
+        const { addressId, notes, initData } = activeRzpSession;
+        closeRazorpaySimulationModal();
+        const redirected = await recordAndRedirectPaymentFailure(addressId, notes, reason, initData.razorpayOrderId);
+        if (!redirected) {
+            showPaymentFailureModal(reason, addressId, notes, 'Razorpay', initData.razorpayOrderId, null);
+        }
+    }
+
+    // Payment Failure Modal Handlers
+    function showPaymentFailureModal(reason, addressId, notes, paymentMethod, gatewayOrderId, orderId = null) {
+        lastFailedPaymentDetails = { reason, addressId, notes, paymentMethod, gatewayOrderId, orderId };
+        const modal = document.getElementById('paymentFailureModal');
+        const msgEl = document.getElementById('paymentFailureMessage');
+        const viewOrderBtn = document.getElementById('paymentFailureViewOrderBtn');
+        if (msgEl) msgEl.textContent = reason || 'Payment authorization was declined or cancelled.';
+        if (viewOrderBtn) {
+            if (orderId) {
+                viewOrderBtn.href = `/checkout/payment-failed/${orderId}?reason=${encodeURIComponent(reason || 'Payment failed')}`;
+                viewOrderBtn.classList.remove('hidden');
+            } else {
+                viewOrderBtn.classList.add('hidden');
+            }
+        }
+        if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+        resetOrderBtn();
+    }
+
+    function closePaymentFailureModal() {
+        const modal = document.getElementById('paymentFailureModal');
+        if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+        resetOrderBtn();
+    }
+
+    function retryPaymentFromFailureModal() {
+        closePaymentFailureModal();
+        if (lastFailedPaymentDetails && lastFailedPaymentDetails.orderId) {
+            window.location.href = `/checkout/payment-failed/${lastFailedPaymentDetails.orderId}?reason=${encodeURIComponent(lastFailedPaymentDetails.reason || 'Payment declined')}`;
+        } else {
+            submitOrder();
+        }
+    }
+
+    async function switchFailedOrderToCod() {
+        closePaymentFailureModal();
+        if (lastFailedPaymentDetails && lastFailedPaymentDetails.orderId) {
+            try {
+                const res = await fetch(`/orders/${lastFailedPaymentDetails.orderId}/retry-payment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ paymentMethod: 'Cash on Delivery' })
+                });
+                const data = await res.json();
+                if (data.success && data.redirect) {
+                    window.location.href = data.redirect;
+                    return;
+                }
+                if (window.showToast) window.showToast(data.message || 'Could not switch to Cash on Delivery.', 'error');
+            } catch (e) {
+                if (window.showToast) window.showToast('Network error switching to Cash on Delivery.', 'error');
+            }
+        } else {
+            selectPaymentOption('Cash on Delivery');
+            submitOrder();
+        }
+    }
+
+    async function submitOrder() {
+        const btn = document.getElementById('placeOrderBtn');
+        const btnText = document.getElementById('placeOrderBtnText');
+
+        // Verify selected address
+        const radio = document.querySelector('input[name="selectedAddressId"]:checked');
+        const addressId = radio ? radio.value : currentSelectedAddressId;
+
+        if (!addressId) {
+            if (window.showToast) {
+                window.showToast('Please select or add a delivery destination address.', 'warning', 4000);
+            } else {
+                alert('Please select or add a delivery destination address.');
+            }
+            openAddAddressModal();
+            return;
+        }
+
+        const notes = (document.getElementById('orderNotes')?.value || '').trim();
+
+        if (btn) btn.disabled = true;
+
+        // Route 0: DELTA Vault Wallet
+        if (currentSelectedPaymentMethod === 'Wallet') {
+            if (btnText) btnText.innerHTML = '<span class="animate-pulse">Authorizing Vault Settlement...</span>';
+            if (window.DeltaPaymentAnimation) {
+                window.DeltaPaymentAnimation.start({
+                    title: 'Authorizing Vault Reserve Settlement',
+                    subtitle: 'Debiting verified collector reserve...',
+                    amount: currentGrandTotal,
+                    method: 'DELTA Vault Reserve'
+                });
+            }
+            try {
+                const res = await fetch('/checkout/place-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        addressId,
+                        paymentMethod: 'Wallet',
+                        notes
+                    })
+                });
+                const data = await res.json();
+
+                if (res.status === 401 || data.redirect?.includes('/login')) {
+                    if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+                    window.location.href = data.redirect || '/login';
+                    return;
+                }
+
+                if (data.success && data.redirect) {
+                    if (window.updateNavbarCounters) window.updateNavbarCounters(0);
+                    if (window.DeltaPaymentAnimation) {
+                        window.DeltaPaymentAnimation.success({
+                            title: 'Vault Settlement Confirmed',
+                            subtitle: 'One-click timepiece allocation complete.',
+                            redirectUrl: data.redirect,
+                            delayMs: 1200
+                        });
+                    } else {
+                        window.location.href = data.redirect;
+                    }
+                } else {
+                    if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+                    resetOrderBtn();
+                    handleCheckoutOrderError(data, 'Unable to authorize wallet settlement.');
+                }
+            } catch (e) {
+                if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+                resetOrderBtn();
+                if (window.showToast) window.showToast('Network issue processing wallet payment.', 'error');
+            }
+            return;
+        }
+
+        // Route 1: Cash on Delivery (COD)
+        if (currentSelectedPaymentMethod === 'Cash on Delivery') {
+            if (btnText) btnText.innerHTML = '<span class="animate-pulse">Authorizing COD Order...</span>';
+            if (window.DeltaPaymentAnimation) {
+                window.DeltaPaymentAnimation.start({
+                    title: 'Securing Timepiece Allocation',
+                    subtitle: 'Registering white-glove consignment destination...',
+                    amount: currentGrandTotal,
+                    method: 'Cash on Delivery'
+                });
+            }
+            try {
+                const res = await fetch('/checkout/place-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        addressId,
+                        paymentMethod: 'Cash on Delivery',
+                        notes
+                    })
+                });
+                const data = await res.json();
+
+                if (res.status === 401 || data.redirect?.includes('/login')) {
+                    if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+                    window.location.href = data.redirect || '/login';
+                    return;
+                }
+
+                if (data.success && data.redirect) {
+                    if (window.updateNavbarCounters) window.updateNavbarCounters(0);
+                    if (window.DeltaPaymentAnimation) {
+                        window.DeltaPaymentAnimation.success({
+                            title: 'Order Allocation Confirmed',
+                            subtitle: 'White-glove delivery dossier generated.',
+                            redirectUrl: data.redirect,
+                            delayMs: 1200
+                        });
+                    } else {
+                        window.location.href = data.redirect;
+                    }
+                } else {
+                    if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+                    resetOrderBtn();
+                    handleCheckoutOrderError(data, 'Unable to place order.');
+                }
+            } catch (e) {
+                if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+                resetOrderBtn();
+                if (window.showToast) window.showToast('Network issue placing order.', 'error');
+            }
+            return;
+        }
+
+        // Route 2: Razorpay Online Payment Gateway
+        if (currentSelectedPaymentMethod === 'Razorpay') {
+            if (btnText) btnText.innerHTML = '<span class="animate-pulse">Initializing Razorpay...</span>';
+            try {
+                const initRes = await fetch('/checkout/razorpay/create-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ addressId, notes })
+                });
+                const initData = await initRes.json();
+                if (!initData.success) {
+                    resetOrderBtn();
+                    handleCheckoutOrderError(initData, 'Could not initiate Razorpay checkout session.');
+                    return;
+                }
+
+                // Check if genuine Razorpay credentials and order are present, or if simulated sandbox is active
+                const isRealRazorpay = typeof window.Razorpay === 'function' &&
+                    !initData.isSimulated &&
+                    initData.keyId &&
+                    !initData.keyId.includes('deltaVault') &&
+                    !initData.keyId.includes('dummy') &&
+                    initData.razorpayOrderId &&
+                    !initData.razorpayOrderId.startsWith('order_delta_');
+
+                if (isRealRazorpay) {
+                    const options = {
+                        key: initData.keyId,
+                        amount: initData.amount,
+                        currency: initData.currency || "INR",
+                        name: "DELTA Luxury Horology",
+                        description: "Vault Allocation Settlement",
+                        order_id: initData.razorpayOrderId,
+                        prefill: {
+                            name: initData.user?.name || "",
+                            email: initData.user?.email || "",
+                            contact: initData.user?.phone || ""
+                        },
+                        theme: {
+                            color: "#0A4D2E"
+                        },
+                        handler: async function (response) {
+                            rzpOutcomeHandled = true;
+                            if (btnText) btnText.innerHTML = '<span class="animate-pulse">Verifying Payment...</span>';
+                            if (window.DeltaPaymentAnimation) {
+                                window.DeltaPaymentAnimation.start({
+                                    title: 'Verifying Razorpay Settlement',
+                                    subtitle: 'Validating cryptographic signature with banking network...',
+                                    amount: currentGrandTotal,
+                                    method: 'Razorpay Secure'
+                                });
+                            }
+                            try {
+                                const verifyRes = await fetch('/checkout/razorpay/verify-payment', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                                    body: JSON.stringify({
+                                        addressId,
+                                        notes,
+                                        razorpay_order_id: response.razorpay_order_id,
+                                        razorpay_payment_id: response.razorpay_payment_id,
+                                        razorpay_signature: response.razorpay_signature
+                                    })
+                                });
+                                const verifyData = await verifyRes.json();
+                                if (verifyData.success && verifyData.redirect) {
+                                    if (window.updateNavbarCounters) window.updateNavbarCounters(0);
+                                    if (window.DeltaPaymentAnimation) {
+                                        window.DeltaPaymentAnimation.success({
+                                            title: 'Payment Successfully Settled',
+                                            subtitle: 'Timepiece allocation secured in DELTA Vault.',
+                                            redirectUrl: verifyData.redirect,
+                                            delayMs: 1200
+                                        });
+                                    } else {
+                                        window.location.href = verifyData.redirect;
+                                    }
+                                } else {
+                                    throw new Error(verifyData.message || 'Payment signature verification failed.');
+                                }
+                            } catch (vErr) {
+                                if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+                                resetOrderBtn();
+                                const reason = vErr.message || 'Payment signature verification failed.';
+                                const rzpOrderId = response.razorpay_order_id || initData.razorpayOrderId;
+                                const redirected = await recordAndRedirectPaymentFailure(addressId, notes, reason, rzpOrderId);
+                                if (!redirected) {
+                                    showPaymentFailureModal(reason, addressId, notes, 'Razorpay', rzpOrderId, null);
+                                }
+                            }
+                        },
+                        modal: {
+                            ondismiss: async function () {
+                                if (rzpOutcomeHandled) return;
+                                rzpOutcomeHandled = true;
+                                resetOrderBtn();
+                                const reason = 'Payment session was dismissed or cancelled by the user.';
+                                const redirected = await recordAndRedirectPaymentFailure(addressId, notes, reason, initData.razorpayOrderId);
+                                if (!redirected && window.showToast) {
+                                    window.showToast('Payment window closed.', 'info');
+                                }
+                            }
+                        }
+                    };
+
+                    let rzpOutcomeHandled = false;
+                    try {
+                        const rzp = new window.Razorpay(options);
+                        rzp.on('payment.failed', async function (resp) {
+                            if (rzpOutcomeHandled) return;
+                            rzpOutcomeHandled = true;
+                            resetOrderBtn();
+                            const errMsg = resp.error?.description || resp.error?.reason || 'Payment declined by issuing bank.';
+                            const redirected = await recordAndRedirectPaymentFailure(addressId, notes, errMsg, initData.razorpayOrderId);
+                            if (!redirected) {
+                                showPaymentFailureModal(errMsg, addressId, notes, 'Razorpay', initData.razorpayOrderId, null);
+                            }
+                        });
+                        rzp.open();
+                    } catch (openErr) {
+                        console.warn("[Razorpay] Live SDK failed to open, switching to simulation fallback:", openErr);
+                        openRazorpaySimulationModal(initData, addressId, notes);
+                    }
+                } else {
+                    // Sandbox fallback simulation modal
+                    openRazorpaySimulationModal(initData, addressId, notes);
+                }
+            } catch (err) {
+                resetOrderBtn();
+                if (window.showToast) window.showToast(err.message, 'error', 5000);
+                else alert(err.message);
+            }
+            return;
+        }
+    }
+
+    // ==========================================
+    // CHECKOUT COUPON MANAGEMENT
+    // ==========================================
+
+    function showCouponFeedback(message, type = 'error') {
+        const feedbackEl = document.getElementById('couponFeedback');
+        if (!feedbackEl) return;
+        
+        feedbackEl.className = 'text-xs rounded-xl p-3 ' + (
+            type === 'success' 
+                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+                : 'bg-rose-50 text-rose-700 border border-rose-200'
+        );
+        feedbackEl.textContent = message;
+        feedbackEl.classList.remove('hidden');
+
+        setTimeout(() => {
+            if (feedbackEl) feedbackEl.classList.add('hidden');
+        }, 8000);
+    }
+
+    function renderCheckoutAppliedCoupons(coupons) {
+        const container = document.getElementById('appliedCouponsList');
+        if (!container) return;
+        if (!coupons || coupons.length === 0) {
+            container.innerHTML = '';
+            container.classList.add('hidden');
+            return;
+        }
+        container.classList.remove('hidden');
+        container.innerHTML = coupons.map(c => `
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200/90 text-emerald-900 transition-all">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="font-mono font-bold text-xs uppercase tracking-wider text-[#0A4D2E]">${c.code}</span>
+                    <span class="text-[10px] font-mono text-emerald-800">(-₹${Number(c.discountAmount || 0).toLocaleString('en-IN')})</span>
+                </div>
+                <button 
+                    type="button" 
+                    onclick="removeCouponFromCheckout('${c.code}')"
+                    class="text-[10px] uppercase font-mono tracking-wider font-bold text-rose-700 hover:text-rose-900 bg-white hover:bg-rose-50 px-2 py-1 rounded-lg border border-rose-200 transition-colors cursor-pointer flex-shrink-0"
+                    title="Remove Coupon Code"
+                >
+                    ✕
+                </button>
+            </div>
+        `).join('');
+    }
+
+    function updateCheckoutTotals(summary, coupon = null, appliedCoupons = null) {
+        if (!summary) return;
+
+        currentGrandTotal = Number(summary.grandTotal || 0);
+        currentDiscount = Number(summary.discount || 0);
+        currentSubtotal = Number(summary.subtotal || 0);
+        currentAppliedCoupon = coupon || null;
+        if (appliedCoupons) {
+            currentAppliedCoupons = appliedCoupons;
+        } else if (summary.appliedCoupons) {
+            currentAppliedCoupons = summary.appliedCoupons;
+        } else if (coupon) {
+            currentAppliedCoupons = [coupon];
+        } else if (!coupon && (!summary.discount || summary.discount === 0)) {
+            currentAppliedCoupons = [];
+        }
+
+        renderCheckoutAppliedCoupons(currentAppliedCoupons);
+
+        const originalSubtotal = Number(summary.originalSubtotal || currentSubtotal);
+        const productDiscount = Number(summary.productDiscount !== undefined ? summary.productDiscount : Math.max(0, originalSubtotal - currentSubtotal));
+        const totalSavings = productDiscount + currentDiscount;
+
+        // Catalog Value (MSRP) & Product Discount
+        const origRow = document.getElementById('summaryOriginalRow');
+        const origVal = document.getElementById('summaryOriginalVal');
+        const prodDiscRow = document.getElementById('summaryProductDiscountRow');
+        const prodDiscVal = document.getElementById('summaryProductDiscountVal');
+
+        if (productDiscount > 0) {
+            if (origRow) origRow.classList.remove('hidden');
+            if (origVal) origVal.textContent = '₹' + originalSubtotal.toLocaleString('en-IN');
+            if (prodDiscRow) prodDiscRow.classList.remove('hidden');
+            if (prodDiscVal) prodDiscVal.textContent = '-₹' + productDiscount.toLocaleString('en-IN');
+        } else {
+            if (origRow) origRow.classList.add('hidden');
+            if (prodDiscRow) prodDiscRow.classList.add('hidden');
+        }
+
+        // Subtotal
+        const subtotalEl = document.getElementById('summarySubtotalVal');
+        if (subtotalEl) subtotalEl.textContent = '₹' + currentSubtotal.toLocaleString('en-IN');
+
+        // Coupon Discount Row
+        const discountRow = document.getElementById('summaryDiscountRow');
+        const discountVal = document.getElementById('summaryDiscountVal');
+        const rateLabel = document.getElementById('summaryDiscountRateLabel');
+        const codeBadge = document.getElementById('summaryDiscountCodeBadge');
+
+        if (currentDiscount > 0 && currentAppliedCoupons && currentAppliedCoupons.length > 0) {
+            if (discountRow) {
+                discountRow.classList.remove('hidden');
+                discountRow.classList.add('flex');
+            }
+            if (discountVal) discountVal.textContent = '-₹' + currentDiscount.toLocaleString('en-IN');
+            if (codeBadge) codeBadge.textContent = currentAppliedCoupons.map(c => c.code).join(', ');
+            if (rateLabel) {
+                rateLabel.textContent = `${currentAppliedCoupons.length} coupon(s) applied`;
+            }
+        } else {
+            if (discountRow) {
+                discountRow.classList.add('hidden');
+                discountRow.classList.remove('flex');
+            }
+            if (discountVal) discountVal.textContent = '-₹0';
+            if (codeBadge) codeBadge.textContent = '';
+            if (rateLabel) rateLabel.textContent = '';
+        }
+
+        // Taxes & Levies
+        const taxEl = document.getElementById('summaryTaxVal');
+        if (taxEl) taxEl.textContent = Math.round(currentSubtotal * 0.18).toLocaleString('en-IN');
+
+        // Total Savings Banner
+        const savingsBanner = document.getElementById('summaryTotalSavingsBanner');
+        const savingsVal = document.getElementById('summaryTotalSavingsVal');
+        if (totalSavings > 0) {
+            if (savingsBanner) {
+                savingsBanner.classList.remove('hidden');
+                savingsBanner.classList.add('flex');
+            }
+            if (savingsVal) savingsVal.textContent = '₹' + totalSavings.toLocaleString('en-IN');
+        } else {
+            if (savingsBanner) {
+                savingsBanner.classList.add('hidden');
+                savingsBanner.classList.remove('flex');
+            }
+        }
+
+        // Grand Total
+        const grandTotalEl = document.getElementById('summaryGrandTotalVal');
+        if (grandTotalEl) grandTotalEl.textContent = '₹' + currentGrandTotal.toLocaleString('en-IN');
+
+        const couponInput = document.getElementById('checkoutCouponCode');
+        if (couponInput) couponInput.value = '';
+
+        // Update Payment Button
+        updatePayButtonText();
+
+        // Dynamically synchronize Vault Wallet payment eligibility
+        syncWalletPaymentEligibility();
+    }
+
+    const collectorWalletBalance = <%= Number(typeof walletBalance !== 'undefined' ? walletBalance : (typeof wallet !== 'undefined' && wallet ? wallet.balance : 0)) %>;
+
+    function syncWalletPaymentEligibility() {
+        const walletCard = document.getElementById('payment-option-wallet');
+        const walletRadio = document.getElementById('payment-radio-wallet');
+        const walletDesc = document.getElementById('payment-wallet-desc');
+        if (!walletCard || !walletRadio) return;
+
+        const canPay = collectorWalletBalance >= currentGrandTotal && currentGrandTotal > 0;
+        walletRadio.disabled = !canPay;
+
+        if (canPay) {
+            walletCard.classList.remove('border-zinc-200/60', 'bg-zinc-50/70', 'opacity-80', 'cursor-not-allowed');
+            walletCard.classList.add('cursor-pointer');
+            walletRadio.classList.remove('cursor-not-allowed');
+            walletRadio.classList.add('cursor-pointer');
+            if (walletDesc) {
+                walletDesc.innerHTML = 'Instant one-click timepiece allocation deducted directly from your verified Vault liquidity reserve.';
+            }
+        } else {
+            const shortfall = Math.max(0, currentGrandTotal - collectorWalletBalance);
+            walletCard.classList.add('border-zinc-200/60', 'bg-zinc-50/70', 'opacity-80', 'cursor-not-allowed');
+            walletCard.classList.remove('border-[#0A4D2E]', 'bg-emerald-50/20', 'ring-1', 'ring-[#0A4D2E]/20', 'shadow-xs', 'cursor-pointer');
+            walletRadio.classList.add('cursor-not-allowed');
+            walletRadio.classList.remove('cursor-pointer');
+            if (walletDesc) {
+                walletDesc.innerHTML = `<span class="text-amber-800 font-medium">Insufficient reserve balance for full settlement (Available: ₹${collectorWalletBalance.toLocaleString('en-IN')} • Shortfall: ₹${shortfall.toLocaleString('en-IN')}).</span> <a href="/wallet" target="_blank" class="text-[#0A4D2E] underline font-bold ml-1 hover:text-[#073822]">Top-up Wallet ↗</a> or choose Razorpay / Cash on Delivery.`;
+            }
+
+            if (currentSelectedPaymentMethod === 'Wallet') {
+                selectPaymentOption('Razorpay');
+            }
+        }
+    }
+
+    async function applyCouponFromCheckout(codeOverride = null) {
+        const input = document.getElementById('checkoutCouponCode');
+        const code = (codeOverride || (input ? input.value : '')).trim();
+
+        if (!code) {
+            showCouponFeedback('Please enter a coupon code.', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('applyCouponBtn');
+        const btnText = document.getElementById('applyCouponBtnText');
+        const spinner = document.getElementById('applyCouponSpinner');
+
+        if (btn) btn.disabled = true;
+        if (btnText) btnText.classList.add('hidden');
+        if (spinner) spinner.classList.remove('hidden');
+
+        try {
+            const res = await fetch('/checkout/apply-coupon', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ code })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || 'Unable to apply coupon code.');
+            }
+
+            updateCheckoutTotals(data.summary, data.coupon, data.appliedCoupons);
+            if (input) input.value = '';
+            showCouponFeedback(data.message || 'Coupon code applied successfully!', 'success');
+            if (window.showToast) {
+                window.showToast(`Coupon code "${(data.coupon && data.coupon.code) || code}" applied: Saved ₹${Number(data.summary.discount).toLocaleString('en-IN')}`, 'success');
+            }
+            closeAvailableCouponsModal();
+        } catch (err) {
+            showCouponFeedback(err.message, 'error');
+            if (window.showToast) {
+                window.showToast(err.message, 'error');
+            }
+        } finally {
+            if (btn) btn.disabled = false;
+            if (btnText) btnText.classList.remove('hidden');
+            if (spinner) spinner.classList.add('hidden');
+        }
+    }
+
+    async function removeCouponFromCheckout(code = null) {
+        const btn = document.getElementById('removeCouponBtn');
+        const btnText = document.getElementById('removeCouponBtnText');
+        const spinner = document.getElementById('removeCouponSpinner');
+
+        if (btn) btn.disabled = true;
+        if (btnText) btnText.classList.add('hidden');
+        if (spinner) spinner.classList.remove('hidden');
+
+        try {
+            const res = await fetch('/checkout/remove-coupon', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ code })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || 'Unable to remove coupon code.');
+            }
+
+            updateCheckoutTotals(data.summary, data.appliedCoupon, data.appliedCoupons);
+            showCouponFeedback('Coupon code removed from your order.', 'success');
+            if (window.showToast) {
+                window.showToast('Coupon code removed from your order.', 'info');
+            }
+        } catch (err) {
+            showCouponFeedback(err.message, 'error');
+            if (window.showToast) {
+                window.showToast(err.message, 'error');
+            }
+        } finally {
+            if (btn) btn.disabled = false;
+            if (btnText) btnText.classList.remove('hidden');
+            if (spinner) spinner.classList.add('hidden');
+        }
+    }
+
+    // Modal for Available Coupons
+    async function openAvailableCouponsModal() {
+        const modal = document.getElementById('availableCouponsModal');
+        const listEl = document.getElementById('availableCouponsList');
+        if (!modal) return;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        if (!listEl) return;
+        listEl.innerHTML = `
+            <div class="text-center py-8 text-zinc-400 text-xs font-mono">
+                <span class="inline-block animate-spin h-5 w-5 border-2 border-[#0A4D2E] border-t-transparent rounded-full mb-2"></span>
+                <p>Consulting catalog for available coupons...</p>
+            </div>
+        `;
+
+        try {
+            const res = await fetch('/api/coupons/available');
+            const data = await res.json();
+
+            if (!data.success || !data.coupons || data.coupons.length === 0) {
+                listEl.innerHTML = `
+                    <div class="text-center py-10 px-4 space-y-2">
+                        <span class="text-2xl text-zinc-300">🎫</span>
+                        <p class="text-sm font-serif text-zinc-700">No active coupons found.</p>
+                        <p class="text-xs text-zinc-400 font-mono">New coupon codes will be delivered via newsletter.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = data.coupons.map(c => {
+                const isCurrentActive = (currentAppliedCoupons && currentAppliedCoupons.some(ac => ac && ac.code && ac.code.toUpperCase() === c.code.toUpperCase())) || (currentAppliedCoupon && currentAppliedCoupon.code && currentAppliedCoupon.code.toUpperCase() === c.code.toUpperCase());
+                const isAlreadyRedeemed = c.alreadyRedeemed;
+                const isEligible = c.isEligible && !isAlreadyRedeemed;
+                const discountDisplay = c.discountType === 'percentage' 
+                    ? `${c.discountValue}% OFF` 
+                    : `₹${Number(c.discountValue).toLocaleString('en-IN')} DIRECT CREDIT`;
+
+                return `
+                    <div class="p-4 rounded-2xl border transition-all ${
+                        isCurrentActive 
+                            ? 'border-[#0A4D2E] bg-emerald-50/30 ring-1 ring-[#0A4D2E]/20' 
+                            : isAlreadyRedeemed
+                            ? 'border-zinc-100 bg-zinc-50/50 opacity-60'
+                            : isEligible 
+                            ? 'border-zinc-200 bg-white hover:border-[#0A4D2E]/40' 
+                            : 'border-zinc-100 bg-zinc-50/60 opacity-75'
+                    }">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="space-y-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="font-mono font-bold text-xs px-2.5 py-1 rounded-lg ${isAlreadyRedeemed ? 'bg-zinc-200 text-zinc-600' : 'bg-zinc-900 text-[#c5a059]'} tracking-wider">
+                                        ${c.code}
+                                    </span>
+                                    <span class="text-[9px] uppercase font-mono font-semibold px-2 py-0.5 rounded ${
+                                        isAlreadyRedeemed 
+                                            ? 'bg-zinc-200 text-zinc-600' 
+                                            : isEligible 
+                                            ? 'bg-emerald-100 text-emerald-800' 
+                                            : 'bg-amber-100 text-amber-800'
+                                    }">
+                                        ${isAlreadyRedeemed ? 'Already Redeemed' : isEligible ? 'Eligible' : `Min Order ₹${Number(c.minPurchaseAmount).toLocaleString('en-IN')}`}
+                                    </span>
+                                </div>
+                                <h4 class="font-serif text-sm font-semibold text-zinc-900 pt-1">
+                                    ${discountDisplay}
+                                </h4>
+                                <p class="text-xs text-zinc-500 font-light leading-relaxed">
+                                    ${c.description}
+                                </p>
+                                ${c.maxDiscountAmount ? `
+                                    <p class="text-[10px] text-zinc-400 font-mono">
+                                        Ceiling Cap: ₹${Number(c.maxDiscountAmount).toLocaleString('en-IN')}
+                                    </p>
+                                ` : ''}
+                            </div>
+
+                            <div class="flex-shrink-0 pt-1">
+                                ${isCurrentActive ? `
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[#0A4D2E] bg-emerald-100 px-3 py-1.5 rounded-xl">
+                                        ✓ Applied
+                                    </span>
+                                ` : isAlreadyRedeemed ? `
+                                    <span class="text-[10px] font-mono text-zinc-400 bg-zinc-100 px-2.5 py-1 rounded-lg">
+                                        Redeemed
+                                    </span>
+                                ` : isEligible ? `
+                                    <button 
+                                        type="button" 
+                                        onclick="applyCouponFromCheckout('${c.code}')"
+                                        class="px-3.5 py-1.5 bg-[#0A4D2E] hover:bg-[#073822] text-white rounded-xl text-[10px] uppercase font-mono font-bold tracking-wider transition-colors cursor-pointer shadow-xs"
+                                    >
+                                        Apply
+                                    </button>
+                                ` : `
+                                    <span class="text-[10px] font-mono text-zinc-400">
+                                        Ineligible
+                                    </span>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (e) {
+            listEl.innerHTML = `
+                <div class="text-center py-6 text-rose-600 text-xs font-mono">
+                    Failed to retrieve available coupons. Please try again.
+                </div>
+            `;
+        }
+    }
+
+    function closeAvailableCouponsModal() {
+        const modal = document.getElementById('availableCouponsModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (Array.isArray(initialCouponWarnings) && initialCouponWarnings.length > 0) {
+            const combinedMsg = initialCouponWarnings.map(w => w.message).filter(Boolean).join(' ');
+            if (combinedMsg) {
+                showCouponFeedback(combinedMsg, 'error');
+                if (window.showToast) window.showToast(combinedMsg, 'error', 6000);
+            }
+        }
+    });
+</script>

@@ -1,0 +1,1160 @@
+<%- include('../partials/header', { title: 'Brand Registry — DELTA Horology' }) %>
+
+<%
+    const safeBrands = (typeof brands !== 'undefined' && Array.isArray(brands)) ? brands : [];
+    const safeSearch = (typeof search !== 'undefined' && search) ? search : '';
+    const safeStatus = (typeof status !== 'undefined' && status) ? status : 'all';
+    const safeStats = (typeof stats !== 'undefined' && stats) ? stats : { totalBrands: safeBrands.length, activeBrands: 0, unlistedBrands: 0, deletedBrands: 0 };
+    const safePagination = (typeof pagination !== 'undefined' && pagination) ? pagination : {
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: safeBrands.length,
+        pageLimit: 6,
+        startItem: safeBrands.length > 0 ? 1 : 0,
+        endItem: safeBrands.length,
+        hasNextPage: false,
+        hasPrevPage: false,
+        nextPage: null,
+        prevPage: null,
+        pageNumbers: [1]
+    };
+    const startNum = safePagination.startItem || (safeBrands.length > 0 ? ((safePagination.currentPage - 1) * safePagination.pageLimit + 1) : 0);
+    const endNum = safePagination.endItem || Math.min(safePagination.totalItems, startNum + safeBrands.length - 1);
+%>
+
+<div class="flex flex-1 min-h-screen bg-[#FBFBFC]">
+    <%- include('../partials/sidebar', { activePage: 'brands' }) %>
+
+    <div class="flex-1 flex flex-col min-w-0">
+        <%- include('../partials/navbar', { pageTitle: 'Brand Registry' }) %>
+
+        <main class="flex-grow p-6 sm:p-10 max-w-[1500px] w-full mx-auto space-y-8">
+            
+            <!-- 1. Header Section -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2 border-b border-zinc-200/70">
+                <div class="space-y-1.5">
+                    <h1 class="text-3xl sm:text-4xl font-serif font-normal text-zinc-900 tracking-tight">
+                        Brand Registry
+                    </h1>
+                    <p class="text-xs sm:text-sm text-zinc-500 font-light max-w-2xl leading-relaxed">
+                        Manage the global horological portfolio. Define brand heritage, toggle active/inactive catalog visibility, and inspect archived maisons.
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <% if (safeStatus === 'archived' && (safeStats.deletedBrands > 0 || safeBrands.length > 0)) { %>
+                        <button 
+                            type="button" 
+                            onclick="openPermanentDeleteAllModal()" 
+                            class="inline-flex items-center gap-2 bg-rose-700 hover:bg-rose-800 text-white px-5 py-3.5 rounded-xl text-xs uppercase font-semibold tracking-[0.15em] transition-all shadow-md shadow-rose-700/20 active:scale-[0.99] cursor-pointer"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            <span>DELETE ALL ARCHIVED</span>
+                        </button>
+                    <% } %>
+                    <button 
+                        type="button" 
+                        onclick="openAddModal()" 
+                        class="inline-flex items-center gap-2.5 bg-[#0A4D2E] hover:bg-[#083e25] text-white px-6 py-3.5 rounded-xl text-xs uppercase font-semibold tracking-[0.15em] transition-all shadow-md shadow-[#0A4D2E]/15 active:scale-[0.99] cursor-pointer"
+                    >
+                        <span class="text-base leading-none font-light">+</span>
+                        <span>REGISTER NEW BRAND</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Flash Alerts -->
+            <% if (typeof success !== 'undefined' && success) { %>
+                <div class="bg-emerald-50/90 border border-emerald-200/80 text-emerald-900 px-5 py-3.5 rounded-2xl text-xs flex items-center justify-between shadow-sm animate-fade-in">
+                    <div class="flex items-center gap-2.5">
+                        <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="font-medium"><%= success %></span>
+                    </div>
+                    <button type="button" onclick="this.parentElement.remove()" class="text-emerald-700 hover:text-emerald-900 text-sm cursor-pointer">✕</button>
+                </div>
+            <% } %>
+
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="bg-rose-50/90 border border-rose-200/80 text-rose-900 px-5 py-3.5 rounded-2xl text-xs flex items-center justify-between shadow-sm animate-fade-in">
+                    <div class="flex items-center gap-2.5">
+                        <svg class="w-4 h-4 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="font-medium"><%= error %></span>
+                    </div>
+                    <button type="button" onclick="this.parentElement.remove()" class="text-rose-700 hover:text-rose-900 text-sm cursor-pointer">✕</button>
+                </div>
+            <% } %>
+
+            <!-- Status Filter Tabs / Counter Pills -->
+            <div class="flex items-center flex-wrap gap-2.5">
+                <a 
+                    href="/admin/brands?status=all&limit=<%= safePagination.pageLimit %><%= safeSearch ? '&search=' + encodeURIComponent(safeSearch) : '' %>"
+                    class="px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 <%= (safeStatus === 'all' || !safeStatus) ? 'bg-zinc-900 text-white shadow-sm' : 'bg-white border border-zinc-200/80 text-zinc-600 hover:bg-zinc-50' %>"
+                >
+                    <span>All Maisons</span>
+                    <span id="statTotalBrands" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold <%= (safeStatus === 'all' || !safeStatus) ? 'bg-zinc-800 text-zinc-200' : 'bg-zinc-100 text-zinc-700' %>"><%= safeStats.totalBrands || 0 %></span>
+                </a>
+
+                <a 
+                    href="/admin/brands?status=active&limit=<%= safePagination.pageLimit %><%= safeSearch ? '&search=' + encodeURIComponent(safeSearch) : '' %>"
+                    class="px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 <%= safeStatus === 'active' ? 'bg-[#0A4D2E] text-white shadow-sm' : 'bg-white border border-zinc-200/80 text-zinc-600 hover:bg-zinc-50' %>"
+                >
+                    <span class="w-2 h-2 rounded-full <%= safeStatus === 'active' ? 'bg-emerald-300' : 'bg-emerald-600' %>"></span>
+                    <span>Active (Listed)</span>
+                    <span id="statActiveBrands" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold <%= safeStatus === 'active' ? 'bg-emerald-900 text-emerald-200' : 'bg-emerald-50 text-emerald-700' %>"><%= safeStats.activeBrands || 0 %></span>
+                </a>
+
+                <a 
+                    href="/admin/brands?status=inactive&limit=<%= safePagination.pageLimit %><%= safeSearch ? '&search=' + encodeURIComponent(safeSearch) : '' %>"
+                    class="px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 <%= safeStatus === 'inactive' ? 'bg-zinc-800 text-white shadow-sm' : 'bg-white border border-zinc-200/80 text-zinc-600 hover:bg-zinc-50' %>"
+                >
+                    <span class="w-2 h-2 rounded-full <%= safeStatus === 'inactive' ? 'bg-zinc-300' : 'bg-zinc-400' %>"></span>
+                    <span>Inactive (Unlisted)</span>
+                    <span id="statUnlistedBrands" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold <%= safeStatus === 'inactive' ? 'bg-zinc-900 text-zinc-200' : 'bg-zinc-100 text-zinc-600' %>"><%= safeStats.unlistedBrands || 0 %></span>
+                </a>
+
+                <a 
+                    href="/admin/brands?status=archived&limit=<%= safePagination.pageLimit %><%= safeSearch ? '&search=' + encodeURIComponent(safeSearch) : '' %>"
+                    class="px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 <%= safeStatus === 'archived' ? 'bg-rose-900 text-white shadow-sm' : 'bg-white border border-zinc-200/80 text-zinc-600 hover:bg-zinc-50' %>"
+                >
+                    <span class="w-2 h-2 rounded-full <%= safeStatus === 'archived' ? 'bg-rose-300' : 'bg-rose-500' %>"></span>
+                    <span>Archived</span>
+                    <span id="statDeletedBrands" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold <%= safeStatus === 'archived' ? 'bg-rose-950 text-rose-200' : 'bg-rose-50 text-rose-700' %>"><%= safeStats.deletedBrands || 0 %></span>
+                </a>
+            </div>
+
+            <!-- 2. Search Bar with Clear Button -->
+            <div class="bg-white border border-zinc-200/70 rounded-2xl p-4 sm:p-5 shadow-sm">
+                <form action="/admin/brands" method="GET" class="flex flex-col sm:flex-row items-center gap-4 m-0">
+                    <input type="hidden" name="status" value="<%= safeStatus %>">
+                    <input type="hidden" name="limit" value="<%= safePagination.pageLimit %>">
+
+                    <div class="relative flex-1 w-full">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </span>
+                        <input 
+                            type="text" 
+                            name="search" 
+                            value="<%= safeSearch %>" 
+                            placeholder="Search Maisons by name, origin region, or heritage notes..." 
+                            class="w-full pl-11 pr-10 py-3 bg-zinc-50/80 hover:bg-zinc-50 focus:bg-white border border-zinc-200/90 rounded-xl text-xs sm:text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A4D2E]/10 focus:border-[#0A4D2E] transition-all"
+                        >
+                        <% if (safeSearch) { %>
+                            <a href="/admin/brands?status=<%= safeStatus %>&limit=<%= safePagination.pageLimit %>" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 p-1 text-xs font-bold" title="Clear Search">
+                                ✕
+                            </a>
+                        <% } %>
+                    </div>
+
+                    <div class="flex items-center gap-2.5 w-full sm:w-auto">
+                        <button type="submit" class="flex-1 sm:flex-none px-5 py-3 bg-zinc-900 hover:bg-black text-white rounded-xl text-xs uppercase tracking-wider font-semibold transition-all cursor-pointer">
+                            Filter
+                        </button>
+                        <% if (safeSearch || safeStatus !== 'all') { %>
+                            <a href="/admin/brands?limit=<%= safePagination.pageLimit %>" class="px-4 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-600 rounded-xl text-xs uppercase tracking-wider font-semibold transition-all">
+                                Reset All
+                            </a>
+                        <% } %>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 3. Luxury Brand Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <% if (safeBrands.length > 0) { %>
+                    <% safeBrands.forEach((b) => { %>
+                        <% const isArchived = Boolean(b.isDeleted); %>
+                        <div id="brand-card-<%= b._id %>" class="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-7 flex flex-col justify-between space-y-6 shadow-sm hover:shadow-md transition-all relative group <%= isArchived ? 'opacity-75 bg-zinc-50/50' : '' %>">
+                            
+                            <!-- Card Top -->
+                            <div class="space-y-4">
+                                <div class="flex items-start justify-between gap-4">
+                                    <div class="flex items-center gap-3.5">
+                                        <div class="w-12 h-12 rounded-2xl bg-zinc-50 border border-zinc-200/80 flex items-center justify-center text-lg font-serif font-bold text-[#0A4D2E] shadow-2xs group-hover:scale-105 transition-transform flex-shrink-0">
+                                            <%= b.name.charAt(0).toUpperCase() %>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-base sm:text-lg font-serif font-normal text-zinc-900 leading-snug">
+                                                <%= b.name %>
+                                            </h3>
+                                            <p class="text-[11px] font-mono text-zinc-400">
+                                                <%= b.origin || 'Switzerland' %> <%= b.foundedYear ? '• Est. ' + b.foundedYear : '' %>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Status Toggle Component (Interactive Toggle Switch) -->
+                                    <% if (isArchived) { %>
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                            <span>Archived</span>
+                                        </span>
+                                    <% } else { %>
+                                        <div class="flex items-center gap-2.5">
+                                            <!-- Status Label Pill -->
+                                            <span 
+                                                id="status-badge-<%= b._id %>"
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider transition-all <%= b.isActive ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/80' : 'bg-zinc-100 text-zinc-500 border border-zinc-200' %>"
+                                            >
+                                                <span class="status-dot w-1.5 h-1.5 rounded-full <%= b.isActive ? 'bg-emerald-600 animate-pulse' : 'bg-zinc-400' %>"></span>
+                                                <span class="status-label"><%= b.isActive ? 'Active' : 'Inactive' %></span>
+                                            </span>
+
+                                            <!-- iOS-style Interactive Toggle Switch -->
+                                            <button 
+                                                type="button" 
+                                                role="switch" 
+                                                aria-checked="<%= b.isActive ? 'true' : 'false' %>"
+                                                onclick="toggleBrandStatusAjax('<%= b._id %>', this)"
+                                                data-brand-id="<%= b._id %>"
+                                                data-brand-name="<%= b.name %>"
+                                                data-is-active="<%= b.isActive %>"
+                                                class="brand-toggle-btn relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#0A4D2E] focus:ring-offset-2 <%= b.isActive ? 'bg-[#0A4D2E]' : 'bg-zinc-300' %>"
+                                                title="Click to toggle Active / Inactive"
+                                            >
+                                                <span class="sr-only">Toggle Maison Status</span>
+                                                <span 
+                                                    aria-hidden="true" 
+                                                    class="toggle-thumb pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out <%= b.isActive ? 'translate-x-5' : 'translate-x-0' %>"
+                                                ></span>
+                                            </button>
+                                        </div>
+                                    <% } %>
+                                </div>
+
+                                <!-- Heritage Notes / Description -->
+                                <p class="text-xs text-zinc-600 font-light leading-relaxed line-clamp-3">
+                                    <%= b.description || 'Distinguished Swiss Manufacture celebrated for mechanical mastery, heritage preservation, and chronometric excellence.' %>
+                                </p>
+                            </div>
+
+                            <!-- Card Bottom Actions -->
+                            <div class="pt-4 border-t border-zinc-100 flex items-center justify-between gap-3 text-xs">
+                                <div>
+                                    <% if (b.website) { %>
+                                        <a href="<%= b.website.startsWith('http') ? b.website : 'https://' + b.website %>" target="_blank" rel="noopener noreferrer" class="text-[11px] font-mono text-[#0A4D2E] hover:underline flex items-center gap-1">
+                                            <span>Official Site</span>
+                                            <span>↗</span>
+                                        </a>
+                                    <% } else { %>
+                                        <span class="text-[10px] font-mono text-zinc-400">Certified Maison</span>
+                                    <% } %>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <% if (isArchived) { %>
+                                        <button 
+                                            type="button" 
+                                            onclick="restoreBrandAjax('<%= b._id %>', '<%= b.name %>')"
+                                            class="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-medium transition-colors shadow-xs cursor-pointer flex items-center gap-1.5"
+                                            title="Restore Maison back to active catalog"
+                                        >
+                                            <span>↻</span>
+                                            <span>Restore</span>
+                                        </button>
+
+                                        <button 
+                                            type="button" 
+                                            onclick="openPermanentDeleteModal('<%= b._id %>', '<%= b.name %>')"
+                                            class="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-700 hover:text-white text-rose-700 border border-rose-200 hover:border-rose-700 rounded-xl text-xs font-medium transition-colors shadow-2xs cursor-pointer flex items-center gap-1.5"
+                                            title="Permanently delete Maison from archive"
+                                        >
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                            <span>Delete</span>
+                                        </button>
+                                    <% } else { %>
+                                        <button 
+                                            type="button" 
+                                            class="edit-brand-btn px-3 py-1.5 bg-zinc-100 hover:bg-zinc-900 hover:text-white text-zinc-700 rounded-xl text-xs font-medium transition-colors cursor-pointer"
+                                            data-id="<%= b._id %>"
+                                            data-name="<%= b.name %>"
+                                            data-origin="<%= b.origin || '' %>"
+                                            data-founded="<%= b.foundedYear || '' %>"
+                                            data-description="<%= b.description || '' %>"
+                                            data-website="<%= b.website || '' %>"
+                                            data-active="<%= b.isActive %>"
+                                        >
+                                            Edit
+                                        </button>
+
+                                        <button 
+                                            type="button" 
+                                            class="delete-brand-btn px-3 py-1.5 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-700 border border-rose-200 hover:border-rose-600 rounded-xl text-xs font-medium transition-colors cursor-pointer"
+                                            data-id="<%= b._id %>"
+                                            data-name="<%= b.name %>"
+                                        >
+                                            Archive
+                                        </button>
+                                    <% } %>
+                                </div>
+                            </div>
+
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="col-span-full py-20 text-center space-y-3 bg-white rounded-3xl border border-zinc-200/80 p-8 shadow-sm">
+                        <div class="w-12 h-12 rounded-2xl bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto text-xl">
+                            🏛
+                        </div>
+                        <h3 class="text-base font-serif text-zinc-900 font-normal">No Manufacture Maisons Found</h3>
+                        <p class="text-xs text-zinc-500 font-light max-w-sm mx-auto">
+                            <% if (safeSearch) { %>
+                                No Maisons matched "<%= safeSearch %>". Try resetting your search filters.
+                            <% } else if (safeStatus === 'inactive') { %>
+                                No inactive/unlisted Maisons currently registered.
+                            <% } else if (safeStatus === 'archived') { %>
+                                No archived Maisons in the registry.
+                            <% } else { %>
+                                Your luxury brand catalog is currently empty. Click "Register New Brand" to add your first manufacture.
+                            <% } %>
+                        </p>
+                        <% if (safeSearch || safeStatus !== 'all') { %>
+                            <div class="pt-2">
+                                <a href="/admin/brands?limit=<%= safePagination.pageLimit %>" class="inline-block px-5 py-2.5 bg-zinc-900 text-white rounded-xl text-xs font-semibold uppercase tracking-wider hover:bg-black transition-colors">
+                                    View All Maisons
+                                </a>
+                            </div>
+                        <% } %>
+                    </div>
+                <% } %>
+
+            </div>
+
+            <!-- 5. Bottom Pagination Bar with Density Selector -->
+            <% if (safePagination.totalItems > 0) { %>
+                <div class="bg-white border border-zinc-200/70 rounded-2xl px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs shadow-sm">
+                    <!-- Density & Range -->
+                    <div class="flex items-center gap-4 text-zinc-500">
+                        <span>
+                            Showing <strong class="text-zinc-900"><%= startNum %></strong> to <strong class="text-zinc-900"><%= endNum %></strong> of <strong class="text-zinc-900"><%= safePagination.totalItems %></strong> Maisons
+                        </span>
+
+                        <div class="flex items-center gap-1.5 pl-3 border-l border-zinc-200">
+                            <span class="text-zinc-400 uppercase tracking-wider text-[10px]">Per page:</span>
+                            <select onchange="changeLimit(this.value)" class="bg-zinc-50 border border-zinc-200 text-zinc-900 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-[#0A4D2E] cursor-pointer">
+                                <option value="6" <%= safePagination.pageLimit === 6 ? 'selected' : '' %>>6</option>
+                                <option value="9" <%= safePagination.pageLimit === 9 ? 'selected' : '' %>>9</option>
+                                <option value="18" <%= safePagination.pageLimit === 18 ? 'selected' : '' %>>18</option>
+                                <option value="36" <%= safePagination.pageLimit === 36 ? 'selected' : '' %>>36</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Page Window Jump Buttons -->
+                    <div class="flex items-center gap-1.5 font-mono">
+                        <% if (safePagination.currentPage > 1) { %>
+                            <a href="/admin/brands?page=1&limit=<%= safePagination.pageLimit %>&status=<%= safeStatus %>&search=<%= encodeURIComponent(safeSearch) %>" class="w-8 h-8 flex items-center justify-center rounded-lg border border-zinc-200 hover:bg-zinc-100 text-zinc-700 transition-colors" title="First Page">«</a>
+                            <a href="/admin/brands?page=<%= safePagination.prevPage || 1 %>&limit=<%= safePagination.pageLimit %>&status=<%= safeStatus %>&search=<%= encodeURIComponent(safeSearch) %>" class="w-8 h-8 flex items-center justify-center rounded-lg border border-zinc-200 hover:bg-zinc-100 text-zinc-700 transition-colors" title="Previous Page">‹</a>
+                        <% } %>
+
+                        <% if (safePagination.pageNumbers && Array.isArray(safePagination.pageNumbers)) { %>
+                            <% safePagination.pageNumbers.forEach(p => { %>
+                                <% if (p === '...') { %>
+                                    <span class="w-8 h-8 flex items-center justify-center text-zinc-400">...</span>
+                                <% } else if (p === safePagination.currentPage) { %>
+                                    <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-[#0A4D2E] text-white font-bold"><%= p %></span>
+                                <% } else { %>
+                                    <a href="/admin/brands?page=<%= p %>&limit=<%= safePagination.pageLimit %>&status=<%= safeStatus %>&search=<%= encodeURIComponent(safeSearch) %>" class="w-8 h-8 flex items-center justify-center rounded-lg border border-zinc-200 hover:bg-zinc-100 text-zinc-700 transition-colors"><%= p %></a>
+                                <% } %>
+                            <% }) %>
+                        <% } %>
+
+                        <% if (safePagination.hasNextPage) { %>
+                            <a href="/admin/brands?page=<%= safePagination.nextPage %>&limit=<%= safePagination.pageLimit %>&status=<%= safeStatus %>&search=<%= encodeURIComponent(safeSearch) %>" class="w-8 h-8 flex items-center justify-center rounded-lg border border-zinc-200 hover:bg-zinc-100 text-zinc-700 transition-colors" title="Next Page">›</a>
+                            <a href="/admin/brands?page=<%= safePagination.totalPages %>&limit=<%= safePagination.pageLimit %>&status=<%= safeStatus %>&search=<%= encodeURIComponent(safeSearch) %>" class="w-8 h-8 flex items-center justify-center rounded-lg border border-zinc-200 hover:bg-zinc-100 text-zinc-700 transition-colors" title="Last Page">»</a>
+                        <% } %>
+                    </div>
+                </div>
+            <% } %>
+
+        </main>
+    </div>
+</div>
+
+<!-- ==================================================================== -->
+<!-- REGISTER NEW BRAND MODAL (WITH CLIENT-SIDE VALIDATION & TOGGLE) -->
+<!-- ==================================================================== -->
+<div id="addBrandModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-8 shadow-2xl border border-zinc-200 relative animate-modal-in">
+        <div class="flex items-center justify-between pb-4 border-b border-zinc-100 mb-6">
+            <div>
+                <h3 class="text-xl font-serif font-normal text-zinc-900">Register Luxury House</h3>
+                <p class="text-xs text-zinc-400 font-light mt-0.5">Add a new Manufacture Maison to the portfolio</p>
+            </div>
+            <button type="button" onclick="closeAddModal()" class="text-zinc-400 hover:text-zinc-700 text-xl font-bold p-1 cursor-pointer">✕</button>
+        </div>
+
+        <form action="/admin/brands/add?status=<%= safeStatus %>&search=<%= encodeURIComponent(safeSearch) %>&page=<%= safePagination.currentPage %>&limit=<%= safePagination.pageLimit %>" method="POST" class="space-y-4" id="addBrandForm" novalidate>
+            <div id="addBrandGeneralError" class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-medium hidden"></div>
+            <div>
+                <label class="block text-[11px] font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">
+                    Maison Name <span class="text-rose-500">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    name="name" 
+                    id="addName" 
+                    required 
+                    placeholder="e.g. Richard Mille, Breguet, Cartier" 
+                    class="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E] focus:bg-white transition-colors"
+                >
+                <p id="addNameError" class="text-rose-600 text-[11px] font-medium mt-1.5 hidden"></p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[11px] font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">Origin Region</label>
+                    <input 
+                        type="text" 
+                        name="origin" 
+                        id="addOrigin" 
+                        placeholder="e.g. Geneva, Switzerland" 
+                        class="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E] focus:bg-white transition-colors"
+                    >
+                    <p id="addOriginError" class="text-rose-600 text-[11px] font-medium mt-1.5 hidden"></p>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">Founded Year</label>
+                    <input 
+                        type="number" 
+                        name="foundedYear" 
+                        id="addFoundedYear" 
+                        min="1500" 
+                        max="<%= new Date().getFullYear() %>" 
+                        placeholder="e.g. 1875" 
+                        class="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs font-mono text-zinc-900 focus:outline-none focus:border-[#0A4D2E] focus:bg-white transition-colors"
+                    >
+                    <p id="addFoundedYearError" class="text-rose-600 text-[11px] font-medium mt-1.5 hidden"></p>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">Heritage Notes / Description</label>
+                <textarea 
+                    name="description" 
+                    id="addDescription" 
+                    rows="3" 
+                    placeholder="Brief history and significance in Haute Horlogerie..." 
+                    class="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E] focus:bg-white transition-colors"
+                ></textarea>
+                <p id="addDescriptionError" class="text-rose-600 text-[11px] font-medium mt-1.5 hidden"></p>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">Official Website URL</label>
+                <input 
+                    type="url" 
+                    name="website" 
+                    id="addWebsite" 
+                    placeholder="https://www.example.com" 
+                    class="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs font-mono text-zinc-900 focus:outline-none focus:border-[#0A4D2E] focus:bg-white transition-colors"
+                >
+                <p id="addWebsiteError" class="text-rose-600 text-[11px] font-medium mt-1.5 hidden"></p>
+            </div>
+
+            <!-- Custom Toggle Switch for Active/Inactive in Modal -->
+            <div class="flex items-center justify-between p-3.5 bg-zinc-50 rounded-2xl border border-zinc-200/70">
+                <div>
+                    <p class="text-xs font-semibold text-zinc-800">Catalog Visibility Status</p>
+                    <p class="text-[11px] text-zinc-500 font-light" id="addStatusDesc">Active & listed in boutique catalog</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="isActive" id="addIsActive" value="true" checked class="sr-only peer" onchange="updateModalToggleText('add')">
+                    <div class="w-11 h-6 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0A4D2E]"></div>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-zinc-100 mt-6">
+                <button type="button" onclick="closeAddModal()" class="px-5 py-2.5 rounded-xl border border-zinc-200 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 transition-colors cursor-pointer">
+                    Cancel
+                </button>
+                <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#0A4D2E] hover:bg-[#083e25] text-white text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm cursor-pointer">
+                    Save Maison
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==================================================================== -->
+<!-- EDIT BRAND MODAL (WITH CLIENT-SIDE VALIDATION & TOGGLE) -->
+<!-- ==================================================================== -->
+<div id="editBrandModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-8 shadow-2xl border border-zinc-200 relative animate-modal-in">
+        <div class="flex items-center justify-between pb-4 border-b border-zinc-100 mb-6">
+            <div>
+                <h3 class="text-xl font-serif font-normal text-zinc-900">Edit Maison Heritage</h3>
+                <p class="text-xs text-zinc-400 font-light mt-0.5">Update manufacture registry details</p>
+            </div>
+            <button type="button" onclick="closeEditModal()" class="text-zinc-400 hover:text-zinc-700 text-xl font-bold p-1 cursor-pointer">✕</button>
+        </div>
+
+        <form id="editBrandForm" action="" method="POST" class="space-y-4" novalidate>
+            <div id="editBrandGeneralError" class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-medium hidden"></div>
+            <div>
+                <label class="block text-[11px] font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">
+                    Maison Name <span class="text-rose-500">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    name="name" 
+                    id="editName" 
+                    required 
+                    class="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E] focus:bg-white transition-colors"
+                >
+                <p id="editNameError" class="text-rose-600 text-[11px] font-medium mt-1.5 hidden"></p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[11px] font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">Origin Region</label>
+                    <input 
+                        type="text" 
+                        name="origin" 
+                        id="editOrigin" 
+                        class="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E] focus:bg-white transition-colors"
+                    >
+                    <p id="editOriginError" class="text-rose-600 text-[11px] font-medium mt-1.5 hidden"></p>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">Founded Year</label>
+                    <input 
+                        type="number" 
+                        name="foundedYear" 
+                        id="editFoundedYear" 
+                        min="1500" 
+                        max="<%= new Date().getFullYear() %>" 
+                        class="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs font-mono text-zinc-900 focus:outline-none focus:border-[#0A4D2E] focus:bg-white transition-colors"
+                    >
+                    <p id="editFoundedYearError" class="text-rose-600 text-[11px] font-medium mt-1.5 hidden"></p>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">Heritage Notes / Description</label>
+                <textarea 
+                    name="description" 
+                    id="editDescription" 
+                    rows="3" 
+                    class="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E] focus:bg-white transition-colors"
+                ></textarea>
+                <p id="editDescriptionError" class="text-rose-600 text-[11px] font-medium mt-1.5 hidden"></p>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">Official Website URL</label>
+                <input 
+                    type="url" 
+                    name="website" 
+                    id="editWebsite" 
+                    class="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs font-mono text-zinc-900 focus:outline-none focus:border-[#0A4D2E] focus:bg-white transition-colors"
+                >
+                <p id="editWebsiteError" class="text-rose-600 text-[11px] font-medium mt-1.5 hidden"></p>
+            </div>
+
+            <!-- Custom Toggle Switch for Active/Inactive in Modal -->
+            <div class="flex items-center justify-between p-3.5 bg-zinc-50 rounded-2xl border border-zinc-200/70">
+                <div>
+                    <p class="text-xs font-semibold text-zinc-800">Catalog Visibility Status</p>
+                    <p class="text-[11px] text-zinc-500 font-light" id="editStatusDesc">Active & listed in boutique catalog</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="isActive" id="editIsActive" value="true" class="sr-only peer" onchange="updateModalToggleText('edit')">
+                    <div class="w-11 h-6 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0A4D2E]"></div>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-zinc-100 mt-6">
+                <button type="button" onclick="closeEditModal()" class="px-5 py-2.5 rounded-xl border border-zinc-200 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 transition-colors cursor-pointer">
+                    Cancel
+                </button>
+                <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#0A4D2E] hover:bg-[#083e25] text-white text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm cursor-pointer">
+                    Update Details
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==================================================================== -->
+<!-- SOFT DELETE CONFIRMATION MODAL -->
+<!-- ==================================================================== -->
+<div id="deleteBrandModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl border border-zinc-200 text-center relative animate-modal-in">
+        <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+        </div>
+
+        <h3 class="text-xl font-serif font-semibold text-zinc-900 mb-1">Archive Maison</h3>
+        <p class="text-xs text-zinc-500 font-light mb-6">
+            Are you sure you want to archive <strong id="deleteBrandName" class="text-zinc-900 font-medium"></strong>? It will be soft-deleted and moved to the archive view. You can restore it anytime.
+        </p>
+
+        <form id="deleteBrandForm" action="" method="POST" class="flex items-center justify-center gap-3">
+            <button type="button" onclick="closeDeleteModal()" class="px-5 py-2.5 rounded-xl border border-zinc-200 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 transition-colors cursor-pointer">
+                Cancel
+            </button>
+            <button type="submit" class="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm cursor-pointer">
+                Confirm Archive
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ==================================================================== -->
+<!-- PERMANENT DELETE (PURGE FROM ARCHIVE) MODAL -->
+<!-- ==================================================================== -->
+<div id="permanentDeleteBrandModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl border border-zinc-200 text-center relative animate-modal-in">
+        <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+        </div>
+
+        <h3 class="text-xl font-serif font-semibold text-zinc-900 mb-1">Permanently Delete Maison</h3>
+        <p class="text-xs text-zinc-500 font-light mb-6">
+            Are you sure you want to permanently delete <strong id="permanentDeleteBrandName" class="text-zinc-900 font-semibold"></strong>? This will permanently and irreversibly erase this brand from the database.
+        </p>
+
+        <form id="permanentDeleteBrandForm" action="" method="POST" class="flex items-center justify-center gap-3">
+            <button type="button" onclick="closePermanentDeleteModal()" class="px-5 py-2.5 rounded-xl border border-zinc-200 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 transition-colors cursor-pointer">
+                Cancel
+            </button>
+            <button type="submit" class="px-6 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm cursor-pointer">
+                Permanently Delete
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ==================================================================== -->
+<!-- PERMANENT DELETE ALL ARCHIVED BRANDS MODAL -->
+<!-- ==================================================================== -->
+<div id="permanentDeleteAllBrandModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl border border-zinc-200 text-center relative animate-modal-in">
+        <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+        </div>
+
+        <h3 class="text-xl font-serif font-semibold text-zinc-900 mb-1">Delete All Archived Maisons</h3>
+        <p class="text-xs text-zinc-500 font-light mb-6">
+            Are you sure you want to permanently delete <strong class="text-rose-700 font-semibold">ALL archived Maisons</strong>? This action is irreversible and will permanently purge all archived brands from the vault database.
+        </p>
+
+        <form action="/admin/brands/permanent-delete-all?status=archived&limit=<%= safePagination.pageLimit %>" method="POST" class="flex items-center justify-center gap-3">
+            <button type="button" onclick="closePermanentDeleteAllModal()" class="px-5 py-2.5 rounded-xl border border-zinc-200 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 transition-colors cursor-pointer">
+                Cancel
+            </button>
+            <button type="submit" class="px-6 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm cursor-pointer">
+                Confirm Purge All
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const brandNameRegex = /^[A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9\s\-_'.,()&/+]{1,59}$/;
+    const brandOriginRegex = /^[A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9\s,.'\-\/]{1,99}$/;
+    const urlRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9\-]+(\.[a-zA-Z]{2,})+([\/?#].*)?$/;
+    const currentYear = new Date().getFullYear();
+
+    function updateModalToggleText(prefix) {
+        const input = document.getElementById(prefix + 'IsActive');
+        const desc = document.getElementById(prefix + 'StatusDesc');
+        if (input && desc) {
+            if (input.checked) {
+                desc.textContent = 'Active & listed in boutique catalog';
+            } else {
+                desc.textContent = 'Inactive / unlisted from boutique catalog';
+            }
+        }
+    }
+
+    async function toggleBrandStatusAjax(brandId, btn) {
+        const isCurrentlyActive = btn.dataset.isActive === 'true';
+        const brandName = btn.dataset.brandName || 'Maison';
+        const thumb = btn.querySelector('.toggle-thumb');
+        const badge = document.getElementById('status-badge-' + brandId);
+        const dot = badge ? badge.querySelector('.status-dot') : null;
+        const label = badge ? badge.querySelector('.status-label') : null;
+
+        // Optimistic UI state change
+        const nextState = !isCurrentlyActive;
+        btn.dataset.isActive = nextState.toString();
+        btn.setAttribute('aria-checked', nextState.toString());
+        
+        if (nextState) {
+            btn.classList.remove('bg-zinc-300');
+            btn.classList.add('bg-[#0A4D2E]');
+            if (thumb) {
+                thumb.classList.remove('translate-x-0');
+                thumb.classList.add('translate-x-5');
+            }
+            if (badge) {
+                badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider transition-all bg-emerald-50 text-emerald-800 border border-emerald-200/80';
+            }
+            if (dot) dot.className = 'status-dot w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse';
+            if (label) label.textContent = 'Active';
+        } else {
+            btn.classList.remove('bg-[#0A4D2E]');
+            btn.classList.add('bg-zinc-300');
+            if (thumb) {
+                thumb.classList.remove('translate-x-5');
+                thumb.classList.add('translate-x-0');
+            }
+            if (badge) {
+                badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider transition-all bg-zinc-100 text-zinc-500 border border-zinc-200';
+            }
+            if (dot) dot.className = 'status-dot w-1.5 h-1.5 rounded-full bg-zinc-400';
+            if (label) label.textContent = 'Inactive';
+        }
+
+        try {
+            const res = await fetch(`/admin/brands/${brandId}/toggle-status`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await res.json();
+            if (!data.success) {
+                throw new Error(data.message || 'Unable to update status');
+            }
+
+            if (window.showToast) {
+                window.showToast(data.message || `Brand "${brandName}" is now ${nextState ? 'Active' : 'Inactive'}.`, 'success');
+            }
+
+            // Update stats counters if present
+            if (data.stats) {
+                const elActive = document.getElementById('statActiveBrands');
+                const elUnlisted = document.getElementById('statUnlistedBrands');
+                if (elActive) elActive.textContent = data.stats.activeBrands;
+                if (elUnlisted) elUnlisted.textContent = data.stats.unlistedBrands;
+            }
+        } catch (err) {
+            if (window.showToast) {
+                window.showToast(err.message || 'Connection issue.', 'error');
+            } else {
+                alert(err.message || 'Connection issue.');
+            }
+            // Reload on failure to restore true database state
+            setTimeout(() => window.location.reload(), 1000);
+        }
+    }
+
+    async function restoreBrandAjax(brandId, brandName) {
+        if (!confirm(`Restore "${brandName}" back to the active Maison catalog?`)) return;
+        try {
+            const res = await fetch(`/admin/brands/${brandId}/restore`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await res.json();
+            if (data.success) {
+                if (window.showToast) {
+                    window.showToast(data.message || `"${brandName}" restored successfully.`, 'success');
+                }
+                setTimeout(() => window.location.reload(), 400);
+            } else {
+                alert(data.message || 'Failed to restore brand.');
+            }
+        } catch (e) {
+            alert('Connection error.');
+        }
+    }
+
+    function setFieldError(inputId, errorId, message) {
+        const input = document.getElementById(inputId);
+        const err = document.getElementById(errorId);
+        if (err) {
+            err.textContent = message;
+            err.classList.remove('hidden');
+        }
+        if (input) {
+            input.classList.remove('border-zinc-200', 'border-emerald-500/80');
+            input.classList.add('border-rose-500', 'bg-rose-50/20', 'ring-1', 'ring-rose-500');
+        }
+    }
+
+    function clearFieldError(inputId, errorId) {
+        const input = document.getElementById(inputId);
+        const err = document.getElementById(errorId);
+        if (err) {
+            err.textContent = '';
+            err.classList.add('hidden');
+        }
+        if (input) {
+            input.classList.remove('border-rose-500', 'bg-rose-50/20', 'ring-1', 'ring-rose-500');
+            input.classList.add('border-zinc-200');
+        }
+    }
+
+    function validateBrandField(prefix, field) {
+        const nameVal = document.getElementById(prefix + 'Name')?.value.trim() || '';
+        const originVal = document.getElementById(prefix + 'Origin')?.value.trim() || '';
+        const foundedVal = document.getElementById(prefix + 'FoundedYear')?.value.trim() || '';
+        const descVal = document.getElementById(prefix + 'Description')?.value.trim() || '';
+        const websiteVal = document.getElementById(prefix + 'Website')?.value.trim() || '';
+
+        if (field === 'name') {
+            if (!nameVal) {
+                setFieldError(prefix + 'Name', prefix + 'NameError', 'Maison name is required.');
+                return false;
+            } else if (nameVal.length < 2 || nameVal.length > 60) {
+                setFieldError(prefix + 'Name', prefix + 'NameError', 'Maison name must be 2 to 60 characters.');
+                return false;
+            } else if (!brandNameRegex.test(nameVal)) {
+                setFieldError(prefix + 'Name', prefix + 'NameError', 'Maison name contains invalid characters.');
+                return false;
+            }
+            clearFieldError(prefix + 'Name', prefix + 'NameError');
+            return true;
+        }
+
+        if (field === 'origin') {
+            if (originVal) {
+                if (originVal.length < 2 || originVal.length > 100) {
+                    setFieldError(prefix + 'Origin', prefix + 'OriginError', 'Origin region must be 2 to 100 characters.');
+                    return false;
+                } else if (!brandOriginRegex.test(originVal)) {
+                    setFieldError(prefix + 'Origin', prefix + 'OriginError', 'Origin region contains invalid characters.');
+                    return false;
+                }
+            }
+            clearFieldError(prefix + 'Origin', prefix + 'OriginError');
+            return true;
+        }
+
+        if (field === 'foundedYear') {
+            if (foundedVal) {
+                const y = parseInt(foundedVal, 10);
+                if (isNaN(y) || y < 1500 || y > currentYear) {
+                    setFieldError(prefix + 'FoundedYear', prefix + 'FoundedYearError', 'Founded year must be between 1500 and ' + currentYear + '.');
+                    return false;
+                }
+            }
+            clearFieldError(prefix + 'FoundedYear', prefix + 'FoundedYearError');
+            return true;
+        }
+
+        if (field === 'description') {
+            if (descVal && descVal.length > 1000) {
+                setFieldError(prefix + 'Description', prefix + 'DescriptionError', 'Description cannot exceed 1000 characters.');
+                return false;
+            }
+            clearFieldError(prefix + 'Description', prefix + 'DescriptionError');
+            return true;
+        }
+
+        if (field === 'website') {
+            if (websiteVal) {
+                if (websiteVal.length > 200) {
+                    setFieldError(prefix + 'Website', prefix + 'WebsiteError', 'Website URL cannot exceed 200 characters.');
+                    return false;
+                } else if (!urlRegex.test(websiteVal)) {
+                    setFieldError(prefix + 'Website', prefix + 'WebsiteError', 'Please enter a valid website URL.');
+                    return false;
+                }
+            }
+            clearFieldError(prefix + 'Website', prefix + 'WebsiteError');
+            return true;
+        }
+
+        return true;
+    }
+
+    function openAddModal() {
+        ['addName', 'addOrigin', 'addFoundedYear', 'addDescription', 'addWebsite'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+            clearFieldError(id, id + 'Error');
+        });
+        const genErr = document.getElementById('addBrandGeneralError');
+        if (genErr) {
+            genErr.textContent = '';
+            genErr.classList.add('hidden');
+        }
+        const activeBox = document.getElementById('addIsActive');
+        if (activeBox) {
+            activeBox.checked = true;
+            updateModalToggleText('add');
+        }
+        document.getElementById('addBrandModal').classList.remove('hidden');
+    }
+
+    function closeAddModal() {
+        document.getElementById('addBrandModal').classList.add('hidden');
+    }
+
+    function closeEditModal() {
+        document.getElementById('editBrandModal').classList.add('hidden');
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteBrandModal').classList.add('hidden');
+    }
+
+    function openPermanentDeleteModal(id, name) {
+        const searchParam = '<%= encodeURIComponent(safeSearch) %>';
+        const statusParam = '<%= encodeURIComponent(safeStatus) %>';
+        const pageParam = '<%= safePagination.currentPage %>';
+        const limitParam = '<%= safePagination.pageLimit %>';
+
+        document.getElementById('permanentDeleteBrandForm').action = '/admin/brands/' + id + '/permanent-delete?status=' + statusParam + '&search=' + searchParam + '&page=' + pageParam + '&limit=' + limitParam;
+        document.getElementById('permanentDeleteBrandName').textContent = name;
+        document.getElementById('permanentDeleteBrandModal').classList.remove('hidden');
+    }
+
+    function closePermanentDeleteModal() {
+        document.getElementById('permanentDeleteBrandModal').classList.add('hidden');
+    }
+
+    function openPermanentDeleteAllModal() {
+        document.getElementById('permanentDeleteAllBrandModal').classList.remove('hidden');
+    }
+
+    function closePermanentDeleteAllModal() {
+        document.getElementById('permanentDeleteAllBrandModal').classList.add('hidden');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchParam = '<%= encodeURIComponent(safeSearch) %>';
+        const statusParam = '<%= encodeURIComponent(safeStatus) %>';
+        const pageParam = '<%= safePagination.currentPage %>';
+        const limitParam = '<%= safePagination.pageLimit %>';
+
+  
+        ['Name', 'Origin', 'FoundedYear', 'Description', 'Website'].forEach(f => {
+            const fieldKey = f.charAt(0).toLowerCase() + f.slice(1);
+            const input = document.getElementById('add' + f);
+            if (input) {
+                input.addEventListener('input', () => validateBrandField('add', fieldKey));
+                input.addEventListener('blur', () => validateBrandField('add', fieldKey));
+            }
+            const editInput = document.getElementById('edit' + f);
+            if (editInput) {
+                editInput.addEventListener('input', () => validateBrandField('edit', fieldKey));
+                editInput.addEventListener('blur', () => validateBrandField('edit', fieldKey));
+            }
+        });
+
+  
+        const addForm = document.getElementById('addBrandForm');
+        if (addForm) {
+            addForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const genErr = document.getElementById('addBrandGeneralError');
+                if (genErr) genErr.classList.add('hidden');
+
+                const validName = validateBrandField('add', 'name');
+                const validOrigin = validateBrandField('add', 'origin');
+                const validFounded = validateBrandField('add', 'foundedYear');
+                const validDesc = validateBrandField('add', 'description');
+                const validWebsite = validateBrandField('add', 'website');
+
+                if (!validName || !validOrigin || !validFounded || !validDesc || !validWebsite) {
+                    return; // Stays open!
+                }
+
+                const submitBtn = addForm.querySelector('button[type="submit"]');
+                const origText = submitBtn ? submitBtn.textContent : '';
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Saving...'; }
+
+                const payload = {
+                    name: document.getElementById('addName')?.value.trim() || '',
+                    origin: document.getElementById('addOrigin')?.value.trim() || '',
+                    foundedYear: document.getElementById('addFoundedYear')?.value.trim() || '',
+                    description: document.getElementById('addDescription')?.value.trim() || '',
+                    website: document.getElementById('addWebsite')?.value.trim() || '',
+                    isActive: document.getElementById('addIsActive')?.checked ?? true
+                };
+
+                try {
+                    const res = await fetch(addForm.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        closeAddModal();
+                        if (window.showToast) window.showToast(data.message || 'Maison registered successfully.', 'success');
+                        setTimeout(() => window.location.reload(), 300);
+                    } else {
+                        // DO NOT CLOSE MODAL!
+                        if (genErr) {
+                            genErr.textContent = data.message || 'Validation issue occurred.';
+                            genErr.classList.remove('hidden');
+                        }
+                        if (data.errors) {
+                            Object.entries(data.errors).forEach(([field, msg]) => {
+                                const cap = field.charAt(0).toUpperCase() + field.slice(1);
+                                setFieldError('add' + cap, 'add' + cap + 'Error', msg);
+                            });
+                        }
+                    }
+                } catch (err) {
+                    if (genErr) {
+                        genErr.textContent = 'Connection error saving Maison.';
+                        genErr.classList.remove('hidden');
+                    }
+                } finally {
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origText; }
+                }
+            });
+        }
+
+
+        const editForm = document.getElementById('editBrandForm');
+        if (editForm) {
+            editForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const genErr = document.getElementById('editBrandGeneralError');
+                if (genErr) genErr.classList.add('hidden');
+
+                const validName = validateBrandField('edit', 'name');
+                const validOrigin = validateBrandField('edit', 'origin');
+                const validFounded = validateBrandField('edit', 'foundedYear');
+                const validDesc = validateBrandField('edit', 'description');
+                const validWebsite = validateBrandField('edit', 'website');
+
+                if (!validName || !validOrigin || !validFounded || !validDesc || !validWebsite) {
+                    return; // Stays open!
+                }
+
+                const submitBtn = editForm.querySelector('button[type="submit"]');
+                const origText = submitBtn ? submitBtn.textContent : '';
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Updating...'; }
+
+                const payload = {
+                    name: document.getElementById('editName')?.value.trim() || '',
+                    origin: document.getElementById('editOrigin')?.value.trim() || '',
+                    foundedYear: document.getElementById('editFoundedYear')?.value.trim() || '',
+                    description: document.getElementById('editDescription')?.value.trim() || '',
+                    website: document.getElementById('editWebsite')?.value.trim() || '',
+                    isActive: document.getElementById('editIsActive')?.checked ?? true
+                };
+
+                try {
+                    const res = await fetch(editForm.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        closeEditModal();
+                        if (window.showToast) window.showToast(data.message || 'Maison updated successfully.', 'success');
+                        setTimeout(() => window.location.reload(), 300);
+                    } else {
+                        // DO NOT CLOSE MODAL!
+                        if (genErr) {
+                            genErr.textContent = data.message || 'Validation issue occurred.';
+                            genErr.classList.remove('hidden');
+                        }
+                        if (data.errors) {
+                            Object.entries(data.errors).forEach(([field, msg]) => {
+                                const cap = field.charAt(0).toUpperCase() + field.slice(1);
+                                setFieldError('edit' + cap, 'edit' + cap + 'Error', msg);
+                            });
+                        }
+                    }
+                } catch (err) {
+                    if (genErr) {
+                        genErr.textContent = 'Connection error updating Maison.';
+                        genErr.classList.remove('hidden');
+                    }
+                } finally {
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origText; }
+                }
+            });
+        }
+
+
+        document.querySelectorAll('.edit-brand-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.id;
+                const name = btn.dataset.name || '';
+                const origin = btn.dataset.origin || '';
+                const founded = btn.dataset.founded || '';
+                const description = btn.dataset.description || '';
+                const website = btn.dataset.website || '';
+                const isActive = btn.dataset.active === 'true';
+
+                ['editName', 'editOrigin', 'editFoundedYear', 'editDescription', 'editWebsite'].forEach(idKey => {
+                    clearFieldError(idKey, idKey + 'Error');
+                });
+                const genErr = document.getElementById('editBrandGeneralError');
+                if (genErr) genErr.classList.add('hidden');
+
+                document.getElementById('editBrandForm').action = '/admin/brands/' + id + '/edit?status=' + statusParam + '&search=' + searchParam + '&page=' + pageParam + '&limit=' + limitParam;
+                document.getElementById('editName').value = name;
+                document.getElementById('editOrigin').value = origin;
+                document.getElementById('editFoundedYear').value = founded;
+                document.getElementById('editDescription').value = description;
+                document.getElementById('editWebsite').value = website;
+                
+                const editActiveBox = document.getElementById('editIsActive');
+                if (editActiveBox) {
+                    editActiveBox.checked = isActive;
+                    updateModalToggleText('edit');
+                }
+
+                document.getElementById('editBrandModal').classList.remove('hidden');
+            });
+        });
+
+
+        document.querySelectorAll('.delete-brand-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.id;
+                const name = btn.dataset.name || 'Maison';
+
+                document.getElementById('deleteBrandForm').action = '/admin/brands/' + id + '/delete?status=' + statusParam + '&search=' + searchParam + '&page=' + pageParam + '&limit=' + limitParam;
+                document.getElementById('deleteBrandName').textContent = name;
+                document.getElementById('deleteBrandModal').classList.remove('hidden');
+            });
+        });
+
+        if (typeof window.showAdminFlash === 'function') {
+            window.showAdminFlash(
+                <%- JSON.stringify(typeof success !== 'undefined' ? success : null) %>,
+                <%- JSON.stringify(typeof error !== 'undefined' ? error : null) %>
+            );
+        }
+    });
+
+    function changeLimit(limit) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('limit', limit);
+        url.searchParams.set('page', '1');
+        window.location.href = url.toString();
+    }
+</script>
+
+<%- include('../partials/footer') %>

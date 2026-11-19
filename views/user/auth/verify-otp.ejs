@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en" class="w-full h-full m-0 p-0">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Verification — DELTA</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Libre Caslon Text"', 'serif'],
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* True Fullscreen Video Cover */
+        .fullscreen-video-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100vw;
+            height: 100vh;
+            min-width: 100%;
+            min-height: 100%;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+            object-position: center;
+        }
+
+        /* Modern Card Entrance */
+        @keyframes cardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .auth-card {
+            animation: cardFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Modern Button Shimmer on Hover */
+        @keyframes sweep {
+            0% { transform: translateX(-150%) skewX(-20deg); }
+            100% { transform: translateX(250%) skewX(-20deg); }
+        }
+
+        .btn-shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-shimmer::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            transform: translateX(-150%) skewX(-20deg);
+        }
+
+        .btn-shimmer:hover::after {
+            animation: sweep 1.3s ease-in-out infinite;
+        }
+
+        /* Error Shake Animation */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+        }
+
+        .input-error {
+            border-color: #f43f5e !important;
+            animation: shake 0.4s ease-in-out;
+        }
+    </style>
+
+    <script>
+        // Invalidate browser back-forward cache (bfcache) on back navigation / session change
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted || (window.performance && window.performance.getEntriesByType && window.performance.getEntriesByType("navigation")[0]?.type === "back_forward") || (window.performance && window.performance.navigation && window.performance.navigation.type === 2)) {
+                window.location.reload();
+            }
+        });
+    </script>
+
+    <script>
+        window.showToast = function(message, type = 'success', duration = 3500) {
+            let container = document.getElementById('deltaToastContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'deltaToastContainer';
+                container.className = 'fixed top-5 right-5 z-[99999] flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0';
+                document.body.appendChild(container);
+            }
+
+            const toast = document.createElement('div');
+            toast.className = 'pointer-events-auto flex items-center justify-between gap-3 p-4 rounded-2xl shadow-2xl backdrop-blur-xl border transition-all duration-300 transform translate-x-8 opacity-0 text-xs font-medium ' +
+                (type === 'success' ? 'bg-zinc-900/95 text-white border-zinc-700/60 shadow-black/40' :
+                 type === 'error' ? 'bg-rose-950/95 text-white border-rose-800/80 shadow-rose-950/50' :
+                 type === 'warning' ? 'bg-amber-950/95 text-amber-100 border-amber-800/80' :
+                 'bg-zinc-900/95 text-white border-zinc-700/60');
+
+            const iconSvg = type === 'success' 
+                ? '<div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 font-bold">✓</div>'
+                : '<div class="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0 font-bold">✕</div>';
+
+            toast.innerHTML = `
+                <div class="flex items-center gap-3 flex-1 overflow-hidden">
+                    ${iconSvg}
+                    <span class="leading-snug text-left">${message}</span>
+                </div>
+                <button type="button" class="text-zinc-400 hover:text-white text-base font-bold ml-2 cursor-pointer transition-colors" onclick="this.parentElement.remove()">✕</button>
+            `;
+
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-x-8', 'opacity-0');
+                toast.classList.add('translate-x-0', 'opacity-100');
+            });
+
+            setTimeout(() => {
+                toast.classList.remove('translate-x-0', 'opacity-100');
+                toast.classList.add('translate-x-8', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        };
+    </script>
+    
+</head>
+<body class="relative min-h-screen w-full flex flex-col justify-between items-center py-8 px-4 font-sans text-zinc-900 antialiased selection:bg-zinc-900 selection:text-white overflow-x-hidden m-0 p-0">
+
+    <!-- Guaranteed Working Fullscreen Video Background Layer -->
+    <div class="fixed inset-0 w-screen h-screen -z-10 overflow-hidden pointer-events-none bg-[#090a0c]">
+        <video 
+            class="fullscreen-video-bg"
+            autoplay 
+            loop 
+            muted 
+            playsinline 
+            controlslist="nodownload nofullscreen" 
+            disablepictureinpicture 
+            disableremoteplayback
+            tabindex="-1"
+            poster="https://media.rolex.com/image/upload/q_auto:eco/f_auto/c_limit,w_1920/v1773157318/rolexcom/094398bf1f99/watches/hub/videos/cover/rolex-watches-new-watches-2026-cover-autoplay-posterframe"
+        >
+            <!-- Live Omega Watch Video Source -->
+            <source src="https://www.omegawatches.com/media/wysiwyg/video/push-PB-1_1-opt.mp4" type="video/mp4">
+            <!-- Reliable Rolex CDN High-Res Video Fallback -->
+            <source src="https://media.rolex.com/video/upload/c_limit,w_1920/f_auto:video/q_auto:eco/v1/rolexcom/094398bf1f99/watches/hub/videos/cover/rolex-watches-new-watches-2026-cover-autoplay.mp4" type="video/mp4">
+        </video>
+        <!-- Dark Vignette Overlay for Crisp Readability -->
+        <div class="absolute inset-0 w-full h-full bg-gradient-to-b from-black/55 via-black/35 to-black/80"></div>
+    </div>
+
+    <!-- Top Spacer -->
+    <div class="w-full"></div>
+
+    <!-- Modern Luxury Modal Card -->
+    <div class="auth-card w-full max-w-[450px] bg-white/95 backdrop-blur-2xl p-8 sm:p-10 rounded-3xl shadow-[0_30px_70px_rgba(0,0,0,0.6)] border border-white/60 relative my-auto text-center">
+        
+        <!-- Header: Logo & Title -->
+        <div class="text-center mb-6">
+            <div>
+                <span class="text-2xl font-serif select-none leading-none">δ</span>
+            </div>
+            <h1 class="text-2xl sm:text-[26px] font-serif text-zinc-900 font-normal tracking-tight">
+                Security Verification
+            </h1>
+            <p class="text-xs text-zinc-500 font-normal mt-1">
+                Enter the 6-digit verification code sent to:
+            </p>
+            <p class="text-xs sm:text-sm font-mono font-semibold text-zinc-900 bg-zinc-100 px-3 py-1.5 rounded-lg inline-block mt-2 border border-zinc-200">
+                <%= typeof email !== 'undefined' && email ? email : '' %>
+            </p>
+        </div>
+
+        <!-- Flash Messages -->
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="mb-5 bg-emerald-50/90 border border-emerald-200/80 text-emerald-800 px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 text-left">
+                <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span><%= success %></span>
+            </div>
+        <% } %>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="mb-5 bg-rose-50/90 border border-rose-200/80 text-rose-800 px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 text-left">
+                <svg class="w-4 h-4 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span><%= error %></span>
+            </div>
+        <% } %>
+
+        <!-- 6-Digit OTP Form -->
+        <form
+            action="/verify-otp"
+            method="POST"
+            id="otpForm"
+            class="space-y-6"
+        >
+            <%
+                const prefillOtp = (typeof oldData !== 'undefined' && oldData.otp) ? String(oldData.otp) : ((typeof otp !== 'undefined' && otp) ? String(otp) : '');
+                const otpDigits = prefillOtp.split('');
+            %>
+            <input type="hidden" name="email" value="<%= email %>">
+            <input type="hidden" name="purpose" value="<%= purpose %>">
+            <input type="hidden" name="otp" id="fullOtp" value="<%= prefillOtp %>">
+
+            <!-- Modern 6-Digit Rounded Input Boxes -->
+            <div>
+                <div class="flex justify-center gap-2 sm:gap-2.5" id="otpBoxContainer">
+                    <input type="text" maxlength="6" inputmode="numeric" autocomplete="one-time-code" value="<%= otpDigits[0] || '' %>" class="otp-box w-11 h-14 sm:w-12 sm:h-16 bg-zinc-50/80 hover:bg-zinc-50 focus:bg-white border border-zinc-200/90 rounded-2xl text-center text-xl sm:text-2xl font-semibold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all duration-200 shadow-sm" autofocus>
+                    <input type="text" maxlength="1" inputmode="numeric" autocomplete="off" value="<%= otpDigits[1] || '' %>" class="otp-box w-11 h-14 sm:w-12 sm:h-16 bg-zinc-50/80 hover:bg-zinc-50 focus:bg-white border border-zinc-200/90 rounded-2xl text-center text-xl sm:text-2xl font-semibold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all duration-200 shadow-sm">
+                    <input type="text" maxlength="1" inputmode="numeric" autocomplete="off" value="<%= otpDigits[2] || '' %>" class="otp-box w-11 h-14 sm:w-12 sm:h-16 bg-zinc-50/80 hover:bg-zinc-50 focus:bg-white border border-zinc-200/90 rounded-2xl text-center text-xl sm:text-2xl font-semibold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all duration-200 shadow-sm">
+                    <input type="text" maxlength="1" inputmode="numeric" autocomplete="off" value="<%= otpDigits[3] || '' %>" class="otp-box w-11 h-14 sm:w-12 sm:h-16 bg-zinc-50/80 hover:bg-zinc-50 focus:bg-white border border-zinc-200/90 rounded-2xl text-center text-xl sm:text-2xl font-semibold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all duration-200 shadow-sm">
+                    <input type="text" maxlength="1" inputmode="numeric" autocomplete="off" value="<%= otpDigits[4] || '' %>" class="otp-box w-11 h-14 sm:w-12 sm:h-16 bg-zinc-50/80 hover:bg-zinc-50 focus:bg-white border border-zinc-200/90 rounded-2xl text-center text-xl sm:text-2xl font-semibold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all duration-200 shadow-sm">
+                    <input type="text" maxlength="1" inputmode="numeric" autocomplete="off" value="<%= otpDigits[5] || '' %>" class="otp-box w-11 h-14 sm:w-12 sm:h-16 bg-zinc-50/80 hover:bg-zinc-50 focus:bg-white border border-zinc-200/90 rounded-2xl text-center text-xl sm:text-2xl font-semibold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all duration-200 shadow-sm">
+                </div>
+                <p id="clientOtpError" class="text-rose-600 text-[11px] font-medium mt-2 hidden"></p>
+            </div>
+
+            <!-- Verify Button -->
+            <button
+                type="submit"
+                id="verifySubmitBtn"
+                class="btn-shimmer group w-full bg-zinc-900 hover:bg-black text-white py-3.5 px-5 rounded-xl text-xs font-semibold uppercase tracking-[0.18em] transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-zinc-900/20 hover:shadow-zinc-900/30 active:scale-[0.99] cursor-pointer"
+            >
+                <span id="verifyBtnText">Verify Code</span>
+                <svg id="verifyBtnIcon" class="w-4 h-4 transform group-hover:translate-x-0.5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                </svg>
+            </button>
+        </form>
+
+        <!-- Resend OTP & Countdown Footer -->
+        <div class="mt-6 text-xs text-zinc-500">
+            <span>Didn't receive the code?</span>
+            <button
+                type="button"
+                id="resendBtn"
+                onclick="ajaxResendOtp()"
+                disabled
+                class="text-zinc-900 font-semibold underline underline-offset-4 disabled:text-zinc-400 disabled:no-underline disabled:cursor-not-allowed ml-1 transition-colors cursor-pointer"
+            >
+                Resend Code <span id="timerSpan" class="font-mono text-zinc-500">(60s)</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Bottom Footer Brand Mark -->
+    <div class="text-center text-[10px] uppercase tracking-[0.35em] text-zinc-300 font-medium py-4 select-none drop-shadow-md">
+        Precision • Heritage • Delta
+    </div>
+
+    <script>
+        const boxes = Array.from(document.querySelectorAll('.otp-box'));
+        const fullOtpInput = document.getElementById('fullOtp');
+        const otpForm = document.getElementById('otpForm');
+        const clientOtpError = document.getElementById('clientOtpError');
+        const verifyBtn = document.getElementById('verifySubmitBtn');
+        const verifyBtnText = document.getElementById('verifyBtnText');
+        const verifyBtnIcon = document.getElementById('verifyBtnIcon');
+
+        let isSubmitting = false;
+        let autoSubmitTimeout = null;
+
+        function getEnteredOtp() {
+            return boxes.map(b => (b.value || '').trim()).join('');
+        }
+
+        function showInputError(msg) {
+            if (clientOtpError) {
+                clientOtpError.textContent = msg;
+                clientOtpError.classList.remove('hidden');
+            }
+            boxes.forEach(box => {
+                if (!box.value) box.classList.add('input-error');
+            });
+        }
+
+        function clearInputErrors() {
+            if (clientOtpError) {
+                clientOtpError.classList.add('hidden');
+            }
+            boxes.forEach(b => b.classList.remove('input-error'));
+        }
+
+        function lockSubmitButton() {
+            if (verifyBtn) {
+                verifyBtn.disabled = true;
+                verifyBtn.classList.add('opacity-75', 'cursor-not-allowed');
+                if (verifyBtnText) verifyBtnText.textContent = 'Verifying...';
+                if (verifyBtnIcon) {
+                    verifyBtnIcon.outerHTML = `
+                        <svg class="animate-spin h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" id="verifyBtnIcon">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    `;
+                }
+            }
+        }
+
+        function triggerFormSubmission() {
+            if (isSubmitting) return;
+            const code = getEnteredOtp();
+            fullOtpInput.value = code;
+
+            if (code.length === 6 && /^\d{6}$/.test(code)) {
+                if (otpForm.requestSubmit) {
+                    otpForm.requestSubmit();
+                } else {
+                    otpForm.submit();
+                }
+            } else {
+                showInputError('• Please enter all 6 digits of the verification code.');
+            }
+        }
+
+        function updateFullOtp(allowAutoSubmit = false) {
+            const code = getEnteredOtp();
+            fullOtpInput.value = code;
+
+            if (autoSubmitTimeout) {
+                clearTimeout(autoSubmitTimeout);
+                autoSubmitTimeout = null;
+            }
+
+            if (code.length === 6 && /^\d{6}$/.test(code) && allowAutoSubmit && !isSubmitting) {
+                autoSubmitTimeout = setTimeout(() => {
+                    triggerFormSubmission();
+                }, 220);
+            }
+        }
+
+        // Handle typing, multi-digit SMS autofill, and keyboard navigation
+        boxes.forEach((box, index) => {
+            box.addEventListener('input', (e) => {
+                const rawVal = e.target.value;
+                const digits = rawVal.replace(/\D/g, '');
+
+                // Case 1: Multi-character input (mobile autofill / pasted digits)
+                if (digits.length > 1) {
+                    const startIdx = digits.length >= 6 ? 0 : index;
+                    for (let i = 0; i < 6; i++) {
+                        const targetBox = boxes[startIdx + i];
+                        if (targetBox) {
+                            targetBox.value = digits[i] || '';
+                            targetBox.classList.remove('input-error');
+                        }
+                    }
+                    const nextFocusIndex = Math.min(startIdx + digits.length, boxes.length - 1);
+                    boxes[nextFocusIndex].focus();
+                    clearInputErrors();
+                    updateFullOtp(true);
+                    return;
+                }
+
+                // Case 2: Single digit entered
+                if (digits.length === 1) {
+                    box.value = digits;
+                    box.classList.remove('input-error');
+                    clearInputErrors();
+                    if (index < boxes.length - 1) {
+                        boxes[index + 1].focus();
+                    }
+                    updateFullOtp(true);
+                    return;
+                }
+
+                // Case 3: Empty / deleted
+                box.value = '';
+                updateFullOtp(false);
+            });
+
+            box.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    triggerFormSubmission();
+                    return;
+                }
+                if (e.key === 'Backspace') {
+                    if (box.value) {
+                        box.value = '';
+                        updateFullOtp(false);
+                    } else if (index > 0) {
+                        boxes[index - 1].value = '';
+                        boxes[index - 1].focus();
+                        updateFullOtp(false);
+                    }
+                    return;
+                }
+                if (e.key === 'ArrowLeft' && index > 0) {
+                    boxes[index - 1].focus();
+                    return;
+                }
+                if (e.key === 'ArrowRight' && index < boxes.length - 1) {
+                    boxes[index + 1].focus();
+                    return;
+                }
+            });
+
+            box.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pasteData = (e.clipboardData || window.clipboardData)?.getData('text') || '';
+                const digits = pasteData.replace(/\D/g, '');
+                if (digits.length >= 6) {
+                    const code = digits.slice(0, 6);
+                    code.split('').forEach((digit, i) => {
+                        if (boxes[i]) {
+                            boxes[i].value = digit;
+                            boxes[i].classList.remove('input-error');
+                        }
+                    });
+                    boxes[boxes.length - 1].focus();
+                    clearInputErrors();
+                    updateFullOtp(true);
+                } else if (digits.length > 0) {
+                    digits.split('').forEach((digit, i) => {
+                        if (boxes[index + i]) {
+                            boxes[index + i].value = digit;
+                            boxes[index + i].classList.remove('input-error');
+                        }
+                    });
+                    const targetFocus = Math.min(index + digits.length, boxes.length - 1);
+                    boxes[targetFocus].focus();
+                    clearInputErrors();
+                    updateFullOtp(false);
+                }
+            });
+        });
+
+        // Form Submit Validation & Single-Submission Lock
+        otpForm.addEventListener('submit', (e) => {
+            if (isSubmitting) {
+                e.preventDefault();
+                return false;
+            }
+
+            const code = getEnteredOtp();
+            fullOtpInput.value = code;
+
+            if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+                e.preventDefault();
+                showInputError('• Please enter all 6 digits of the verification code.');
+                return false;
+            }
+
+            isSubmitting = true;
+            if (autoSubmitTimeout) {
+                clearTimeout(autoSubmitTimeout);
+                autoSubmitTimeout = null;
+            }
+            lockSubmitButton();
+        });
+
+        // Persistent Reload-Proof Countdown Timer & AJAX Resend
+        const COOLDOWN_SECONDS = 60;
+        let countdownTimer = null;
+
+        function startOtpTimer(duration = COOLDOWN_SECONDS) {
+            clearInterval(countdownTimer);
+            const email = "<%= typeof email !== 'undefined' ? email : '' %>".toLowerCase().trim();
+            const purpose = "<%= typeof purpose !== 'undefined' ? purpose : 'signup' %>".trim();
+            const storageKey = 'delta_otp_target_' + encodeURIComponent(purpose) + '_' + encodeURIComponent(email);
+
+            const resendBtn = document.getElementById('resendBtn');
+            const timerSpan = document.getElementById('timerSpan');
+
+            let targetTimestamp = Date.now() + (duration * 1000);
+            sessionStorage.setItem(storageKey, targetTimestamp);
+
+            function tick() {
+                const currentNow = Date.now();
+                const remainingSecs = Math.max(0, Math.ceil((targetTimestamp - currentNow) / 1000));
+
+                if (remainingSecs > 0) {
+                    if (timerSpan) timerSpan.textContent = `(${remainingSecs}s)`;
+                    if (resendBtn) resendBtn.disabled = true;
+                } else {
+                    if (timerSpan) timerSpan.textContent = '';
+                    if (resendBtn) resendBtn.disabled = false;
+                    sessionStorage.removeItem(storageKey);
+                    clearInterval(countdownTimer);
+                }
+            }
+
+            tick();
+            countdownTimer = setInterval(tick, 1000);
+        }
+
+        // Initialize countdown on load
+        (function initOtpCountdown() {
+            const email = "<%= typeof email !== 'undefined' ? email : '' %>".toLowerCase().trim();
+            const purpose = "<%= typeof purpose !== 'undefined' ? purpose : 'signup' %>".trim();
+            const storageKey = 'delta_otp_target_' + encodeURIComponent(purpose) + '_' + encodeURIComponent(email);
+
+            let savedTarget = parseInt(sessionStorage.getItem(storageKey), 10);
+            const now = Date.now();
+
+            if (savedTarget && !isNaN(savedTarget) && savedTarget > now) {
+                const remaining = Math.ceil((savedTarget - now) / 1000);
+                startOtpTimer(remaining);
+            } else {
+                startOtpTimer(COOLDOWN_SECONDS);
+            }
+        })();
+
+        async function ajaxResendOtp() {
+            const email = "<%= typeof email !== 'undefined' ? email : '' %>".toLowerCase().trim();
+            const purpose = "<%= typeof purpose !== 'undefined' ? purpose : 'signup' %>".trim();
+            const resendBtn = document.getElementById('resendBtn');
+
+            if (resendBtn) {
+                resendBtn.disabled = true;
+            }
+
+            try {
+                const res = await fetch('/otp/resend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ email, purpose })
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    showToast(data.message || 'Unable to resend verification code.', 'error');
+                    if (resendBtn) resendBtn.disabled = false;
+                    return;
+                }
+
+                // Clear boxes so new code can be entered cleanly
+                boxes.forEach(b => {
+                    b.value = '';
+                    b.classList.remove('input-error');
+                });
+                fullOtpInput.value = '';
+                clearInputErrors();
+                if (boxes[0]) boxes[0].focus();
+
+                showToast(data.message || 'A new verification code has been sent.', 'success');
+                startOtpTimer(COOLDOWN_SECONDS);
+            } catch (err) {
+                showToast('Connection error resending verification code.', 'error');
+                if (resendBtn) resendBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

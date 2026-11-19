@@ -1,0 +1,247 @@
+<%
+    const safeUser = (typeof user !== 'undefined' && user) ? user : { _id: '', name: 'Collector', email: '', phone: '', profileImage: null, referralCode: 'DLT-MEMBER', authProvider: 'local' };
+    const safeAddresses = (typeof addresses !== 'undefined' && Array.isArray(addresses)) ? addresses : [];
+    const isGoogleUser = Boolean(safeUser.authProvider === 'google' || safeUser.providerId || safeUser.googleId);
+    const safeHasPassword = (typeof hasPassword !== 'undefined') ? Boolean(hasPassword) : (!isGoogleUser);
+    const isInitialGoogleUser = Boolean(isGoogleUser && !safeHasPassword);
+%>
+<%- include('../partials/header', { title: (safeUser.name || 'Collector') + ' — Portfolio | DELTA Vault' }) %>
+<%- include('../partials/navbar', { activeNav: 'profile' }) %>
+
+<div class="bg-[#faf8f7] min-h-screen text-[#1b1c1c] py-10">
+
+    <!-- Main Collector Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-6 py-10 w-full">
+        <!-- Flash Alert -->
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 text-xs flex items-center justify-between rounded-xl shadow-xs">
+                <span><%= success %></span>
+            </div>
+        <% } %>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="mb-6 bg-rose-50 border border-rose-200 text-rose-800 px-4 py-3 text-xs flex items-center justify-between rounded-xl shadow-xs">
+                <span><%= error %></span>
+            </div>
+        <% } %>
+
+        <!-- Toast Notification for Copy -->
+        <div id="copyToast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none bg-zinc-900 text-white px-5 py-3 rounded-lg shadow-2xl flex items-center gap-3 border border-zinc-700 text-xs">
+            <span class="text-emerald-400">✓</span>
+            <span id="copyToastText">Referral code copied to clipboard</span>
+        </div>
+
+        <!-- Collector Header Section -->
+        <div class="bg-white border border-zinc-200 p-8 sm:p-10 mb-8 rounded-2xl shadow-sm">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                <!-- Avatar & Identity Info -->
+                <div class="flex items-center gap-6">
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border border-zinc-300 bg-[#1c1c1c] text-white flex items-center justify-center overflow-hidden flex-shrink-0 text-3xl font-serif font-semibold shadow-sm">
+                        <% if (safeUser.profileImage) { %>
+                            <img src="<%= safeUser.profileImage %>" alt="<%= safeUser.name %>" class="w-full h-full object-cover">
+                        <% } else { %>
+                            <%= (safeUser.name || 'U').charAt(0).toUpperCase() %>
+                        <% } %>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center gap-3 mb-1">
+                            <span class="text-[10px] uppercase tracking-[0.25em] text-[#885c1d] font-semibold block">
+                                Collector Profile
+                            </span>
+                            
+                            <% if (isGoogleUser) { %>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-zinc-100 border border-zinc-200 rounded-full text-[10px] font-mono text-zinc-700 font-semibold shadow-2xs">
+                                    <svg class="w-3 h-3" viewBox="0 0 24 24">
+                                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                                    </svg>
+                                    Google Linked
+                                </span>
+                            <% } %>
+                        </div>
+
+                        <h1 class="text-3xl sm:text-4xl font-serif text-[#1c1c1c] font-normal tracking-tight mb-2">
+                            <%= safeUser.name %>
+                        </h1>
+                        <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-zinc-500 font-light">
+                            <span class="font-mono text-zinc-800 flex items-center gap-1.5">
+                                <%= safeUser.email %>
+                            </span>
+                            <span class="text-zinc-600"><%= safeUser.phone || 'Contact not specified' %></span>
+                            
+                            <!-- Referral ID Badge with Clean Copy Action -->
+                            <div class="flex items-center gap-1.5 bg-zinc-100 border border-zinc-200 px-2.5 py-1 rounded text-zinc-800">
+                                <span class="text-[9px] uppercase tracking-wider text-zinc-500 font-semibold">Referral ID:</span>
+                                <span class="font-mono font-bold text-zinc-900"><%= safeUser.referralCode || 'DLT-MEMBER' %></span>
+                                <button 
+                                    type="button" 
+                                    data-referral-code="<%= safeUser.referralCode || 'DLT-MEMBER' %>" onclick="copyReferralCode(this.getAttribute('data-referral-code'))"
+                                    class="text-zinc-500 hover:text-black ml-1 transition-colors cursor-pointer"
+                                    title="Copy Referral ID"
+                                >
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons Grid -->
+                <div class="flex flex-col gap-3 w-full lg:w-auto">
+                    <!-- Row 1: Primary Portfolio Navigation -->
+                    <div class="grid grid-cols-3 gap-3">
+                        <a href="/profile/edit" class="bg-[#1c1c1c] hover:bg-black text-white px-5 py-3 text-[10px] uppercase tracking-[0.2em] font-semibold text-center transition-colors rounded-xl shadow-xs">
+                            Edit Profile
+                        </a>
+                        <a href="/orders" class="bg-[#1c1c1c] hover:bg-black text-white px-5 py-3 text-[10px] uppercase tracking-[0.2em] font-semibold text-center transition-colors rounded-xl shadow-xs">
+                            My Orders
+                        </a>
+                        <a href="/wallet" class="bg-[#0A4D2E] hover:bg-[#073822] text-white px-5 py-3 text-[10px] uppercase tracking-[0.2em] font-bold text-center transition-colors rounded-xl shadow-xs border border-emerald-700/60 flex items-center justify-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#c5a059]"></span>
+                            Vault Wallet
+                        </a>
+                    </div>
+
+                    <!-- Row 2: Collection & Bag -->
+                    <div class="grid grid-cols-3 gap-3">
+                        <a href="/cart" class="bg-white hover:bg-zinc-50 border border-zinc-300 text-[#1c1c1c] px-5 py-3 text-[10px] uppercase tracking-[0.2em] font-semibold text-center transition-colors rounded-xl shadow-xs">
+                            My Bag / Cart
+                        </a>
+                        <a href="/wishlist" class="bg-white hover:bg-zinc-50 border border-zinc-300 text-[#1c1c1c] px-5 py-3 text-[10px] uppercase tracking-[0.2em] font-semibold text-center transition-colors rounded-xl shadow-xs">
+                            My Wishlist
+                        </a>
+                        <a href="/addresses" class="bg-white hover:bg-zinc-50 border border-zinc-300 text-[#1c1c1c] px-5 py-3 text-[10px] uppercase tracking-[0.2em] font-semibold text-center transition-colors rounded-xl shadow-xs">
+                            Addresses
+                        </a>
+                    </div>
+
+                    <!-- Row 3: Security & Session -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <% if (isInitialGoogleUser) { %>
+                            <a href="/forgot-password?email=<%= encodeURIComponent(safeUser.email) %>" title="Google-linked account. Perform reset password first to set an account password." class="bg-[#1c1c1c] hover:bg-black text-white px-5 py-3 text-[10px] uppercase tracking-[0.2em] font-semibold text-center transition-colors rounded-xl shadow-xs flex items-center justify-center gap-1.5">
+                                <span>Reset Password</span>
+                            </a>
+                        <% } else { %>
+                            <a href="/profile/change-password" class="bg-[#1c1c1c] hover:bg-black text-white px-5 py-3 text-[10px] uppercase tracking-[0.2em] font-semibold text-center transition-colors rounded-xl shadow-xs">
+                                Change Password
+                            </a>
+                        <% } %>
+                        <form action="/logout" method="POST" class="w-full">
+                            <button type="submit" class="w-full bg-[#1c1c1c] hover:bg-rose-900 text-white px-5 py-3 text-[10px] uppercase tracking-[0.2em] font-semibold text-center transition-colors cursor-pointer rounded-xl shadow-xs">
+                                Sign Out
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Saved Addresses Section (Only Real User Data) -->
+        <section class="mb-12">
+            <div class="flex items-center justify-between mb-6 pb-2 border-b border-zinc-200">
+                <h2 class="text-xl font-serif text-[#1c1c1c] font-normal">
+                    Saved Addresses
+                </h2>
+                <a href="/addresses/add" class="text-[11px] uppercase tracking-[0.2em] text-[#885c1d] hover:underline font-semibold">
+                    + Add New Address
+                </a>
+            </div>
+
+            <% if (safeAddresses && safeAddresses.length > 0) { %>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <% safeAddresses.forEach(addr => { %>
+                        <div class="bg-white border <%= addr.isDefault ? 'border-zinc-900 ring-1 ring-zinc-900 shadow-sm' : 'border-zinc-200' %> p-6 flex flex-col justify-between rounded-xl relative group">
+                            <div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-[10px] uppercase tracking-widest text-[#885c1d] font-semibold font-mono">
+                                        <%= addr.addressType || 'Residence' %>
+                                    </span>
+                                    <% if (addr.isDefault) { %>
+                                        <span class="bg-zinc-900 text-white text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded font-mono">
+                                            Primary Address
+                                        </span>
+                                    <% } %>
+                                </div>
+                                <h3 class="font-serif text-base text-zinc-900 font-semibold mb-1">
+                                    <%= addr.fullName || addr.name || 'Collector Address' %>
+                                </h3>
+                                <p class="text-xs text-zinc-600 leading-relaxed font-light mb-1">
+                                    <%= addr.addressLine || addr.street || addr.streetAddress || '' %><% if (addr.city) { %>, <%= addr.city %><% } %>
+                                </p>
+                                <p class="text-xs text-zinc-600 leading-relaxed font-light mb-2">
+                                    <%= addr.state || '' %> — <span class="font-mono font-medium"><%= addr.pincode || addr.postalCode || '' %></span>
+                                </p>
+                                <p class="text-xs text-zinc-500 font-mono">
+                                    Phone: <%= addr.phone %>
+                                </p>
+                            </div>
+
+                            <div class="flex items-center gap-4 mt-6 pt-4 border-t border-zinc-100 text-[10px] uppercase tracking-wider font-semibold">
+                                <a href="/addresses/<%= addr._id %>/edit" class="text-zinc-700 hover:text-black transition-colors">
+                                    Edit
+                                </a>
+                                <% if (!addr.isDefault) { %>
+                                    <form action="/addresses/<%= addr._id %>/set-default" method="POST" class="inline">
+                                        <button type="submit" class="text-[#885c1d] hover:underline cursor-pointer">
+                                            Set Default
+                                        </button>
+                                    </form>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div class="bg-white border border-dashed border-zinc-300 p-12 text-center rounded-2xl">
+                    <p class="text-zinc-500 text-xs mb-4 font-light">
+                        No delivery destinations currently recorded in your private address book.
+                    </p>
+                    <a href="/addresses/add" class="inline-block bg-[#1c1c1c] text-white px-6 py-3 text-[10px] uppercase tracking-[0.2em] font-semibold hover:bg-black transition-colors rounded-xl shadow-xs">
+                        Add Primary Address
+                    </a>
+                </div>
+            <% } %>
+        </section>
+
+    </main>
+
+</div>
+
+<script>
+    function copyReferralCode(code) {
+        if (!navigator.clipboard) {
+            const temp = document.createElement('input');
+            temp.value = code;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            showToastNotice();
+            return;
+        }
+
+        navigator.clipboard.writeText(code).then(() => {
+            showToastNotice();
+        }).catch(err => {
+            console.error('Clipboard copy failed:', err);
+        });
+    }
+
+    function showToastNotice() {
+        const toast = document.getElementById('copyToast');
+        if (!toast) return;
+        toast.classList.remove('translate-y-20', 'opacity-0');
+        toast.classList.add('translate-y-0', 'opacity-100');
+        setTimeout(() => {
+            toast.classList.remove('translate-y-0', 'opacity-100');
+            toast.classList.add('translate-y-20', 'opacity-0');
+        }, 2500);
+    }
+</script>
+
+<%- include('../partials/footer') %>

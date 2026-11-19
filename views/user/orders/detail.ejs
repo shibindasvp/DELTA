@@ -1,0 +1,1969 @@
+<%
+    // 5-Day Return Window Calculation
+    let isReturnEligible = false;
+    let returnDaysLeft = 0;
+    let returnDeadlineFormatted = '';
+    let returnExpired = false;
+    const isOrderReturnDeclined = order.returnDeclined || (order.returnAdminNotes && order.returnAdminNotes.toLowerCase().includes('decline'));
+
+    if (order.orderStatus === 'Delivered') {
+        const deliveryDate = new Date(order.deliveredAt || order.updatedAt || order.createdAt);
+        const returnDeadline = new Date(deliveryDate.getTime() + 5 * 24 * 60 * 60 * 1000);
+        const msRemaining = returnDeadline.getTime() - Date.now();
+        
+        if (msRemaining > 0 && !isOrderReturnDeclined) {
+            isReturnEligible = true;
+            returnDaysLeft = Math.max(1, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
+        } else if (msRemaining <= 0) {
+            returnExpired = true;
+        }
+        returnDeadlineFormatted = returnDeadline.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+%>
+
+<%- include('../partials/header', { title: 'Order Details — ' + order.orderNumber + ' | DELTA Vault' }) %>
+<%- include('../partials/navbar', { activeNav: 'profile' }) %>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<div class="bg-[#faf8f7] min-h-screen text-[#1b1c1c] py-10">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 space-y-8">
+        
+        <!-- Flash Alert if present -->
+        <%- include('../partials/flash-message') %>
+
+        <!-- Breadcrumbs & Header -->
+        <div class="space-y-4">
+            <div class="flex items-center gap-2 text-[10px] uppercase font-mono tracking-widest text-zinc-400">
+                <a href="/profile" class="hover:text-zinc-900 transition-colors">Client Portfolio</a>
+                <span>/</span>
+                <a href="/profile/orders" class="hover:text-zinc-900 transition-colors">Orders</a>
+                <span>/</span>
+                <span class="text-zinc-900 font-bold"><%= order.orderNumber %></span>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-zinc-200/80 pb-6">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-3">
+                        <span class="text-[10px] uppercase font-mono tracking-[0.25em] text-[#c5a059] font-bold block">
+                            ORDER DETAILS
+                        </span>
+                        <%
+                            let badgeClass = 'bg-zinc-100 text-zinc-700 border-zinc-200';
+                            let dotColor = 'bg-zinc-400';
+                            if (order.orderStatus === 'Pending') { badgeClass = 'bg-amber-50 text-amber-800 border-amber-200/90'; dotColor = 'bg-amber-500'; }
+                            if (order.orderStatus === 'Processing') { badgeClass = 'bg-blue-50 text-blue-800 border-blue-200/90'; dotColor = 'bg-blue-500'; }
+                            if (order.orderStatus === 'Shipped') { badgeClass = 'bg-indigo-50 text-indigo-800 border-indigo-200/90'; dotColor = 'bg-indigo-500'; }
+                            if (order.orderStatus === 'Delivered') { badgeClass = 'bg-emerald-50 text-[#0A4D2E] border-emerald-200/90'; dotColor = 'bg-emerald-600'; }
+                            if (order.orderStatus === 'Cancelled') { badgeClass = 'bg-rose-50 text-rose-800 border-rose-200/90'; dotColor = 'bg-rose-500'; }
+                            if (order.orderStatus === 'Return Requested') { badgeClass = 'bg-purple-50 text-purple-800 border-purple-200/90'; dotColor = 'bg-purple-500'; }
+                        %>
+                        <span class="inline-flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-wider font-semibold px-3 py-0.5 rounded-full border <%= badgeClass %>">
+                            <span class="w-1.5 h-1.5 rounded-full <%= dotColor %>"></span>
+                            <%= order.orderStatus %>
+                        </span>
+                    </div>
+
+                    <h1 class="text-3xl font-serif text-zinc-900 font-normal tracking-tight">
+                        Order Ref: <span class="font-mono font-bold"><%= order.orderNumber %></span>
+                    </h1>
+                    <p class="text-xs text-zinc-400 font-mono">
+                        Authorized on <%= new Date(order.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                    </p>
+                </div>
+
+            <!-- Header Action Buttons -->
+            <div class="flex items-center gap-3 flex-wrap">
+                <% if (order.orderStatus === 'Pending' || order.orderStatus === 'Processing') { %>
+                    <button 
+                        type="button" 
+                        onclick="openCancelOrderModal()"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-xl text-xs uppercase font-semibold tracking-wider transition-colors shadow-2xs cursor-pointer"
+                        title="Cancel this order"
+                    >
+                        <span>✕ Cancel Order</span>
+                    </button>
+                <% } %>
+
+                <!-- PDF Invoice Download -->
+                <a 
+                    href="/orders/<%= order._id %>/invoice" 
+                    target="_blank"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-zinc-50 border border-zinc-300 text-zinc-700 rounded-xl text-xs uppercase font-semibold tracking-wider transition-colors shadow-2xs cursor-pointer"
+                    title="Download Official PDF Invoice"
+                >
+                    <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span>Download PDF Invoice</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+        <!-- Online Payment Failure / Incomplete Alert Banner -->
+        <% if (order.paymentStatus === 'Failed') { %>
+            <div class="bg-gradient-to-r from-rose-50 via-rose-50/80 to-amber-50/40 border border-rose-200/90 rounded-2xl p-6 text-xs text-rose-900 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+                <div class="flex items-start sm:items-center gap-4">
+                    <div class="w-11 h-11 rounded-2xl bg-rose-100/90 text-rose-700 flex items-center justify-center text-lg flex-shrink-0 font-bold border border-rose-200 shadow-2xs">
+                        ✕
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-mono uppercase tracking-widest text-rose-600 font-bold">Action Required</span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                            <span class="text-[10px] font-mono text-rose-600 font-semibold">Payment Incomplete</span>
+                        </div>
+                        <h4 class="font-serif font-bold text-base text-zinc-900">Payment Authorization Incomplete</h4>
+                        <p class="font-light text-rose-800 leading-relaxed max-w-2xl">
+                            <%= order.paymentFailureReason || 'The online payment for this order was not completed or authorization was declined.' %>
+                            Your timepiece reservation remains secured in vault hold. Please retry payment settlement to authorize dispatch.
+                        </p>
+                    </div>
+                </div>
+                <button 
+                    type="button" 
+                    onclick="openRetryPaymentModal()"
+                    class="self-start sm:self-auto px-6 py-3.5 bg-[#0A4D2E] hover:bg-[#073620] text-white rounded-xl text-xs uppercase font-mono tracking-wider font-semibold shadow-md transition-all cursor-pointer flex-shrink-0 flex items-center gap-2.5"
+                >
+                    <svg class="w-4 h-4 text-[#c5a059]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                    <span>Retry Settlement Now</span>
+                </button>
+            </div>
+        <% } %>
+
+        <!-- Cancellation / Return / In-Transit / Delivered 5-Day Policy Banner -->
+        <% if (order.orderStatus === 'Cancelled') { %>
+            <div class="bg-rose-50 border border-rose-200 rounded-2xl p-6 text-xs text-rose-800 space-y-1">
+                <h4 class="font-serif font-bold text-sm">Order Cancelled</h4>
+                <p class="font-light">
+                    Reason: <%= order.cancellationReason || 'Collector requested cancellation' %>
+                </p>
+                <% if (order.cancelledAt) { %>
+                    <p class="font-mono text-[11px] text-rose-600">Cancelled on <%= new Date(order.cancelledAt).toLocaleString('en-IN') %></p>
+                <% } %>
+                <% if (order.refundAmount && order.refundAmount > 0) { %>
+                    <div class="mt-2.5 pt-2.5 border-t border-rose-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
+                        <span class="font-medium text-emerald-900 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-600 flex-shrink-0"></span>
+                            <span>Direct refund of <strong class="font-mono text-emerald-950 font-bold">₹<%= Number(order.refundAmount).toLocaleString('en-IN') %></strong> credited immediately to your DELTA Vault Wallet.</span>
+                        </span>
+                        <a href="/wallet" class="self-start sm:self-auto font-mono font-bold text-[#0A4D2E] hover:underline bg-white/80 px-2.5 py-1 rounded-lg border border-emerald-200 flex-shrink-0">
+                            View Wallet Ledger →
+                        </a>
+                    </div>
+                <% } %>
+            </div>
+        <% } else if (order.orderStatus === 'Return Requested' || (order.items && order.items.some(i => i.status === 'Return Requested'))) { %>
+            <% 
+                const returnReqItems = (order.items || []).filter(i => i.status === 'Return Requested');
+                const isSingleItemReturn = returnReqItems.length === 1 && (order.items || []).filter(i => i.status !== 'Cancelled').length > 1;
+            %>
+            <div class="bg-purple-50 border border-purple-200 rounded-2xl p-6 text-xs text-purple-800 space-y-2">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <h4 class="font-serif font-bold text-sm">
+                        <%= isSingleItemReturn ? 'Single Timepiece Return Under Review' : 'Return Request Under Review' %>
+                    </h4>
+                    <% if (order.returnRequestedAt || (returnReqItems[0] && returnReqItems[0].returnRequestedAt)) { %>
+                        <p class="font-mono text-[11px] text-purple-600">
+                            Requested on <%= new Date(order.returnRequestedAt || returnReqItems[0].returnRequestedAt).toLocaleString('en-IN') %>
+                        </p>
+                    <% } %>
+                </div>
+
+                <% if (isSingleItemReturn) { %>
+                    <p class="font-light">
+                        Return requested for <strong class="font-semibold text-purple-950"><%= returnReqItems[0].productName %></strong>:
+                    </p>
+                    <div class="bg-white/80 border border-purple-200/80 rounded-xl p-3 text-purple-950 font-mono text-[11px]">
+                        Reason: "<%= returnReqItems[0].returnReason || order.returnReason || 'No statement provided.' %>"
+                    </div>
+                <% } else if (returnReqItems.length > 1) { %>
+                    <p class="font-light">Returned Item Reasons:</p>
+                    <div class="space-y-1.5">
+                        <% returnReqItems.forEach(rItem => { %>
+                            <div class="bg-white/80 border border-purple-200/80 rounded-xl p-2.5 text-purple-950 text-[11px]">
+                                <strong class="font-semibold text-purple-950"><%= rItem.productName %>:</strong>
+                                <span class="italic font-mono">"<%= rItem.returnReason || order.returnReason || 'No statement provided.' %>"</span>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <p class="font-light">
+                        Mandatory Reason Provided: <%= order.returnReason || (order.items && order.items.find(i => i.returnReason)?.returnReason) || 'No statement provided.' %>
+                    </p>
+                <% } %>
+
+                <div class="mt-2.5 pt-2.5 border-t border-purple-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-purple-900">
+                    <span class="font-medium flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse flex-shrink-0"></span>
+                        <span>Refund will be credited to your DELTA Vault Wallet immediately upon administrator inspection and return confirmation.</span>
+                    </span>
+                    <span class="self-start sm:self-auto font-mono text-[10px] text-purple-800 bg-white/90 px-2.5 py-1 rounded-lg border border-purple-200 font-bold flex-shrink-0">
+                        Pending Admin Confirmation
+                    </span>
+                </div>
+            </div>
+        <% } else if (order.orderStatus === 'Returned') { %>
+            <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-xs text-emerald-900 space-y-1">
+                <h4 class="font-serif font-bold text-sm">Timepiece Return Completed & Restocked</h4>
+                <p class="font-light">
+                    Mandatory Reason Provided: <%= order.returnReason || (order.items && order.items.find(i => i.returnReason)?.returnReason) || 'Return processed' %>
+                </p>
+                <% if (order.returnedAt) { %>
+                    <p class="font-mono text-[11px] text-emerald-700">Completed on <%= new Date(order.returnedAt).toLocaleString('en-IN') %></p>
+                <% } %>
+                <% if (order.refundAmount && order.refundAmount > 0) { %>
+                    <div class="mt-2.5 pt-2.5 border-t border-emerald-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
+                        <span class="font-medium text-emerald-900 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-600 flex-shrink-0"></span>
+                            <span>Return confirmed by administration. Refund of <strong class="font-mono text-emerald-950 font-bold">₹<%= Number(order.refundAmount).toLocaleString('en-IN') %></strong> credited to your DELTA Vault Wallet reserve.</span>
+                        </span>
+                        <a href="/wallet" class="self-start sm:self-auto font-mono font-bold text-[#0A4D2E] hover:underline bg-white/80 px-2.5 py-1 rounded-lg border border-emerald-200 flex-shrink-0">
+                            View Wallet Ledger →
+                        </a>
+                    </div>
+                <% } %>
+            </div>
+        <% } else if (order.orderStatus === 'Shipped' || order.orderStatus === 'Out for Delivery') { %>
+            <div class="bg-indigo-50/80 border border-indigo-200/90 rounded-2xl p-5 text-xs text-indigo-900 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+                <div class="flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-base flex-shrink-0">
+                        🚚
+                    </span>
+                    <div>
+                        <h4 class="font-serif font-bold text-sm">Dispatched with White-Glove Courier</h4>
+                        <p class="font-light text-indigo-700/90">This timepiece order is in active transit and can no longer be cancelled. A return may be requested upon safe delivery.</p>
+                    </div>
+                </div>
+                <span class="self-start sm:self-auto px-3 py-1 bg-white border border-indigo-200 rounded-full font-mono text-[10px] uppercase font-bold text-indigo-800 flex-shrink-0">
+                    Non-Cancellable in Transit
+                </span>
+            </div>
+        <% } else if (order.orderStatus === 'Delivered' && isOrderReturnDeclined) { %>
+            <div class="bg-zinc-100/90 border border-zinc-200 rounded-2xl p-5 text-xs text-zinc-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+                <div class="flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-base flex-shrink-0 font-bold">
+                        ✕
+                    </span>
+                    <div>
+                        <h4 class="font-serif font-bold text-sm text-zinc-900">Return Request Declined</h4>
+                        <p class="font-light text-zinc-600">
+                            <%= order.returnAdminNotes || 'A previous return request for this order was reviewed and declined by the concierge. Timepieces with a declined return request are not eligible for another return request.' %>
+                        </p>
+                    </div>
+                </div>
+                <span class="self-start sm:self-auto px-3.5 py-1.5 bg-white border border-rose-200 text-rose-700 rounded-full font-mono text-[10px] uppercase font-bold flex-shrink-0 shadow-2xs">
+                    Return Ineligible
+                </span>
+            </div>
+        <% } else if (order.orderStatus === 'Delivered' && isReturnEligible) { %>
+            <div class="bg-emerald-50/80 border border-emerald-200/90 rounded-2xl p-5 text-xs text-emerald-950 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+                <div class="flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-base flex-shrink-0 font-bold">
+                        ✓
+                    </span>
+                    <div>
+                        <h4 class="font-serif font-bold text-sm">Timepiece Safely Received</h4>
+                        <p class="font-light text-emerald-800/90">
+                            Delivered destination verified. 5-day vault return policy active until <span class="font-medium underline"><%= returnDeadlineFormatted %></span> (<%= returnDaysLeft %> <%= returnDaysLeft === 1 ? 'day' : 'days' %> remaining). Use the <span class="font-semibold text-purple-900 font-mono">"Return Piece"</span> button on any individual timepiece below to initiate a return.
+                        </p>
+                    </div>
+                </div>
+                <span class="self-start sm:self-auto px-3.5 py-1.5 bg-white border border-emerald-200 text-[#0A4D2E] rounded-full font-mono text-[10px] uppercase font-bold flex-shrink-0 shadow-2xs">
+                    5-Day Return Window Active (<%= returnDaysLeft %>d)
+                </span>
+            </div>
+        <% } else if (order.orderStatus === 'Delivered' && returnExpired) { %>
+            <div class="bg-zinc-100/90 border border-zinc-200 rounded-2xl p-5 text-xs text-zinc-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+                <div class="flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-full bg-zinc-200 text-zinc-500 flex items-center justify-center text-base flex-shrink-0">
+                        🔒
+                    </span>
+                    <div>
+                        <h4 class="font-serif font-bold text-sm text-zinc-900">Provenance & Delivery Sealed</h4>
+                        <p class="font-light text-zinc-500">
+                            The 5-day return window closed on <%= returnDeadlineFormatted %>. Provenance certificate and warranty are permanently registered to your collector archive.
+                        </p>
+                    </div>
+                </div>
+                <span class="self-start sm:self-auto px-3.5 py-1 bg-white border border-zinc-200 rounded-full font-mono text-[10px] uppercase font-bold text-zinc-500 flex-shrink-0">
+                    Return Window Closed
+                </span>
+            </div>
+        <% } %>
+
+        <!-- Tracking Timeline Status Bar -->
+        <div class="bg-white rounded-3xl border border-zinc-200/80 p-8 shadow-sm space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xs uppercase font-mono tracking-[0.2em] text-[#c5a059] font-bold">
+                    Order Fulfillment Timeline
+                </h2>
+                <span class="inline-flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-wider font-semibold px-3 py-1 rounded-full border <%= badgeClass %>">
+                    <span class="w-1.5 h-1.5 rounded-full <%= dotColor %>"></span>
+                    <%= order.orderStatus %>
+                </span>
+            </div>
+
+            <%
+                const timelineSteps = [
+                    { id: 'Pending', label: 'Vault Authentication', desc: 'Order Placed' },
+                    { id: 'Processing', label: 'Bespoke Packaging', desc: 'Preparing Allocation' },
+                    { id: 'Shipped', label: 'White-Glove Transit', desc: 'Dispatched with Courier' },
+                    { id: 'Out for Delivery', label: 'Courier Dispatch', desc: 'Out for Delivery' },
+                    { id: 'Delivered', label: 'Safely Received', desc: 'Delivered to Vault' }
+                ];
+                
+                const stepOrder = ['Pending', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
+                const currentIdx = stepOrder.indexOf(order.orderStatus);
+            %>
+
+            <% if (order.orderStatus === 'Cancelled') { %>
+                <div class="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 text-rose-800 text-xs">
+                    <span class="w-8 h-8 rounded-full bg-rose-200 text-rose-700 flex items-center justify-center font-bold text-sm">✕</span>
+                    <div>
+                        <p class="font-bold font-serif text-sm">Order Terminated / Cancelled</p>
+                        <p class="text-[11px] text-rose-600">This order was cancelled and inventory stock has been returned to vault reserves.</p>
+                    </div>
+                </div>
+            <% } else if (order.orderStatus === 'Returned') { %>
+                <div class="p-4 bg-purple-50 border border-purple-200 rounded-2xl flex items-center gap-3 text-purple-900 text-xs">
+                    <span class="w-8 h-8 rounded-full bg-purple-200 text-purple-700 flex items-center justify-center font-bold text-sm">↩</span>
+                    <div>
+                        <p class="font-bold font-serif text-sm">Return Completed & Restocked</p>
+                        <p class="text-[11px] text-purple-700">The timepiece was returned to vault custody and verified by our horological team.</p>
+                    </div>
+                </div>
+            <% } else { %>
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 relative">
+                    <% timelineSteps.forEach((st, idx) => { %>
+                        <% const isDone = (currentIdx !== -1 && idx <= currentIdx) || (order.orderStatus === 'Return Requested'); %>
+                        <div class="space-y-2 text-center sm:text-left">
+                            <div class="flex items-center gap-2">
+                                <span class="w-7 h-7 rounded-full flex items-center justify-center font-mono text-xs font-bold transition-all <%= isDone ? 'bg-[#0A4D2E] text-white shadow-sm' : 'bg-zinc-100 text-zinc-400' %>">
+                                    <%= isDone ? '✓' : idx + 1 %>
+                                </span>
+                                <div class="hidden sm:block flex-1 h-0.5 <%= (idx < currentIdx || (order.orderStatus === 'Return Requested' && idx < 4)) ? 'bg-[#0A4D2E]' : 'bg-zinc-200' %>"></div>
+                            </div>
+                            <h4 class="text-xs font-serif font-semibold <%= isDone ? 'text-zinc-900' : 'text-zinc-400' %>">
+                                <%= st.id %>
+                            </h4>
+                            <p class="text-[10px] text-zinc-400 font-light">
+                                <%= st.label %>
+                            </p>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- 2 Column Details: Items + Shipping & Valuation Info -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left 8 Cols: Items Purchased & Support Dossier -->
+            <div class="lg:col-span-8 space-y-6">
+                
+                <!-- Ordered Timepieces Card -->
+                <div class="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-8 space-y-6 shadow-xs">
+                    <div class="border-b border-zinc-100 pb-4 flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] uppercase font-mono tracking-[0.25em] text-[#c5a059] font-bold block mb-1">
+                                MANUFACTURE SPECIFICATIONS
+                            </span>
+                            <h3 class="text-xl font-serif text-zinc-900 font-normal">
+                                Ordered Timepieces <span class="text-xs font-mono text-zinc-400 font-normal ml-1">(<%= order.items.length %> <%= order.items.length === 1 ? 'item' : 'items' %>)</span>
+                            </h3>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <% order.items.forEach(item => { %>
+                            <div class="p-5 rounded-2xl bg-zinc-50/70 border border-zinc-200/60 hover:border-zinc-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+                                <div class="flex items-start sm:items-center gap-4">
+                                    <div class="w-20 h-20 rounded-2xl bg-[#f4f1ee] overflow-hidden p-2 flex items-center justify-center flex-shrink-0 border border-zinc-200/70 shadow-2xs">
+                                        <% if (item.variant && item.variant.image) { %>
+                                            <img src="<%= item.variant.image %>" alt="<%= item.productName %>" class="w-full h-full object-cover rounded-xl">
+                                        <% } else { %>
+                                            <span class="text-zinc-300 text-2xl">⏱</span>
+                                        <% } %>
+                                    </div>
+
+                                    <div class="space-y-1.5">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="text-[10px] uppercase font-mono tracking-widest text-[#c5a059] font-bold block">
+                                                <%= item.brandName %>
+                                            </span>
+                                            <span class="text-[9px] font-mono uppercase px-2.5 py-0.5 rounded-full font-bold
+                                                <%= item.status === 'Delivered' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 
+                                                   (item.status === 'Out for Delivery' ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' : 
+                                                   (item.status === 'Shipped' ? 'bg-blue-100 text-blue-800 border border-blue-200' : 
+                                                   (item.status === 'Processing' ? 'bg-amber-100 text-amber-800 border border-amber-200' : 
+                                                   (item.status === 'Cancelled' ? 'bg-rose-100 text-rose-700 border border-rose-200' : 
+                                                   (item.status === 'Return Requested' || item.status === 'Returned' ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-zinc-100 text-zinc-700 border border-zinc-200'))))) %>">
+                                                <%= item.status || 'Pending' %>
+                                            </span>
+                                        </div>
+
+                                        <h4 class="font-serif text-base text-zinc-900 font-normal">
+                                            <%= item.productName %>
+                                        </h4>
+
+                                        <div class="flex items-center gap-2 text-xs text-zinc-600 flex-wrap pt-0.5">
+                                            <span class="px-2.5 py-0.5 bg-white border border-zinc-200 rounded-md font-medium text-zinc-800 text-[11px] shadow-2xs">
+                                                <%= item.variant ? item.variant.color : 'Standard Edition' %>
+                                            </span>
+                                            <% if (item.variant && item.variant.material) { %>
+                                                <span class="px-2 py-0.5 bg-white border border-zinc-200 rounded-md text-[10px] text-zinc-500 font-mono shadow-2xs">
+                                                    <%= item.variant.material %>
+                                                </span>
+                                            <% } %>
+                                            <span class="px-2 py-0.5 bg-white border border-zinc-200 rounded-md text-[10px] text-zinc-700 font-mono font-semibold shadow-2xs">
+                                                Qty: <%= item.quantity %>
+                                            </span>
+                                        </div>
+
+                                        <% if (item.cancellationReason) { %>
+                                            <p class="text-[10px] text-rose-600 font-mono pt-1">Cancellation Note: "<%= item.cancellationReason %>"</p>
+                                        <% } %>
+                                        <% const displayItemReturnReason = item.returnReason || ((item.status === 'Return Requested' || item.status === 'Returned') ? order.returnReason : ''); %>
+                                        <% if (displayItemReturnReason) { %>
+                                            <p class="text-[10px] text-purple-600 font-mono pt-1">Return Reason: "<%= displayItemReturnReason %>"</p>
+                                        <% } %>
+                                    </div>
+                                </div>
+
+                                <div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 border-t sm:border-t-0 pt-3 sm:pt-0 border-zinc-200/60 flex-shrink-0">
+                                    <div>
+                                        <p class="font-mono text-base font-bold text-zinc-900 sm:text-right">
+                                            ₹<%= Number(item.itemTotal).toLocaleString('en-IN') %>
+                                        </p>
+                                        <span class="text-[10px] text-zinc-400 font-mono block sm:text-right">
+                                            ₹<%= Number(item.price).toLocaleString('en-IN') %> / unit
+                                        </span>
+                                    </div>
+
+                                    <!-- Action Buttons per Item -->
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <!-- Specific Product Cancel Button (Allowed only when item is Pending/Processing before shipping) -->
+                                        <% if (item.status !== 'Cancelled' && (item.status === 'Pending' || item.status === 'Processing')) { %>
+                                            <button 
+                                                type="button" 
+                                                onclick="openCancelItemModal('<%= item._id %>', '<%= item.productName %>')"
+                                                class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-[10px] uppercase font-mono tracking-wider font-semibold transition-colors cursor-pointer"
+                                            >
+                                                Cancel Piece
+                                            </button>
+                                        <% } %>
+
+                                        <!-- Specific Product Return Button (Allowed only when item is Delivered within 5-day window and not declined) -->
+                                        <%
+                                            const itemDeliveryDate = new Date(item.deliveredAt || order.deliveredAt || order.updatedAt || order.createdAt);
+                                            const itemReturnDeadline = new Date(itemDeliveryDate.getTime() + 5 * 24 * 60 * 60 * 1000);
+                                            const itemMsRemaining = itemReturnDeadline.getTime() - Date.now();
+                                            const isItemDeclined = item.returnDeclined || (item.returnAdminNotes && item.returnAdminNotes.toLowerCase().includes('decline'));
+                                            const isItemReturnEligible = item.status === 'Delivered' && (itemMsRemaining > 0) && !isItemDeclined;
+                                            const itemDaysLeft = Math.max(1, Math.ceil(itemMsRemaining / (1000 * 60 * 60 * 24)));
+                                        %>
+                                        <% if (isItemDeclined) { %>
+                                            <span class="px-3 py-1 bg-zinc-100 text-zinc-500 border border-zinc-200 rounded-xl text-[10px] uppercase font-mono tracking-wider font-semibold" title="<%= item.returnAdminNotes || 'Return Request Declined' %>">
+                                                Return Declined
+                                            </span>
+                                        <% } else if (isItemReturnEligible) { %>
+                                            <button 
+                                                type="button" 
+                                                onclick="openReturnItemModal('<%= item._id %>', '<%= item.productName %>')"
+                                                class="px-3.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 rounded-xl text-[11px] uppercase font-mono tracking-wider font-semibold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs"
+                                                title="Initiate Return for this specific timepiece"
+                                            >
+                                                <span>Return Piece</span>
+                                                <span class="text-[10px] font-mono text-purple-600 bg-white/80 px-1.5 py-0.2 rounded border border-purple-200/60"><%= itemDaysLeft %>d left</span>
+                                            </button>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right 4 Cols: Address & Valuation Recap -->
+            <div class="lg:col-span-4 space-y-6">
+                
+                <!-- Destination Card -->
+                <div class="bg-white rounded-3xl border border-zinc-200/80 p-6 space-y-4 shadow-sm">
+                    <span class="text-[10px] uppercase font-mono tracking-[0.2em] text-[#c5a059] font-bold block">Delivery Destination</span>
+                    
+                    <div class="space-y-1 text-xs text-zinc-600">
+                        <h4 class="font-serif text-base font-semibold text-zinc-900"><%= order.shippingAddress.fullName %></h4>
+                        <p class="font-light"><%= order.shippingAddress.street %></p>
+                        <p class="font-light"><%= order.shippingAddress.city %>, <%= order.shippingAddress.state %> — <span class="font-mono font-medium"><%= order.shippingAddress.postalCode %></span></p>
+                        <p class="font-mono text-zinc-500 pt-1">Phone: <%= order.shippingAddress.mobile %></p>
+                    </div>
+
+                    <div class="pt-3 border-t border-zinc-100 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] uppercase font-mono text-zinc-400 block">Payment Method</span>
+                            <% if (order.paymentStatus === 'Completed') { %>
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-emerald-50 text-[#0A4D2E] border border-emerald-200">
+                                    Authorized & Paid
+                                </span>
+                            <% } else if (order.paymentStatus === 'Refunded') { %>
+                                <a href="/wallet" class="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-emerald-50 text-[#0A4D2E] border border-emerald-200 hover:bg-emerald-100 transition-colors" title="View in Vault Wallet">
+                                    Refunded to Vault Wallet ↗
+                                </a>
+                            <% } else if (order.paymentStatus === 'Failed') { %>
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                    Authorization Failed
+                                </span>
+                            <% } else { %>
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                    <%= order.paymentMethod === 'Cash on Delivery' ? 'Pay Upon Delivery' : 'Pending Payment' %>
+                                </span>
+                            <% } %>
+                        </div>
+                        <p class="font-serif text-sm font-semibold text-zinc-900"><%= order.paymentMethod %></p>
+
+                        <% if (order.razorpayPaymentId) { %>
+                            <p class="text-[10px] text-zinc-500 font-mono">
+                                Razorpay Ref: <span class="text-zinc-800 font-medium"><%= order.razorpayPaymentId %></span>
+                            </p>
+                        <% } else if (order.paypalCaptureId) { %>
+                            <p class="text-[10px] text-zinc-500 font-mono">
+                                PayPal Ref: <span class="text-zinc-800 font-medium"><%= order.paypalCaptureId %></span>
+                            </p>
+                        <% } %>
+
+                        <% if (order.paidAt) { %>
+                            <p class="text-[10px] text-zinc-400 font-mono">
+                                Paid on <%= new Date(order.paidAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                            </p>
+                        <% } %>
+
+                        <% if (order.paymentStatus === 'Failed') { %>
+                            <% 
+                                const isDetailCooldown = typeof cooldown !== 'undefined' && cooldown && cooldown.inCooldown;
+                                const detailSecs = isDetailCooldown ? cooldown.remainingSeconds : 0;
+                            %>
+                            <div class="pt-1.5 space-y-1.5">
+                                <div id="detailCooldownBadge" class="<%= isDetailCooldown ? 'flex' : 'hidden' %> p-2 rounded-xl bg-amber-50 border border-amber-200/80 text-[10px] text-amber-800 items-center justify-between font-mono">
+                                    <span>⏱ 5-MIN RE-BUY COOLDOWN</span>
+                                    <span id="detailCooldownBadgeTimer" class="font-bold"><%= Math.floor(detailSecs / 60) %>:<%= (detailSecs % 60).toString().padStart(2, '0') %></span>
+                                </div>
+                                <button 
+                                    type="button" 
+                                    id="detailRetryBtn"
+                                    onclick="handleDetailRetryClick()"
+                                    class="w-full py-2 px-3 bg-[#0A4D2E] hover:bg-[#073620] text-white rounded-xl text-[11px] uppercase font-mono tracking-wider font-semibold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                                >
+                                    <svg class="w-3.5 h-3.5 text-[#c5a059]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                    <span id="detailRetryBtnText">Retry Settlement</span>
+                                </button>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <% if (order.notes) { %>
+                        <div class="pt-3 border-t border-zinc-100 text-xs">
+                            <span class="text-[10px] uppercase font-mono text-zinc-400 block mb-1">Collector Notes</span>
+                            <p class="font-light text-zinc-600 italic">"<%= order.notes %>"</p>
+                        </div>
+                    <% } %>
+                </div>
+
+                <!-- Financial Card -->
+                <div class="bg-white rounded-3xl border border-zinc-200/80 p-6 space-y-3 shadow-sm text-xs">
+                    <span class="text-[10px] uppercase font-mono tracking-[0.2em] text-[#c5a059] font-bold block mb-2">Valuation Summary</span>
+
+                    <% 
+                        const hasMod = (order.cancelledAmount && order.cancelledAmount > 0) || (order.returnedAmount && order.returnedAmount > 0);
+                        const origSubVal = Number(order.originalSubtotal) || (hasMod ? (Number(order.subtotal || 0) + Number(order.cancelledAmount || 0) + Number(order.returnedAmount || 0)) : Number(order.subtotal || 0));
+                    %>
+                    <div class="flex justify-between text-zinc-600">
+                        <span><%= hasMod ? 'Original Subtotal' : 'Items Subtotal' %></span>
+                        <span class="font-mono font-medium text-zinc-900">₹<%= origSubVal.toLocaleString('en-IN') %></span>
+                    </div>
+
+                    <% if (order.cancelledAmount && order.cancelledAmount > 0) { %>
+                        <div class="flex justify-between text-rose-600">
+                            <span>Cancelled Deductions</span>
+                            <span class="font-mono font-medium">-₹<%= Number(order.cancelledAmount).toLocaleString('en-IN') %></span>
+                        </div>
+                    <% } %>
+
+                    <% if (order.returnedAmount && order.returnedAmount > 0) { %>
+                        <div class="flex justify-between text-purple-700 font-medium">
+                            <span>Returned / Restocked</span>
+                            <span class="font-mono">-₹<%= Number(order.returnedAmount).toLocaleString('en-IN') %></span>
+                        </div>
+                    <% } %>
+
+                    <% if (order.discountAmount && order.discountAmount > 0) { %>
+                        <div class="flex justify-between text-emerald-700 font-semibold">
+                            <span>Coupon Discount <%= order.appliedCoupon?.code ? '(' + order.appliedCoupon.code + ')' : '' %></span>
+                            <span class="font-mono">-₹<%= Number(order.discountAmount).toLocaleString('en-IN') %></span>
+                        </div>
+                    <% } %>
+
+                    <div class="flex justify-between text-zinc-600">
+                        <span>White-Glove Courier</span>
+                        <span class="font-mono text-[#0A4D2E] font-semibold uppercase text-[10px]">Complimentary</span>
+                    </div>
+
+                    <% 
+                        const activeSub = Number(order.subtotal || 0);
+                        const displayGst = order.taxAmount ? Number(order.taxAmount) : Math.round(activeSub * 0.18);
+                    %>
+                    <div class="flex justify-between text-zinc-600 text-xs">
+                        <span>Statutory Taxes (GST 18%)</span>
+                        <span class="font-mono font-medium text-zinc-900">₹<%= displayGst.toLocaleString('en-IN') %> <span class="italic text-[10px] text-zinc-400 font-normal">(Included)</span></span>
+                    </div>
+
+                    <div class="pt-3 border-t border-zinc-200 flex justify-between items-baseline">
+                        <span class="text-xs uppercase font-mono font-bold text-zinc-900">TOTAL VALUATION</span>
+                        <span class="text-xl font-bold font-mono text-[#0A4D2E]">₹<%= Number(order.grandTotal || 0).toLocaleString('en-IN') %></span>
+                    </div>
+
+                    <% if (order.refundAmount && order.refundAmount > 0) { %>
+                        <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col gap-1 text-xs">
+                            <div class="flex items-center justify-between text-[#0A4D2E] font-medium">
+                                <span class="flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                    <span>Vault Wallet Refund</span>
+                                </span>
+                                <span class="font-mono font-bold text-sm">+₹<%= Number(order.refundAmount).toLocaleString('en-IN') %></span>
+                            </div>
+                            <div class="flex items-center justify-between text-[11px] text-zinc-500 font-light pt-1 border-t border-emerald-100">
+                                <span>Credited to liquid reserve</span>
+                                <a href="/wallet" class="text-[#0A4D2E] font-medium hover:underline font-mono">View Wallet Ledger →</a>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+
+            </div>
+
+        </div>
+
+    <!-- ========================================================= -->
+<!-- CANCEL SPECIFIC ITEM MODAL -->
+<!-- ========================================================= -->
+<div id="cancelItemModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-8 space-y-6 shadow-2xl relative">
+        <div class="flex items-center justify-between border-b border-zinc-100 pb-4">
+            <div>
+                <span class="text-[10px] uppercase font-mono tracking-widest text-rose-600 font-bold block">Item Cancellation</span>
+                <h3 class="text-xl font-serif text-zinc-900">Cancel Specific Timepiece</h3>
+            </div>
+            <button type="button" onclick="closeCancelItemModal()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-500 flex items-center justify-center transition-colors cursor-pointer">✕</button>
+        </div>
+
+        <p class="text-xs text-zinc-600 font-light leading-relaxed">
+            Cancel <span id="cancelItemName" class="font-serif font-semibold text-zinc-900"></span> from your order? Its allocated unit will be immediately returned to vault inventory.
+        </p>
+
+        <form id="cancelItemForm" onsubmit="submitCancelItem(event)" class="space-y-4 text-xs">
+            <input type="hidden" id="cancelItemId" name="itemId">
+
+            <div class="space-y-1">
+                <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-600">Reason for Cancellation <span class="text-rose-500">*</span></label>
+                <select id="cancelItemReasonPreset" required onchange="applyCancelItemPreset(this.value)" class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none bg-white text-xs font-light text-zinc-800 cursor-pointer mb-2">
+                    <option value="">Select cancellation reason *</option>
+                    <option value="Changed mind / Decided on a different timepiece">Changed mind / Decided on a different timepiece</option>
+                    <option value="Ordered by mistake / Duplicate order placed">Ordered by mistake / Duplicate order placed</option>
+                    <option value="Incorrect variant, dial, or case material selected">Incorrect variant, dial, or case material selected</option>
+                    <option value="Found alternative edition or brand elsewhere">Found alternative edition or brand elsewhere</option>
+                    <option value="Delivery timeframe or waiting period is too long">Delivery timeframe or waiting period is too long</option>
+                    <option value="Payment or billing adjustment required">Payment or billing adjustment required</option>
+                    <option value="Other">Other (Specify in text box below)</option>
+                </select>
+                <textarea id="cancelItemReason" name="reason" rows="2" placeholder="Additional details or specific reason (optional if selected from dropdown)..." class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none font-light"></textarea>
+            </div>
+
+            <div id="cancelItemError" class="text-rose-600 text-xs hidden pt-1 font-mono"></div>
+
+            <div class="pt-4 flex items-center justify-end gap-3 border-t border-zinc-100">
+                <button type="button" onclick="closeCancelItemModal()" class="px-5 py-3 border border-zinc-200 rounded-xl text-zinc-700 hover:bg-zinc-50 uppercase tracking-wider font-semibold cursor-pointer">Back</button>
+                <button type="submit" id="confirmCancelItemBtn" class="px-6 py-3 bg-rose-700 hover:bg-rose-800 text-white rounded-xl uppercase tracking-wider font-semibold shadow-sm cursor-pointer">Cancel Piece</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- CANCEL ENTIRE ORDER MODAL -->
+<!-- ========================================================= -->
+<div id="cancelOrderModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-8 space-y-6 shadow-2xl relative">
+        <div class="flex items-center justify-between border-b border-zinc-100 pb-4">
+            <div>
+                <span class="text-[10px] uppercase font-mono tracking-widest text-rose-600 font-bold block">Order Cancellation</span>
+                <h3 class="text-xl font-serif text-zinc-900">Cancel Entire Order</h3>
+            </div>
+            <button type="button" onclick="closeCancelOrderModal()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-500 flex items-center justify-center transition-colors cursor-pointer">✕</button>
+        </div>
+
+        <p class="text-xs text-zinc-600 font-light leading-relaxed">
+            Cancel order <span class="font-mono font-bold text-zinc-900"><%= order.orderNumber %></span>? All reserved pieces will be restored to vault reserves.
+        </p>
+
+        <form id="cancelOrderForm" onsubmit="submitCancelOrder(event)" class="space-y-4 text-xs">
+            <div class="space-y-1">
+                <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-600">Reason for Cancellation <span class="text-rose-500">*</span></label>
+                <select id="cancelOrderReasonPreset" required onchange="applyCancelOrderPreset(this.value)" class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none bg-white text-xs font-light text-zinc-800 cursor-pointer mb-2">
+                    <option value="">Select cancellation reason *</option>
+                    <option value="Changed mind / Decided on a different timepiece">Changed mind / Decided on a different timepiece</option>
+                    <option value="Ordered by mistake / Duplicate order placed">Ordered by mistake / Duplicate order placed</option>
+                    <option value="Incorrect variant, dial, or case material selected">Incorrect variant, dial, or case material selected</option>
+                    <option value="Found alternative edition or brand elsewhere">Found alternative edition or brand elsewhere</option>
+                    <option value="Delivery timeframe or waiting period is too long">Delivery timeframe or waiting period is too long</option>
+                    <option value="Payment or billing adjustment required">Payment or billing adjustment required</option>
+                    <option value="Other">Other (Specify in text box below)</option>
+                </select>
+                <textarea id="cancelOrderReason" name="reason" rows="2" placeholder="Additional details or specific reason (optional if selected from dropdown)..." class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none font-light"></textarea>
+            </div>
+
+            <div id="cancelOrderError" class="text-rose-600 text-xs hidden pt-1 font-mono"></div>
+
+            <div class="pt-4 flex items-center justify-end gap-3 border-t border-zinc-100">
+                <button type="button" onclick="closeCancelOrderModal()" class="px-5 py-3 border border-zinc-200 rounded-xl text-zinc-700 hover:bg-zinc-50 uppercase tracking-wider font-semibold cursor-pointer">Back</button>
+                <button type="submit" id="confirmCancelOrderBtn" class="px-6 py-3 bg-rose-700 hover:bg-rose-800 text-white rounded-xl uppercase tracking-wider font-semibold shadow-sm cursor-pointer">Cancel Entire Order</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // --- Cancel Specific Item ---
+    function openCancelItemModal(itemId, itemName) {
+        document.getElementById('cancelItemId').value = itemId;
+        document.getElementById('cancelItemName').textContent = itemName;
+        document.getElementById('cancelItemReasonPreset').value = '';
+        document.getElementById('cancelItemReason').value = '';
+        const errEl = document.getElementById('cancelItemError');
+        if (errEl) errEl.classList.add('hidden');
+        const m = document.getElementById('cancelItemModal');
+        if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    }
+    function closeCancelItemModal() {
+        const m = document.getElementById('cancelItemModal');
+        if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    }
+    function applyCancelItemPreset(val) {
+        const txt = document.getElementById('cancelItemReason');
+        if (val && val !== 'Other') {
+            if (txt) txt.value = val;
+        } else if (val === 'Other') {
+            if (txt) { txt.value = ''; txt.focus(); }
+        }
+    }
+    async function submitCancelItem(e) {
+        e.preventDefault();
+        const itemId = document.getElementById('cancelItemId').value;
+        const preset = document.getElementById('cancelItemReasonPreset').value;
+        const customReason = document.getElementById('cancelItemReason').value.trim();
+        const finalReason = customReason || preset;
+        const errEl = document.getElementById('cancelItemError');
+        const btn = document.getElementById('confirmCancelItemBtn');
+
+        if (!finalReason) {
+            if (errEl) {
+                errEl.textContent = 'Please choose or provide a reason for cancelling this timepiece.';
+                errEl.classList.remove('hidden');
+            }
+            return;
+        }
+
+        if (btn) btn.disabled = true;
+
+        try {
+            const res = await fetch('/orders/<%= order._id %>/items/' + itemId + '/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ reason: finalReason })
+            });
+            const data = await res.json();
+            if (data.success) {
+                if (window.showToast) window.showToast('Timepiece item cancelled and stock returned to vault.', 'info');
+                window.location.reload();
+            } else {
+                if (errEl) {
+                    errEl.textContent = data.message || 'Unable to cancel timepiece.';
+                    errEl.classList.remove('hidden');
+                } else {
+                    alert(data.message || 'Unable to cancel timepiece.');
+                }
+            }
+        } catch (err) {
+            if (errEl) {
+                errEl.textContent = 'Connection error cancelling timepiece.';
+                errEl.classList.remove('hidden');
+            }
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    // --- Cancel Entire Order ---
+    function openCancelOrderModal() {
+        document.getElementById('cancelOrderReasonPreset').value = '';
+        document.getElementById('cancelOrderReason').value = '';
+        const errEl = document.getElementById('cancelOrderError');
+        if (errEl) errEl.classList.add('hidden');
+        const m = document.getElementById('cancelOrderModal');
+        if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    }
+    function closeCancelOrderModal() {
+        const m = document.getElementById('cancelOrderModal');
+        if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    }
+    function applyCancelOrderPreset(val) {
+        const txt = document.getElementById('cancelOrderReason');
+        if (val && val !== 'Other') {
+            if (txt) txt.value = val;
+        } else if (val === 'Other') {
+            if (txt) { txt.value = ''; txt.focus(); }
+        }
+    }
+    async function submitCancelOrder(e) {
+        e.preventDefault();
+        const preset = document.getElementById('cancelOrderReasonPreset').value;
+        const customReason = document.getElementById('cancelOrderReason').value.trim();
+        const finalReason = customReason || preset;
+        const errEl = document.getElementById('cancelOrderError');
+        const btn = document.getElementById('confirmCancelOrderBtn');
+
+        if (!finalReason) {
+            if (errEl) {
+                errEl.textContent = 'Please choose or provide a reason for cancelling this order.';
+                errEl.classList.remove('hidden');
+            }
+            return;
+        }
+
+        if (btn) btn.disabled = true;
+
+        try {
+            const res = await fetch('/orders/<%= order._id %>/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ reason: finalReason })
+            });
+            const data = await res.json();
+            if (data.success) {
+                if (window.showToast) window.showToast('Order cancelled and all stock returned to vault.', 'info');
+                window.location.reload();
+            } else {
+                if (errEl) {
+                    errEl.textContent = data.message || 'Unable to cancel order.';
+                    errEl.classList.remove('hidden');
+                } else {
+                    alert(data.message || 'Unable to cancel order.');
+                }
+            }
+        } catch (err) {
+            if (errEl) {
+                errEl.textContent = 'Connection error cancelling order.';
+                errEl.classList.remove('hidden');
+            }
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    // --- Return Single Item (MANDATORY REASON) ---
+    function openReturnItemModal(itemId, itemName) {
+        document.getElementById('returnItemId').value = itemId;
+        document.getElementById('returnItemName').textContent = itemName;
+        document.getElementById('returnItemReason').value = '';
+        document.getElementById('returnItemReasonPreset').value = '';
+        const errEl = document.getElementById('returnItemError');
+        if (errEl) errEl.classList.add('hidden');
+        const m = document.getElementById('returnItemModal');
+        if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    }
+    function closeReturnItemModal() {
+        const m = document.getElementById('returnItemModal');
+        if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    }
+    function applyReturnItemPreset(val) {
+        if (val && val !== 'Other') {
+            document.getElementById('returnItemReason').value = val;
+        } else if (val === 'Other') {
+            document.getElementById('returnItemReason').value = '';
+            document.getElementById('returnItemReason').focus();
+        }
+    }
+    async function submitReturnItem(e) {
+        e.preventDefault();
+        const itemId = document.getElementById('returnItemId').value;
+        const reason = document.getElementById('returnItemReason').value.trim();
+        const errEl = document.getElementById('returnItemError');
+        const btn = document.getElementById('confirmReturnItemBtn');
+
+        if (!reason) {
+            if (errEl) {
+                errEl.textContent = 'A reason for return is strictly mandatory.';
+                errEl.classList.remove('hidden');
+            }
+            return;
+        }
+
+        if (btn) btn.disabled = true;
+
+        try {
+            const res = await fetch('/orders/<%= order._id %>/items/' + itemId + '/return', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ reason })
+            });
+            const data = await res.json();
+            if (data.success) {
+                if (window.showToast) window.showToast('Timepiece return request submitted. Concierge will contact you.', 'info');
+                window.location.reload();
+            } else {
+                if (errEl) {
+                    errEl.textContent = data.message || 'Unable to request return for this timepiece.';
+                    errEl.classList.remove('hidden');
+                }
+            }
+        } catch (err) {
+            if (errEl) {
+                errEl.textContent = 'Connection error requesting return.';
+                errEl.classList.remove('hidden');
+            }
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+</script>
+
+<!-- ========================================================= -->
+<!-- RETURN SINGLE ITEM MODAL (Reason is MANDATORY) -->
+<!-- ========================================================= -->
+<div id="returnItemModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-8 space-y-6 shadow-2xl relative">
+        <div class="flex items-center justify-between border-b border-zinc-100 pb-4">
+            <div>
+                <span class="text-[10px] uppercase font-mono tracking-widest text-purple-700 font-bold block">Reverse Logistics Request</span>
+                <h3 class="text-xl font-serif text-zinc-900">Return Specific Timepiece</h3>
+            </div>
+            <button type="button" onclick="closeReturnItemModal()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-500 flex items-center justify-center transition-colors cursor-pointer">✕</button>
+        </div>
+
+        <p class="text-xs text-zinc-600 font-light leading-relaxed">
+            Request return for <span id="returnItemName" class="font-serif font-semibold text-zinc-900"></span>. Please provide a mandatory reason for this return request.
+        </p>
+
+        <form id="returnItemForm" onsubmit="submitReturnItem(event)" class="space-y-4 text-xs">
+            <input type="hidden" id="returnItemId" name="itemId">
+
+            <div class="space-y-1">
+                <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-600">Mandatory Reason for Return *</label>
+                <select id="returnItemReasonPreset" required onchange="applyReturnItemPreset(this.value)" class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none bg-white mb-2">
+                    <option value="">Select mandatory return reason *</option>
+                    <option value="Mechanical defect or chronometric irregularity">Mechanical defect or chronometric irregularity</option>
+                    <option value="Different finish or dial variant than ordered">Different finish or dial variant than ordered</option>
+                    <option value="Cosmetic blemish or damaged manufacture box">Cosmetic blemish or damaged manufacture box</option>
+                    <option value="Authenticity verification certificate query">Authenticity verification certificate query</option>
+                    <option value="Other">Other (Specify in text box below)</option>
+                </select>
+                <textarea id="returnItemReason" name="reason" required rows="3" placeholder="Explain the specific issue in detail (mandatory)..." class="w-full p-3 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none font-light"></textarea>
+            </div>
+
+            <div id="returnItemError" class="text-rose-600 text-xs hidden pt-1 font-mono"></div>
+
+            <div class="pt-4 flex items-center justify-end gap-3 border-t border-zinc-100">
+                <button type="button" onclick="closeReturnItemModal()" class="px-5 py-3 border border-zinc-200 rounded-xl text-zinc-700 hover:bg-zinc-50 uppercase tracking-wider font-semibold cursor-pointer">Back</button>
+                <button type="submit" id="confirmReturnItemBtn" class="px-6 py-3 bg-purple-800 hover:bg-purple-900 text-white rounded-xl uppercase tracking-wider font-semibold shadow-sm cursor-pointer">Submit Return</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- RETRY PAYMENT MODAL -->
+<!-- ========================================================= -->
+<div id="retryPaymentModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-8 space-y-6 shadow-2xl relative">
+        <div class="flex items-center justify-between border-b border-zinc-100 pb-4">
+            <div>
+                <span class="text-[10px] uppercase font-mono tracking-widest text-[#c5a059] font-bold block">SECURE SETTLEMENT</span>
+                <h3 class="text-xl font-serif text-zinc-900">Retry Order Payment</h3>
+            </div>
+            <button type="button" onclick="closeRetryPaymentModal()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-500 flex items-center justify-center transition-colors cursor-pointer">✕</button>
+        </div>
+
+        <div class="bg-[#faf8f7] border border-zinc-200/80 rounded-2xl p-4 flex items-center justify-between text-xs">
+            <div>
+                <span class="text-[10px] uppercase font-mono text-zinc-400 block">Order Reference</span>
+                <p class="font-mono font-bold text-zinc-900 text-sm"><%= order.orderNumber %></p>
+            </div>
+            <div class="text-right">
+                <span class="text-[10px] uppercase font-mono text-zinc-400 block">Total Due</span>
+                <p class="font-mono font-bold text-[#0A4D2E] text-base">₹<%= Number(order.grandTotal).toLocaleString('en-IN') %></p>
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-500">Select Payment Gateway</label>
+
+            <!-- Gateway Option: DELTA Vault Wallet -->
+            <% 
+                const retryVaultBalance = Number(typeof walletBalance !== 'undefined' ? walletBalance : 0);
+                const canRetryWithWallet = retryVaultBalance >= Number(order.grandTotal || 0);
+            %>
+            <label 
+                id="retryCardWallet" 
+                onclick="<%= canRetryWithWallet ? "selectRetryGateway('Wallet')" : "" %>" 
+                class="p-4 rounded-2xl border-2 <%= canRetryWithWallet ? 'border-zinc-200 bg-white cursor-pointer hover:border-[#0A4D2E]' : 'border-zinc-200/60 bg-zinc-50/70 opacity-70 cursor-not-allowed' %> flex items-center justify-between transition-all"
+            >
+                <div class="flex items-center gap-3">
+                    <input 
+                        type="radio" 
+                        name="retryGateway" 
+                        id="retryGwWallet" 
+                        value="Wallet" 
+                        <%= canRetryWithWallet ? '' : 'disabled' %>
+                        class="text-[#0A4D2E] focus:ring-[#0A4D2E] <%= canRetryWithWallet ? 'cursor-pointer' : 'cursor-not-allowed' %>"
+                    >
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-serif font-bold text-sm text-zinc-900">DELTA Vault Wallet</h4>
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                Available: ₹<%= retryVaultBalance.toLocaleString('en-IN') %>
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-zinc-500 font-light">
+                            <% if (canRetryWithWallet) { %>
+                                Instant settlement deducted directly from your verified Vault reserve.
+                            <% } else { %>
+                                <span class="text-amber-800">Insufficient balance (Shortfall: ₹<%= (Math.max(0, Number(order.grandTotal) - retryVaultBalance)).toLocaleString('en-IN') %>)</span>
+                            <% } %>
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1 font-mono text-[10px] font-bold text-[#0A4D2E]">
+                    <span>Vault</span>
+                </div>
+            </label>
+
+            <!-- Gateway Option 1: Razorpay (Primary) -->
+            <label id="retryCardRazorpay" onclick="selectRetryGateway('Razorpay')" class="p-4 rounded-2xl border-2 border-[#0A4D2E] bg-emerald-50/20 flex items-center justify-between cursor-pointer transition-all hover:border-[#0A4D2E]">
+                <div class="flex items-center gap-3">
+                    <input type="radio" name="retryGateway" id="retryGwRazorpay" value="Razorpay" checked class="text-[#0A4D2E] focus:ring-[#0A4D2E]">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-serif font-bold text-sm text-zinc-900">Razorpay Secure Gateway</h4>
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-[#0A4D2E] text-white">Recommended</span>
+                        </div>
+                        <p class="text-[11px] text-zinc-500 font-light">Cards, UPI (GPay, PhonePe, Paytm), NetBanking & Wallets</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1 font-mono text-[10px] font-bold text-[#0A4D2E]">
+                    <span>₹ INR</span>
+                </div>
+            </label>
+
+            <!-- Gateway Option 3: Cash on Delivery -->
+            <% const canRetryCod = Number(order.grandTotal || 0) <= 1000000; %>
+            <label 
+                id="retryCardCod" 
+                onclick="<%= canRetryCod ? "selectRetryGateway('Cash on Delivery')" : "" %>" 
+                class="p-4 rounded-2xl border-2 <%= canRetryCod ? 'border-zinc-200 bg-white cursor-pointer hover:border-[#0A4D2E]' : 'border-zinc-200/60 bg-zinc-50/70 opacity-70 cursor-not-allowed' %> flex items-center justify-between transition-all"
+            >
+                <div class="flex items-center gap-3">
+                    <input 
+                        type="radio" 
+                        name="retryGateway" 
+                        id="retryGwCod" 
+                        value="Cash on Delivery" 
+                        <%= canRetryCod ? '' : 'disabled' %>
+                        class="text-[#0A4D2E] focus:ring-[#0A4D2E] <%= canRetryCod ? 'cursor-pointer' : 'cursor-not-allowed' %>"
+                    >
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-serif font-bold text-sm text-zinc-900">Cash on Delivery (COD)</h4>
+                            <% if (canRetryCod) { %>
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                    Complimentary Courier
+                                </span>
+                            <% } else { %>
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                    Limit: ₹10,00,000
+                                </span>
+                            <% } %>
+                        </div>
+                        <p class="text-[11px] text-zinc-500 font-light">
+                            <% if (canRetryCod) { %>
+                                Pay upon white-glove insured delivery at your verified address.
+                            <% } else { %>
+                                Not available for orders exceeding ₹10,00,000 threshold.
+                            <% } %>
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1 font-mono text-[10px] font-bold text-zinc-600">
+                    <span>On Delivery</span>
+                </div>
+            </label>
+        </div>
+
+        <div id="retryPaymentError" class="text-rose-600 text-xs hidden pt-1 font-mono"></div>
+
+        <div class="pt-4 flex items-center justify-end gap-3 border-t border-zinc-100">
+            <button type="button" onclick="closeRetryPaymentModal()" class="px-5 py-3 border border-zinc-200 rounded-xl text-zinc-700 hover:bg-zinc-50 uppercase tracking-wider font-semibold text-xs cursor-pointer">Cancel</button>
+            <button type="button" id="confirmRetryPaymentBtn" onclick="submitRetryPayment()" class="px-7 py-3 bg-[#0A4D2E] hover:bg-[#073620] text-white rounded-xl uppercase tracking-wider font-semibold text-xs shadow-md transition-all cursor-pointer flex items-center gap-2">
+                <span>Proceed to Settlement</span>
+                <span class="text-[#c5a059]">→</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- RAZORPAY RETRY SIMULATION MODAL (Sandbox Fallback) -->
+<!-- ========================================================= -->
+<div id="razorpayRetrySimModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl relative border border-zinc-200 overflow-hidden my-auto animate-in fade-in zoom-in duration-150">
+        <!-- Top Razorpay Trust Bar -->
+        <div class="bg-[#0b1424] text-white px-5 py-3.5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm font-mono shadow-xs">
+                    R
+                </div>
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-xs tracking-wider uppercase font-sans">Razorpay Trusted Checkout</span>
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">RETRY SETTLEMENT</span>
+                    </div>
+                    <p class="text-[10px] text-zinc-400 font-mono">Order #<%= order.orderNumber %> • DELTA Vault Allocation</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeRazorpayRetrySimModal()" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer text-sm">✕</button>
+        </div>
+
+        <!-- Order Summary Strip -->
+        <div class="bg-zinc-50 border-b border-zinc-200/80 px-5 py-3 flex items-center justify-between text-xs">
+            <div>
+                <span class="text-[10px] uppercase font-mono tracking-wider text-zinc-400 block">Gateway Order Ref</span>
+                <span id="rzpRetryOrderId" class="font-mono font-bold text-zinc-800 text-[11px] truncate max-w-[200px] block">...</span>
+            </div>
+            <div class="text-right">
+                <span class="text-[10px] uppercase font-mono tracking-wider text-zinc-400 block">Amount to Settle</span>
+                <span id="rzpRetryAmount" class="font-mono font-bold text-[#0A4D2E] text-base">₹<%= Number(order.grandTotal).toLocaleString('en-IN') %></span>
+            </div>
+        </div>
+
+        <!-- Method Navigation Tabs -->
+        <div class="p-5 space-y-4">
+            <div>
+                <label class="block text-[10px] font-mono uppercase tracking-widest text-zinc-400 font-semibold mb-2">Select Payment Instrument</label>
+                <div class="grid grid-cols-4 gap-1 p-1 bg-zinc-100 rounded-2xl text-xs font-medium">
+                    <button type="button" onclick="switchRetryRzpTab('upi')" id="rzpRetryTabBtn_upi" class="py-2 px-1 text-center rounded-xl transition-all cursor-pointer bg-white text-zinc-900 shadow-xs font-semibold flex flex-col items-center gap-1">
+                        <svg class="w-4 h-4 text-[#0A4D2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        <span class="text-[11px]">UPI / QR</span>
+                    </button>
+                    <button type="button" onclick="switchRetryRzpTab('card')" id="rzpRetryTabBtn_card" class="py-2 px-1 text-center rounded-xl transition-all cursor-pointer text-zinc-500 hover:text-zinc-900 flex flex-col items-center gap-1">
+                        <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                        <span class="text-[11px]">Cards</span>
+                    </button>
+                    <button type="button" onclick="switchRetryRzpTab('netbanking')" id="rzpRetryTabBtn_netbanking" class="py-2 px-1 text-center rounded-xl transition-all cursor-pointer text-zinc-500 hover:text-zinc-900 flex flex-col items-center gap-1">
+                        <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        <span class="text-[11px]">NetBanking</span>
+                    </button>
+                    <button type="button" onclick="switchRetryRzpTab('wallet')" id="rzpRetryTabBtn_wallet" class="py-2 px-1 text-center rounded-xl transition-all cursor-pointer text-zinc-500 hover:text-zinc-900 flex flex-col items-center gap-1">
+                        <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        <span class="text-[11px]">Wallets</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 1: UPI / QR -->
+            <div id="rzpRetryPanel_upi" class="space-y-3.5">
+                <div class="p-3.5 bg-gradient-to-br from-emerald-50/50 to-zinc-50 rounded-2xl border border-emerald-100 flex items-center gap-3.5">
+                    <div class="w-16 h-16 bg-white p-1 rounded-xl border border-zinc-200 shrink-0 shadow-2xs flex items-center justify-center">
+                        <svg class="w-14 h-14 text-zinc-900" viewBox="0 0 100 100" fill="currentColor">
+                            <rect x="10" y="10" width="30" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="8"/>
+                            <rect x="20" y="20" width="10" height="10"/>
+                            <rect x="60" y="10" width="30" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="8"/>
+                            <rect x="70" y="20" width="10" height="10"/>
+                            <rect x="10" y="60" width="30" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="8"/>
+                            <rect x="20" y="70" width="10" height="10"/>
+                            <rect x="55" y="55" width="12" height="12"/>
+                            <rect x="75" y="55" width="15" height="8"/>
+                            <rect x="55" y="75" width="18" height="15"/>
+                            <rect x="80" y="75" width="10" height="15"/>
+                        </svg>
+                    </div>
+                    <div class="space-y-1 text-xs">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-bold text-zinc-900 font-sans">Scan & Retry via any UPI App</span>
+                            <span class="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-emerald-100 text-[#0A4D2E] font-bold">INSTANT</span>
+                        </div>
+                        <p class="text-[11px] text-zinc-500 font-light leading-relaxed">
+                            Google Pay, PhonePe, Paytm, or BHIM. Zero payment surcharge.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">Select UPI App</span>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button type="button" onclick="selectRetryRzpUpiApp('Google Pay', 'collector@okhdfcbank')" id="rzpRetryUpiApp_gpay" class="p-2 rounded-xl border-2 border-[#0A4D2E] bg-emerald-50/40 flex flex-col items-center justify-center gap-1 text-[11px] font-bold text-zinc-900 transition-all cursor-pointer">
+                            <span class="w-6 h-6 rounded-full bg-white shadow-2xs flex items-center justify-center font-bold text-blue-600 text-xs">G</span>
+                            <span>GPay</span>
+                        </button>
+                        <button type="button" onclick="selectRetryRzpUpiApp('PhonePe', 'collector@ybl')" id="rzpRetryUpiApp_phonepe" class="p-2 rounded-xl border border-zinc-200 bg-white flex flex-col items-center justify-center gap-1 text-[11px] font-semibold text-zinc-600 transition-all cursor-pointer hover:border-purple-600">
+                            <span class="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-xs">पे</span>
+                            <span>PhonePe</span>
+                        </button>
+                        <button type="button" onclick="selectRetryRzpUpiApp('Paytm', 'collector@paytm')" id="rzpRetryUpiApp_paytm" class="p-2 rounded-xl border border-zinc-200 bg-white flex flex-col items-center justify-center gap-1 text-[11px] font-semibold text-zinc-600 transition-all cursor-pointer hover:border-sky-500">
+                            <span class="w-6 h-6 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold text-xs">P</span>
+                            <span>Paytm</span>
+                        </button>
+                        <button type="button" onclick="selectRetryRzpUpiApp('BHIM', 'collector@upi')" id="rzpRetryUpiApp_bhim" class="p-2 rounded-xl border border-zinc-200 bg-white flex flex-col items-center justify-center gap-1 text-[11px] font-semibold text-zinc-600 transition-all cursor-pointer hover:border-amber-600">
+                            <span class="w-6 h-6 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-xs">B</span>
+                            <span>BHIM</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5 pt-1">
+                    <label class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">Or Enter UPI ID</label>
+                    <input 
+                        type="text" 
+                        id="rzpRetryUpiVpaInput" 
+                        value="collector@okhdfcbank"
+                        placeholder="e.g. yourname@okhdfcbank"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs font-mono font-medium text-zinc-900 focus:outline-none focus:border-[#0A4D2E]"
+                    >
+                </div>
+            </div>
+
+            <!-- Tab 2: Credit / Debit Cards -->
+            <div id="rzpRetryPanel_card" class="space-y-3.5 hidden">
+                <div class="p-4 bg-gradient-to-br from-[#0A4D2E] via-[#06331e] to-black rounded-2xl text-white shadow-md relative overflow-hidden space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-7 h-5 rounded bg-amber-400/80 inline-block shadow-2xs"></span>
+                            <span class="text-[10px] font-mono tracking-widest text-emerald-200 uppercase font-semibold">DELTA RETRY CARD</span>
+                        </div>
+                        <span class="text-[11px] font-mono font-bold tracking-wider text-zinc-300">VISA / MASTERCARD</span>
+                    </div>
+                    <div class="font-mono text-sm tracking-widest text-white/90 font-bold pt-1">
+                        4532 •••• •••• 8892
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] font-mono text-zinc-300 pt-1">
+                        <div>
+                            <span class="text-[8px] uppercase text-zinc-400 block tracking-wider">Card Holder</span>
+                            <span class="font-semibold text-white"><%= order.collectorName || 'COLLECTOR' %></span>
+                        </div>
+                        <div>
+                            <span class="text-[8px] uppercase text-zinc-400 block tracking-wider">Expires</span>
+                            <span class="font-semibold text-white">12/28</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2.5 text-xs">
+                    <div>
+                        <label class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block mb-1">Card Number</label>
+                        <input 
+                            type="text" 
+                            value="4532 8910 2345 8892" 
+                            maxlength="19"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 font-mono text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E]"
+                        >
+                    </div>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block mb-1">Expiry (MM/YY)</label>
+                            <input 
+                                type="text" 
+                                value="12/28" 
+                                maxlength="5"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 font-mono text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E]"
+                            >
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block mb-1">CVV</label>
+                            <input 
+                                type="password" 
+                                value="892" 
+                                maxlength="4"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 font-mono text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E]"
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: NetBanking -->
+            <div id="rzpRetryPanel_netbanking" class="space-y-3.5 hidden">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">Select Popular Bank</span>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" onclick="selectRetryRzpBank('HDFC Bank')" id="rzpRetryBank_HDFC" class="p-2.5 rounded-xl border-2 border-[#0A4D2E] bg-emerald-50/40 text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">01</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">HDFC</span>
+                    </button>
+                    <button type="button" onclick="selectRetryRzpBank('ICICI Bank')" id="rzpRetryBank_ICICI" class="p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">02</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">ICICI</span>
+                    </button>
+                    <button type="button" onclick="selectRetryRzpBank('State Bank of India')" id="rzpRetryBank_SBI" class="p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">03</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">SBI</span>
+                    </button>
+                    <button type="button" onclick="selectRetryRzpBank('Axis Bank')" id="rzpRetryBank_Axis" class="p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">04</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">Axis</span>
+                    </button>
+                    <button type="button" onclick="selectRetryRzpBank('Kotak Mahindra Bank')" id="rzpRetryBank_Kotak" class="p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">05</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">Kotak</span>
+                    </button>
+                    <button type="button" onclick="selectRetryRzpBank('Punjab National Bank')" id="rzpRetryBank_PNB" class="p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">06</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">PNB</span>
+                    </button>
+                </div>
+
+                <div class="space-y-1.5 pt-1">
+                    <label class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">Or Select Any Other Bank</label>
+                    <select onchange="selectRetryRzpOtherBank(this.value)" class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs font-sans text-zinc-800 bg-white focus:outline-none focus:border-[#0A4D2E]">
+                        <option value="">-- Choose from 40+ Indian Scheduled Banks --</option>
+                        <option value="Bank of Baroda">Bank of Baroda</option>
+                        <option value="Canara Bank">Canara Bank</option>
+                        <option value="Union Bank of India">Union Bank of India</option>
+                        <option value="IndusInd Bank">IndusInd Bank</option>
+                        <option value="Yes Bank">Yes Bank</option>
+                        <option value="Federal Bank">Federal Bank</option>
+                        <option value="IDBI Bank">IDBI Bank</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Tab 4: Wallets -->
+            <div id="rzpRetryPanel_wallet" class="space-y-3 hidden">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">Select Digital Wallet</span>
+                <div class="space-y-2">
+                    <label onclick="selectRetryRzpWallet('Amazon Pay')" class="p-3 rounded-xl border-2 border-[#0A4D2E] bg-emerald-50/30 flex items-center justify-between cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <input type="radio" name="rzpRetryWalletRadio" checked class="text-[#0A4D2E]">
+                            <span class="text-xs font-bold text-zinc-900">Amazon Pay</span>
+                        </div>
+                        <span class="text-[10px] font-mono text-emerald-800 font-semibold">Ready</span>
+                    </label>
+                    <label onclick="selectRetryRzpWallet('PhonePe Wallet')" class="p-3 rounded-xl border border-zinc-200 bg-white flex items-center justify-between cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <input type="radio" name="rzpRetryWalletRadio" class="text-[#0A4D2E]">
+                            <span class="text-xs font-bold text-zinc-900">PhonePe Wallet</span>
+                        </div>
+                        <span class="text-[10px] font-mono text-zinc-500">Ready</span>
+                    </label>
+                    <label onclick="selectRetryRzpWallet('Paytm Wallet')" class="p-3 rounded-xl border border-zinc-200 bg-white flex items-center justify-between cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <input type="radio" name="rzpRetryWalletRadio" class="text-[#0A4D2E]">
+                            <span class="text-xs font-bold text-zinc-900">Paytm Wallet</span>
+                        </div>
+                        <span class="text-[10px] font-mono text-zinc-500">Ready</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-2 pt-2 border-t border-zinc-100">
+                <button 
+                    type="button" 
+                    onclick="openRetryRzpConfirmPayModal()" 
+                    class="w-full py-3.5 px-4 bg-[#0A4D2E] hover:bg-[#083e25] text-white rounded-xl text-xs uppercase font-mono tracking-wider font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                    <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    <span id="rzpRetryPayBtnLabel">Authorize & Pay via UPI</span>
+                </button>
+                <button 
+                    type="button" 
+                    onclick="openRetryRzpConfirmDeclineModal()" 
+                    class="w-full py-2.5 px-4 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs uppercase font-mono tracking-wider font-semibold transition-colors cursor-pointer text-center"
+                >
+                    ✕ Simulate Bank Decline
+                </button>
+            </div>
+
+            <!-- Trust Footer -->
+            <div class="pt-1 flex items-center justify-center gap-3 text-[10px] text-zinc-400 font-mono">
+                <span>🛡️ PCI-DSS Level 1</span>
+                <span>•</span>
+                <span>256-bit SSL</span>
+                <span>•</span>
+                <span>RBI Tokenized</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- RAZORPAY RETRY CONFIRM PAY MODAL -->
+<!-- ========================================================= -->
+<div id="rzpRetryConfirmPayModal" class="fixed inset-0 z-[60] bg-black/75 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-5 shadow-2xl relative border border-emerald-100 text-center animate-in fade-in zoom-in duration-150">
+        <!-- Horological Seal -->
+        <div class="w-16 h-16 rounded-full bg-emerald-50 text-[#0A4D2E] mx-auto flex items-center justify-center border-2 border-emerald-200 shadow-xs">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+        </div>
+
+        <div class="space-y-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-emerald-50 text-[#0A4D2E] border border-emerald-200">
+                CONFIRM RETRY AUTHORIZATION
+            </span>
+            <h3 class="text-xl font-serif font-bold text-zinc-900">Authorize Payment?</h3>
+            <p class="text-xs text-zinc-500 font-light leading-relaxed">
+                You are about to authorize settlement for order #<%= order.orderNumber %>.
+            </p>
+        </div>
+
+        <!-- Valuation Breakdown -->
+        <div class="p-3.5 bg-zinc-50 rounded-2xl border border-zinc-200/80 text-xs space-y-2 text-left font-mono">
+            <div class="flex items-center justify-between text-zinc-500 text-[11px]">
+                <span>Settlement Instrument:</span>
+                <span id="rzpRetryConfirmPayMethod" class="font-bold text-zinc-800">UPI</span>
+            </div>
+            <div class="flex items-center justify-between text-zinc-500 text-[11px]">
+                <span>Order Reference:</span>
+                <span id="rzpRetryConfirmPayOrderRef" class="font-bold text-zinc-800 truncate max-w-[150px]"><%= order.orderNumber %></span>
+            </div>
+            <div class="flex items-center justify-between pt-2 border-t border-zinc-200 text-sm">
+                <span class="text-zinc-600 font-sans font-semibold">Total Debit:</span>
+                <span id="rzpRetryConfirmPayAmount" class="font-bold text-[#0A4D2E] text-base">₹<%= Number(order.grandTotal).toLocaleString('en-IN') %></span>
+            </div>
+        </div>
+
+        <!-- Confirm Actions -->
+        <div class="space-y-2 pt-1">
+            <button 
+                type="button" 
+                onclick="executeConfirmedRetryRazorpayPay()" 
+                class="w-full py-3.5 px-4 bg-[#0A4D2E] hover:bg-[#073620] text-white rounded-xl text-xs uppercase font-mono tracking-wider font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+                <span>Yes, Authorize & Pay</span>
+                <span>✓</span>
+            </button>
+            <button 
+                type="button" 
+                onclick="closeRetryRzpConfirmPayModal()" 
+                class="w-full py-3 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl text-xs uppercase font-mono tracking-wider font-semibold transition-colors cursor-pointer"
+            >
+                Cancel / Return
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- RAZORPAY RETRY CONFIRM DECLINE MODAL -->
+<!-- ========================================================= -->
+<div id="rzpRetryConfirmDeclineModal" class="fixed inset-0 z-[60] bg-black/75 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-5 shadow-2xl relative border border-rose-200 text-center animate-in fade-in zoom-in duration-150">
+        <!-- Rose Decline Medallion -->
+        <div class="w-16 h-16 rounded-full bg-rose-50 text-rose-700 mx-auto flex items-center justify-center border-2 border-rose-200 shadow-xs">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+        </div>
+
+        <div class="space-y-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                SIMULATE BANK DECLINE
+            </span>
+            <h3 class="text-xl font-serif font-bold text-zinc-900">Decline Payment?</h3>
+            <p class="text-xs text-zinc-500 font-light leading-relaxed">
+                This will simulate an issuing bank refusal. In accordance with security policy, you can re-buy this timepiece only after 5 minutes.
+            </p>
+        </div>
+
+        <!-- Order Snapshot -->
+        <div class="p-3.5 bg-rose-50/50 rounded-2xl border border-rose-200/60 text-xs space-y-2 text-left font-mono">
+            <div class="flex items-center justify-between text-zinc-500 text-[11px]">
+                <span>Simulation Type:</span>
+                <span class="font-bold text-rose-700">Bank Decline / 3DS Refusal</span>
+            </div>
+            <div class="flex items-center justify-between text-zinc-500 text-[11px]">
+                <span>Order Reference:</span>
+                <span class="font-bold text-zinc-800 truncate max-w-[150px]"><%= order.orderNumber %></span>
+            </div>
+            <div class="flex items-center justify-between pt-2 border-t border-rose-200 text-sm">
+                <span class="text-zinc-600 font-sans font-semibold">Unpaid Amount:</span>
+                <span class="font-bold text-rose-700 text-base">₹<%= Number(order.grandTotal).toLocaleString('en-IN') %></span>
+            </div>
+        </div>
+
+        <!-- Decline Actions -->
+        <div class="space-y-2 pt-1">
+            <button 
+                type="button" 
+                onclick="executeConfirmedRetryRazorpayDecline()" 
+                class="w-full py-3.5 px-4 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs uppercase font-mono tracking-wider font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+                <span>Yes, Decline Settlement</span>
+                <span>✕</span>
+            </button>
+            <button 
+                type="button" 
+                onclick="closeRetryRzpConfirmDeclineModal()" 
+                class="w-full py-3 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl text-xs uppercase font-mono tracking-wider font-semibold transition-colors cursor-pointer"
+            >
+                Cancel / Return
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Global variable for current retry session
+    let currentRetrySession = null;
+    let detailCooldownRemaining = <%= typeof cooldown !== 'undefined' && cooldown && cooldown.inCooldown ? cooldown.remainingSeconds : 0 %>;
+    let detailCooldownInterval = null;
+
+    function startDetailCooldownTimer(seconds) {
+        detailCooldownRemaining = seconds;
+        if (detailCooldownInterval) clearInterval(detailCooldownInterval);
+
+        const badge = document.getElementById('detailCooldownBadge');
+        const badgeTimer = document.getElementById('detailCooldownBadgeTimer');
+
+        if (seconds <= 0) {
+            if (badge) badge.classList.add('hidden');
+            return;
+        }
+
+        if (badge) {
+            badge.classList.remove('hidden');
+            badge.classList.add('flex');
+        }
+
+        const updateUI = () => {
+            const mins = Math.floor(detailCooldownRemaining / 60);
+            const secs = (detailCooldownRemaining % 60).toString().padStart(2, '0');
+            const formatted = `${mins}:${secs}`;
+            if (badgeTimer) badgeTimer.textContent = formatted;
+
+            if (detailCooldownRemaining <= 0) {
+                clearInterval(detailCooldownInterval);
+                if (badge) badge.classList.add('hidden');
+                if (window.showToast) window.showToast('5-minute catalog security interval ended.', 'info');
+            }
+            detailCooldownRemaining--;
+        };
+
+        updateUI();
+        detailCooldownInterval = setInterval(updateUI, 1000);
+    }
+
+    function handleDetailRetryClick() {
+        openRetryPaymentModal();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (detailCooldownRemaining > 0) {
+            startDetailCooldownTimer(detailCooldownRemaining);
+        }
+    });
+
+    function openRetryPaymentModal() {
+        const errEl = document.getElementById('retryPaymentError');
+        if (errEl) errEl.classList.add('hidden');
+        selectRetryGateway('Razorpay');
+        const m = document.getElementById('retryPaymentModal');
+        if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    }
+
+    function closeRetryPaymentModal() {
+        const m = document.getElementById('retryPaymentModal');
+        if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    }
+
+    function selectRetryGateway(gw) {
+        const rzpRadio = document.getElementById('retryGwRazorpay');
+        const walletRadio = document.getElementById('retryGwWallet');
+        const codRadio = document.getElementById('retryGwCod');
+        if (rzpRadio) rzpRadio.checked = (gw === 'Razorpay');
+        if (walletRadio) walletRadio.checked = (gw === 'Wallet');
+        if (codRadio) codRadio.checked = (gw === 'Cash on Delivery');
+
+        const cardRzp = document.getElementById('retryCardRazorpay');
+        const cardWallet = document.getElementById('retryCardWallet');
+        const cardCod = document.getElementById('retryCardCod');
+
+        [cardRzp, cardWallet, cardCod].forEach(c => {
+            if (c) {
+                c.classList.remove('border-[#0A4D2E]', 'bg-emerald-50/20');
+                c.classList.add('border-zinc-200', 'bg-white');
+            }
+        });
+
+        let target = cardRzp;
+        if (gw === 'Wallet') target = cardWallet;
+        else if (gw === 'Cash on Delivery') target = cardCod;
+
+        if (target) {
+            target.classList.add('border-[#0A4D2E]', 'bg-emerald-50/20');
+            target.classList.remove('border-zinc-200', 'bg-white');
+        }
+    }
+
+    async function submitRetryPayment() {
+        const rzpRadio = document.getElementById('retryGwRazorpay');
+        const walletRadio = document.getElementById('retryGwWallet');
+        const codRadio = document.getElementById('retryGwCod');
+
+        let paymentMethod = 'Razorpay';
+        if (walletRadio && walletRadio.checked) paymentMethod = 'Wallet';
+        else if (codRadio && codRadio.checked) paymentMethod = 'Cash on Delivery';
+
+        const btn = document.getElementById('confirmRetryPaymentBtn');
+        const errEl = document.getElementById('retryPaymentError');
+
+        if (errEl) errEl.classList.add('hidden');
+        if (btn) btn.disabled = true;
+
+        if (paymentMethod === 'Wallet' && window.DeltaPaymentAnimation) {
+            window.DeltaPaymentAnimation.start({
+                title: 'Authorizing Vault Reserve Settlement',
+                subtitle: 'Debiting verified reserve...',
+                amount: <%= Number(order.grandTotal || 0) %>,
+                method: 'DELTA Vault Reserve'
+            });
+        } else if (paymentMethod === 'Cash on Delivery' && window.DeltaPaymentAnimation) {
+            window.DeltaPaymentAnimation.start({
+                title: 'Converting to Cash on Delivery',
+                subtitle: 'Allocating complimentary white-glove courier settlement...',
+                amount: <%= Number(order.grandTotal || 0) %>,
+                method: 'Cash on Delivery'
+            });
+        }
+
+        try {
+            const res = await fetch('/orders/<%= order._id %>/retry-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ paymentMethod })
+            });
+
+            const data = await res.json();
+
+            if (!data.success) {
+                if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+                if (errEl) {
+                    errEl.textContent = data.message || 'Payment retry initialization failed.';
+                    errEl.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (data.gateway === 'Wallet' || data.gateway === 'Cash on Delivery' || data.completed) {
+                if (window.DeltaPaymentAnimation) {
+                    window.DeltaPaymentAnimation.success({
+                        title: paymentMethod === 'Wallet' ? 'Vault Settlement Confirmed' : 'Order Switched to Cash on Delivery',
+                        subtitle: 'Retry allocation complete.',
+                        redirectUrl: data.redirect || ('/order/success/<%= order._id %>'),
+                        delayMs: 1200
+                    });
+                } else {
+                    if (window.showToast) window.showToast('Order payment authorized via ' + paymentMethod + '!', 'success');
+                    window.location.href = data.redirect || ('/order/success/<%= order._id %>');
+                }
+                return;
+            }
+
+            currentRetrySession = data;
+            closeRetryPaymentModal();
+
+            handleRazorpayRetryFlow(data);
+        } catch (err) {
+            if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+            if (errEl) {
+                errEl.textContent = 'Connection error initiating payment retry.';
+                errEl.classList.remove('hidden');
+            }
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    function handleRazorpayRetryFlow(data) {
+        // If live Razorpay SDK is present and real test/live credentials are valid
+        const isRealRazorpay = typeof window.Razorpay === 'function' &&
+            !data.isSimulated &&
+            data.keyId &&
+            !data.keyId.includes('deltaVault') &&
+            !data.keyId.includes('dummy') &&
+            data.razorpayOrderId &&
+            !data.razorpayOrderId.startsWith('order_delta_');
+
+        if (isRealRazorpay) {
+            const options = {
+                key: data.keyId,
+                amount: data.amount,
+                currency: data.currency || 'INR',
+                name: 'DELTA Haute Horlogerie',
+                description: 'Retry Settlement — Order ' + data.orderNumber,
+                order_id: data.razorpayOrderId,
+                prefill: {
+                    name: data.user?.name || '',
+                    email: data.user?.email || '',
+                    contact: data.user?.phone || ''
+                },
+                theme: { color: '#0A4D2E' },
+                handler: async function (response) {
+                    await verifyRetryPaymentWithServer({
+                        paymentMethod: 'Razorpay',
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature
+                    });
+                },
+                modal: {
+                    ondismiss: function () {
+                        if (window.showToast) window.showToast('Payment window was dismissed.', 'info');
+                    }
+                }
+            };
+            try {
+                const rzp = new window.Razorpay(options);
+                rzp.on('payment.failed', function (resp) {
+                    const desc = resp.error?.description || resp.error?.reason || 'Payment was declined.';
+                    if (window.showToast) window.showToast(desc, 'error');
+                });
+                rzp.open();
+            } catch (err) {
+                console.warn("[Razorpay] Live SDK failed to open, switching to simulation fallback:", err);
+                openRazorpayRetrySimModal(data);
+            }
+        } else {
+            // Open Razorpay Sandbox Simulation Fallback Modal
+            openRazorpayRetrySimModal(data);
+        }
+    }
+
+    let currentRetryRzpTab = 'upi';
+    let currentRetryRzpSubMethod = 'UPI';
+
+    function switchRetryRzpTab(tab) {
+        currentRetryRzpTab = tab;
+        ['upi', 'card', 'netbanking', 'wallet'].forEach(t => {
+            const btn = document.getElementById(`rzpRetryTabBtn_${t}`);
+            const panel = document.getElementById(`rzpRetryPanel_${t}`);
+            if (btn) {
+                if (t === tab) {
+                    btn.className = "py-2 px-1 text-center rounded-xl transition-all cursor-pointer bg-white text-zinc-900 shadow-xs font-semibold flex flex-col items-center gap-1";
+                    const svg = btn.querySelector('svg');
+                    if (svg) svg.classList.add('text-[#0A4D2E]');
+                } else {
+                    btn.className = "py-2 px-1 text-center rounded-xl transition-all cursor-pointer text-zinc-500 hover:text-zinc-900 flex flex-col items-center gap-1";
+                    const svg = btn.querySelector('svg');
+                    if (svg) svg.classList.remove('text-[#0A4D2E]');
+                }
+            }
+            if (panel) {
+                if (t === tab) panel.classList.remove('hidden');
+                else panel.classList.add('hidden');
+            }
+        });
+        updateRetryRzpPayButtonText();
+    }
+
+    function selectRetryRzpUpiApp(app, vpa) {
+        currentRetryRzpSubMethod = app;
+        const vpaInput = document.getElementById('rzpRetryUpiVpaInput');
+        if (vpaInput) vpaInput.value = vpa;
+        ['gpay', 'phonepe', 'paytm', 'bhim'].forEach(a => {
+            const btn = document.getElementById(`rzpRetryUpiApp_${a}`);
+            if (btn) {
+                btn.className = "p-2 rounded-xl border border-zinc-200 bg-white flex flex-col items-center justify-center gap-1 text-[11px] font-semibold text-zinc-600 transition-all cursor-pointer";
+            }
+        });
+        const activeKey = app === 'Google Pay' ? 'gpay' : app === 'PhonePe' ? 'phonepe' : app === 'Paytm' ? 'paytm' : 'bhim';
+        const activeBtn = document.getElementById(`rzpRetryUpiApp_${activeKey}`);
+        if (activeBtn) {
+            activeBtn.className = "p-2 rounded-xl border-2 border-[#0A4D2E] bg-emerald-50/40 flex flex-col items-center justify-center gap-1 text-[11px] font-bold text-zinc-900 transition-all cursor-pointer";
+        }
+        updateRetryRzpPayButtonText();
+    }
+
+    function selectRetryRzpBank(bank) {
+        currentRetryRzpSubMethod = bank;
+        ['HDFC', 'ICICI', 'SBI', 'Axis', 'Kotak', 'PNB'].forEach(b => {
+            const btn = document.getElementById(`rzpRetryBank_${b}`);
+            if (btn) btn.className = "p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]";
+        });
+        const key = bank.includes('HDFC') ? 'HDFC' : bank.includes('ICICI') ? 'ICICI' : bank.includes('State') ? 'SBI' : bank.includes('Axis') ? 'Axis' : bank.includes('Kotak') ? 'Kotak' : 'PNB';
+        const activeBtn = document.getElementById(`rzpRetryBank_${key}`);
+        if (activeBtn) activeBtn.className = "p-2.5 rounded-xl border-2 border-[#0A4D2E] bg-emerald-50/40 text-left transition-all cursor-pointer";
+        updateRetryRzpPayButtonText();
+    }
+
+    function selectRetryRzpOtherBank(bank) {
+        if (!bank) return;
+        currentRetryRzpSubMethod = bank;
+        ['HDFC', 'ICICI', 'SBI', 'Axis', 'Kotak', 'PNB'].forEach(b => {
+            const btn = document.getElementById(`rzpRetryBank_${b}`);
+            if (btn) btn.className = "p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]";
+        });
+        updateRetryRzpPayButtonText();
+    }
+
+    function selectRetryRzpWallet(wallet) {
+        currentRetryRzpSubMethod = wallet;
+        updateRetryRzpPayButtonText();
+    }
+
+    function updateRetryRzpPayButtonText() {
+        const btn = document.getElementById('rzpRetryPayBtnLabel');
+        if (!btn || !currentRetrySession) return;
+        const amountStr = '₹' + Number(currentRetrySession.grandTotal).toLocaleString('en-IN');
+        let methodLabel = 'UPI';
+        if (currentRetryRzpTab === 'upi') methodLabel = currentRetryRzpSubMethod || 'UPI';
+        else if (currentRetryRzpTab === 'card') methodLabel = 'Card';
+        else if (currentRetryRzpTab === 'netbanking') methodLabel = currentRetryRzpSubMethod || 'NetBanking';
+        else if (currentRetryRzpTab === 'wallet') methodLabel = currentRetryRzpSubMethod || 'Wallet';
+        btn.textContent = `Authorize & Pay ${amountStr} via ${methodLabel}`;
+    }
+
+    function openRazorpayRetrySimModal(data) {
+        const orderIdEl = document.getElementById('rzpRetryOrderId');
+        const amountEl = document.getElementById('rzpRetryAmount');
+        if (orderIdEl) orderIdEl.textContent = data.razorpayOrderId;
+        if (amountEl) amountEl.textContent = '₹' + Number(data.grandTotal).toLocaleString('en-IN');
+        switchRetryRzpTab('upi');
+        const m = document.getElementById('razorpayRetrySimModal');
+        if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    }
+
+    function closeRazorpayRetrySimModal() {
+        closeRetryRzpConfirmPayModal();
+        closeRetryRzpConfirmDeclineModal();
+        const m = document.getElementById('razorpayRetrySimModal');
+        if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    }
+
+    function openRetryRzpConfirmPayModal() {
+        const m = document.getElementById('rzpRetryConfirmPayModal');
+        const methodEl = document.getElementById('rzpRetryConfirmPayMethod');
+        const orderRefEl = document.getElementById('rzpRetryConfirmPayOrderRef');
+        const amountEl = document.getElementById('rzpRetryConfirmPayAmount');
+
+        let methodLabel = 'UPI';
+        if (currentRetryRzpTab === 'upi') methodLabel = currentRetryRzpSubMethod || 'UPI';
+        else if (currentRetryRzpTab === 'card') methodLabel = 'Credit / Debit Card';
+        else if (currentRetryRzpTab === 'netbanking') methodLabel = currentRetryRzpSubMethod || 'NetBanking';
+        else if (currentRetryRzpTab === 'wallet') methodLabel = currentRetryRzpSubMethod || 'Digital Wallet';
+
+        if (methodEl) methodEl.textContent = methodLabel;
+        if (orderRefEl && currentRetrySession) orderRefEl.textContent = currentRetrySession.orderNumber || currentRetrySession.razorpayOrderId;
+        if (amountEl && currentRetrySession) amountEl.textContent = '₹' + Number(currentRetrySession.grandTotal).toLocaleString('en-IN');
+
+        if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    }
+
+    function closeRetryRzpConfirmPayModal() {
+        const m = document.getElementById('rzpRetryConfirmPayModal');
+        if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    }
+
+    async function executeConfirmedRetryRazorpayPay() {
+        closeRetryRzpConfirmPayModal();
+        await simulateSuccessfulRazorpayRetry();
+    }
+
+    function openRetryRzpConfirmDeclineModal() {
+        const m = document.getElementById('rzpRetryConfirmDeclineModal');
+        const amountEl = document.getElementById('rzpRetryConfirmDeclineAmount');
+        if (amountEl && currentRetrySession) amountEl.textContent = '₹' + Number(currentRetrySession.grandTotal).toLocaleString('en-IN');
+        if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    }
+
+    function closeRetryRzpConfirmDeclineModal() {
+        const m = document.getElementById('rzpRetryConfirmDeclineModal');
+        if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    }
+
+    async function executeConfirmedRetryRazorpayDecline() {
+        closeRetryRzpConfirmDeclineModal();
+        try {
+            await fetch('/orders/<%= order._id %>/record-decline', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ reason: 'Transaction authorization was declined by user/bank' })
+            });
+        } catch (e) {}
+        simulateDeclinedRazorpayRetry();
+        startDetailCooldownTimer(300);
+    }
+
+    async function simulateSuccessfulRazorpayRetry() {
+        if (!currentRetrySession) return;
+        closeRazorpayRetrySimModal();
+        await verifyRetryPaymentWithServer({
+            paymentMethod: 'Razorpay',
+            razorpay_order_id: currentRetrySession.razorpayOrderId,
+            razorpay_payment_id: currentRetrySession.testPaymentId,
+            razorpay_signature: currentRetrySession.testSignature
+        });
+    }
+
+    function simulateDeclinedRazorpayRetry() {
+        closeRazorpayRetrySimModal();
+        if (window.showToast) window.showToast('Simulated payment authorization declined.', 'error');
+    }
+
+    async function verifyRetryPaymentWithServer(payload) {
+        if (window.DeltaPaymentAnimation) {
+            window.DeltaPaymentAnimation.start({
+                title: 'Authorizing Retry Settlement',
+                subtitle: 'Authenticating 256-bit cryptographic payload with bank...',
+                amount: <%= Number(order.grandTotal || 0) %>,
+                method: payload.paymentMethod || 'Razorpay'
+            });
+        }
+        try {
+            const res = await fetch('/orders/<%= order._id %>/verify-retry-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                if (window.showToast) window.showToast('Payment successfully authorized! Order confirmed.', 'success');
+                if (window.DeltaPaymentAnimation) {
+                    window.DeltaPaymentAnimation.success({
+                        title: 'Retry Settlement Confirmed',
+                        subtitle: 'Order state updated to Completed in Private Vault.',
+                        redirectUrl: window.location.href,
+                        delayMs: 1200
+                    });
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+                const errMsg = data.message || 'Payment verification failed.';
+                if (window.showToast) window.showToast(errMsg, 'error');
+                else alert(errMsg);
+            }
+        } catch (err) {
+            if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+            const connErrMsg = 'Connection error verifying retry payment.';
+            if (window.showToast) window.showToast(connErrMsg, 'error');
+            else alert(connErrMsg);
+        }
+    }
+</script>
+
+<%- include('../partials/payment-animation') %>
+
+<%- include('../partials/footer') %>
+
+

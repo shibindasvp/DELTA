@@ -1,0 +1,49 @@
+<%
+    const code = (typeof statusCode !== 'undefined' && statusCode) ? statusCode : 500;
+    const heading = (typeof title !== 'undefined' && title) ? title : 'Unable to Process Request';
+    const userMessage = (typeof message !== 'undefined' && message)
+        ? message
+        : (typeof error === 'string' && error && !error.includes('\n    at '))
+            ? error
+            : 'An unexpected issue prevented us from completing your request. Please try again.';
+    const adminContext = (typeof isAdmin !== 'undefined' && isAdmin) || (typeof url === 'string' && url.startsWith('/admin'));
+%>
+<%- include('../user/partials/header', { title: `${code} — ${heading} | DELTA`, user: typeof user !== 'undefined' ? user : null }) %>
+<%- include('../user/partials/navbar', { user: typeof user !== 'undefined' ? user : null }) %>
+
+<main class="flex-grow flex items-center justify-center py-20 px-4 text-center">
+    <div class="max-w-lg w-full mx-auto bg-white border border-zinc-200 rounded-2xl p-8 sm:p-10 shadow-sm space-y-6">
+        <span class="text-6xl sm:text-7xl font-serif text-rose-700 font-bold block tracking-widest"><%= code %></span>
+
+        <div class="space-y-2">
+            <h1 class="text-2xl sm:text-3xl font-serif text-[#1b1c1c]"><%= heading %></h1>
+            <p class="text-sm text-zinc-600 leading-relaxed"><%= userMessage %></p>
+        </div>
+
+        <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && Object.keys(errors).length > 0) { %>
+            <ul class="bg-rose-50 border border-rose-200 rounded-lg p-4 text-left text-xs text-rose-800 space-y-1.5">
+                <% Object.values(errors).forEach((errMsg) => { %>
+                    <li>• <%= errMsg %></li>
+                <% }) %>
+            </ul>
+        <% } %>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <details class="text-left bg-zinc-50 border border-zinc-200 rounded-lg p-3">
+                <summary class="text-xs font-medium text-zinc-500 cursor-pointer select-none">Technical details</summary>
+                <pre class="mt-2 text-[11px] font-mono text-rose-800 overflow-x-auto whitespace-pre-wrap break-words"><%= error %></pre>
+            </details>
+        <% } %>
+
+        <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button type="button" onclick="window.history.back()" class="w-full sm:w-auto border border-zinc-300 text-[#1b1c1c] px-7 py-3 rounded-lg text-xs uppercase tracking-[0.2em] font-semibold hover:bg-zinc-50 transition-colors cursor-pointer">
+                Go Back
+            </button>
+            <a href="<%= adminContext ? '/admin/dashboard' : '/' %>" class="w-full sm:w-auto inline-block bg-[#1b1c1c] text-white px-7 py-3 rounded-lg text-xs uppercase tracking-[0.2em] font-semibold hover:bg-zinc-800 transition-colors">
+                <%= adminContext ? 'Admin Dashboard' : 'Return Home' %>
+            </a>
+        </div>
+    </div>
+</main>
+
+<%- include('../user/partials/footer') %>

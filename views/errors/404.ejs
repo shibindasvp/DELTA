@@ -1,0 +1,42 @@
+<%- include('../user/partials/header', { title: `${typeof statusCode !== 'undefined' ? statusCode : 404} — Page Not Found | DELTA`, user: typeof user !== 'undefined' ? user : null }) %>
+<%- include('../user/partials/navbar', { user: typeof user !== 'undefined' ? user : null }) %>
+
+<% const adminContext = (typeof isAdmin !== 'undefined' && isAdmin) || (typeof url === 'string' && url.startsWith('/admin')); %>
+
+<main class="flex-grow flex items-center justify-center py-20 px-4 text-center">
+    <div class="max-w-lg w-full mx-auto bg-white border border-zinc-200 rounded-2xl p-8 sm:p-10 shadow-sm space-y-6">
+        <span class="text-6xl sm:text-7xl font-serif text-[#c59b2c] font-bold block tracking-widest">404</span>
+
+        <div class="space-y-2">
+            <h1 class="text-2xl sm:text-3xl font-serif text-[#1b1c1c]">
+                <%= (typeof title !== 'undefined' && title) ? title : 'Page Not Found' %>
+            </h1>
+            <p class="text-sm text-zinc-600 leading-relaxed">
+                <%= (typeof message !== 'undefined' && message) ? message : 'The requested page or timepiece could not be found.' %>
+            </p>
+        </div>
+
+        <% if (typeof url !== 'undefined' && url) { %>
+            <div class="bg-zinc-50 border border-zinc-200 px-4 py-2.5 rounded-lg text-xs font-mono text-zinc-500 break-all">
+                Requested path: <span class="text-zinc-800 font-medium"><%= url %></span>
+            </div>
+        <% } %>
+
+        <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <% if (adminContext) { %>
+                <a href="/admin/dashboard" class="w-full sm:w-auto inline-block bg-[#1b1c1c] text-white px-7 py-3 rounded-lg text-xs uppercase tracking-[0.2em] font-semibold hover:bg-zinc-800 transition-colors">
+                    Admin Dashboard
+                </a>
+            <% } else { %>
+                <a href="/" class="w-full sm:w-auto inline-block bg-[#1b1c1c] text-white px-7 py-3 rounded-lg text-xs uppercase tracking-[0.2em] font-semibold hover:bg-zinc-800 transition-colors">
+                    Return Home
+                </a>
+                <a href="/shop" class="w-full sm:w-auto inline-block border border-zinc-300 text-[#1b1c1c] px-7 py-3 rounded-lg text-xs uppercase tracking-[0.2em] font-semibold hover:bg-zinc-50 transition-colors">
+                    Browse Watches
+                </a>
+            <% } %>
+        </div>
+    </div>
+</main>
+
+<%- include('../user/partials/footer') %>

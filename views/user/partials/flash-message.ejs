@@ -1,0 +1,29 @@
+<% if (typeof success !== 'undefined' && success) { %>
+    <div class="mb-6 bg-emerald-50/95 border border-emerald-200/90 text-emerald-900 px-4 py-3.5 rounded-2xl text-xs flex items-center justify-between shadow-xs animate-fadeIn" role="alert">
+        <div class="flex items-center gap-3">
+            <div class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs flex-shrink-0">✓</div>
+            <span class="font-medium leading-relaxed"><%= success %></span>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-emerald-700 hover:text-emerald-950 text-sm font-bold ml-3 cursor-pointer transition-colors" aria-label="Dismiss">✕</button>
+    </div>
+<% } %>
+
+<% if (typeof error !== 'undefined' && error) { %>
+    <div class="mb-6 bg-rose-50/95 border border-rose-200/90 text-rose-900 px-4 py-3.5 rounded-2xl text-xs flex items-center justify-between shadow-xs animate-fadeIn" role="alert">
+        <div class="flex items-center gap-3">
+            <div class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-xs flex-shrink-0">✕</div>
+            <span class="font-medium leading-relaxed"><%= error %></span>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-rose-700 hover:text-rose-950 text-sm font-bold ml-3 cursor-pointer transition-colors" aria-label="Dismiss">✕</button>
+    </div>
+<% } %>
+
+<% if (typeof warning !== 'undefined' && warning) { %>
+    <div class="mb-6 bg-amber-50/95 border border-amber-200/90 text-amber-900 px-4 py-3.5 rounded-2xl text-xs flex items-center justify-between shadow-xs animate-fadeIn" role="alert">
+        <div class="flex items-center gap-3">
+            <div class="w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs flex-shrink-0">!</div>
+            <span class="font-medium leading-relaxed"><%= warning %></span>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-amber-700 hover:text-amber-950 text-sm font-bold ml-3 cursor-pointer transition-colors" aria-label="Dismiss">✕</button>
+    </div>
+<% } %>

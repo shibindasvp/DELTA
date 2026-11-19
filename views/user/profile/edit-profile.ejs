@@ -1,0 +1,362 @@
+<%
+    const safeUser = (typeof user !== 'undefined' && user) ? user : { _id: '', name: 'Collector', email: '', phone: '', profileImage: null, referralCode: 'DLT-MEMBER', authProvider: 'local' };
+    const isGoogleUser = Boolean(safeUser.authProvider === 'google' || safeUser.providerId || safeUser.googleId);
+    const safeErrors = (typeof errors !== 'undefined' && errors) ? errors : {};
+%>
+<%- include('../partials/header', { title: 'Edit Profile — DELTA Vault' }) %>
+<%- include('../partials/navbar') %>
+
+<div class="bg-[#faf8f7] min-h-screen text-[#1b1c1c] py-12">
+    <main class="max-w-2xl mx-auto px-6 space-y-8">
+        
+        <!-- Breadcrumb & Header -->
+        <div class="space-y-1.5 border-b border-zinc-200 pb-6">
+            <div class="flex items-center gap-2 text-[10px] uppercase font-mono tracking-widest text-zinc-400">
+                <a href="/profile" class="hover:text-zinc-900 transition-colors">Client Portfolio</a>
+                <span>/</span>
+                <span class="text-zinc-900 font-bold">Edit Details</span>
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-serif font-normal tracking-tight text-zinc-900">
+                Edit Client Profile
+            </h1>
+            <p class="text-xs text-zinc-500 font-light">
+                Update your collector credentials and personal contact information.
+            </p>
+        </div>
+
+        <%- include('../partials/flash-message') %>
+
+        <div class="bg-white border border-zinc-200/80 rounded-3xl p-8 sm:p-10 shadow-sm">
+            <form action="/profile/edit" method="POST" enctype="multipart/form-data" class="space-y-6" id="editProfileForm" novalidate>
+                
+                <!-- Avatar Upload Section with Live Preview & Validation -->
+                <div class="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-zinc-100">
+                    <div class="relative group">
+                        <div class="w-24 h-24 rounded-full overflow-hidden border-2 border-zinc-200 shadow-sm bg-[#1b1c1c] text-white flex items-center justify-center relative">
+                            <% if (safeUser.profileImage) { %>
+                                <img id="avatarPreview" src="<%= safeUser.profileImage %>" alt="<%= safeUser.name %>" class="w-full h-full object-cover">
+                                <div id="avatarPlaceholder" class="w-full h-full bg-[#1b1c1c] text-white flex items-center justify-center text-3xl font-serif font-bold hidden">
+                                    <%= (safeUser.name || 'C').charAt(0).toUpperCase() %>
+                                </div>
+                            <% } else { %>
+                                <img id="avatarPreview" src="" alt="Preview" class="w-full h-full object-cover hidden">
+                                <div id="avatarPlaceholder" class="w-full h-full bg-[#1b1c1c] text-white flex items-center justify-center text-3xl font-serif font-bold">
+                                    <%= (safeUser.name || 'C').charAt(0).toUpperCase() %>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 text-center sm:text-left space-y-2">
+                        <label class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600">Profile Portrait</label>
+                        <input
+                            type="file"
+                            name="profileImage"
+                            id="profileImage"
+                            accept="image/jpeg,image/png,image/jpg,image/webp,.jpg,.jpeg,.png,.webp"
+                            class="text-xs text-zinc-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border file:border-zinc-200 file:text-xs file:font-semibold file:bg-zinc-50 file:text-zinc-900 hover:file:bg-zinc-100 cursor-pointer"
+                        >
+                        <p class="text-[11px] text-zinc-400 font-light">Supported formats: JPG, JPEG, PNG, WebP (Max 5MB)</p>
+                        <p id="imageError" class="text-rose-600 text-xs font-medium <%= safeErrors.profileImage ? '' : 'hidden' %>">
+                            <%= safeErrors.profileImage || '' %>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Full Legal Name with Real-Time Validation -->
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <label for="name" class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600">
+                            Full Legal Name <span class="text-rose-500">*</span>
+                        </label>
+                        <span id="nameCharCount" class="text-[10px] font-mono text-zinc-400">0/50</span>
+                    </div>
+                    <input
+                        type="text"
+                        name="name"
+                        id="name"
+                        required
+                        maxlength="50"
+                        value="<%= safeUser.name || '' %>"
+                        placeholder="Enter your legal full name"
+                        class="w-full px-4 py-3.5 bg-white border <%= safeErrors.name ? 'border-rose-500 bg-rose-50/20 ring-1 ring-rose-500' : 'border-zinc-300' %> rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all font-sans"
+                    >
+                    <p id="nameError" class="text-rose-600 text-xs font-medium <%= safeErrors.name ? '' : 'hidden' %>">
+                        <%= safeErrors.name || '' %>
+                    </p>
+                </div>
+
+                <!-- Mobile Phone Number with Real-Time Validation -->
+                <div class="space-y-1.5">
+                    <label for="phone" class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600">
+                        Mobile Phone Number
+                    </label>
+                    <div class="relative">
+                        <input
+                            type="tel"
+                            name="phone"
+                            id="phone"
+                            maxlength="15"
+                            value="<%= safeUser.phone || '' %>"
+                            placeholder="e.g. 9876543210"
+                            class="w-full px-4 py-3.5 bg-white border <%= safeErrors.phone ? 'border-rose-500 bg-rose-50/20 ring-1 ring-rose-500' : 'border-zinc-300' %> rounded-xl text-sm font-mono text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all"
+                        >
+                    </div>
+                    <p id="phoneError" class="text-rose-600 text-xs font-medium <%= safeErrors.phone ? '' : 'hidden' %>">
+                        <%= safeErrors.phone || '' %>
+                    </p>
+                </div>
+
+                <!-- Registered Email Section -->
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600">
+                            Registered Email Address
+                        </label>
+                        <% if (isGoogleUser) { %>
+                            <span class="inline-flex items-center gap-1.5 text-xs text-zinc-500 font-mono font-medium">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24">
+                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                                </svg>
+                                Google Account
+                            </span>
+                        <% } else { %>
+                            <a href="/profile/change-email" class="text-xs uppercase tracking-wider text-[#0A4D2E] hover:underline font-bold font-mono">
+                                Change Email →
+                            </a>
+                        <% } %>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input
+                            type="email"
+                            value="<%= safeUser.email || '' %>"
+                            disabled
+                            class="w-full px-4 py-3.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm text-zinc-500 font-mono cursor-not-allowed select-none"
+                        >
+                        <% if (!isGoogleUser) { %>
+                            <a href="/profile/change-email" class="bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 text-zinc-800 px-5 py-3.5 rounded-xl text-xs uppercase tracking-wider font-semibold whitespace-nowrap transition-colors">
+                                Edit
+                            </a>
+                        <% } %>
+                    </div>
+                    <% if (isGoogleUser) { %>
+                        <p class="text-[11px] text-zinc-400 font-light">Your registered email address is linked to Google authentication and cannot be changed.</p>
+                    <% } %>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-zinc-100">
+                    <a href="/profile" class="px-6 py-3.5 border border-zinc-300 hover:border-zinc-900 rounded-xl text-xs uppercase tracking-wider font-semibold text-zinc-700 hover:text-black transition-colors">
+                        Cancel
+                    </a>
+                    <button
+                        type="submit"
+                        id="saveProfileBtn"
+                        class="bg-[#1b1c1c] hover:bg-black text-white px-8 py-3.5 rounded-xl text-xs uppercase tracking-[0.2em] font-semibold transition-all duration-200 shadow-sm cursor-pointer flex items-center justify-center gap-2 min-w-[140px]"
+                    >
+                        <span id="saveBtnText">Save Profile</span>
+                        <svg id="saveBtnSpinner" class="w-4 h-4 text-white animate-spin hidden" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script>
+    // -------------------------------------------------------------
+    // CLIENT-SIDE REAL-TIME PROFILE FORM VALIDATION & PREVIEW
+    // -------------------------------------------------------------
+    const form = document.getElementById('editProfileForm');
+    const nameInput = document.getElementById('name');
+    const phoneInput = document.getElementById('phone');
+    const fileInput = document.getElementById('profileImage');
+    const nameError = document.getElementById('nameError');
+    const phoneError = document.getElementById('phoneError');
+    const imageError = document.getElementById('imageError');
+    const nameCharCount = document.getElementById('nameCharCount');
+    const avatarPreview = document.getElementById('avatarPreview');
+    const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+    const saveProfileBtn = document.getElementById('saveProfileBtn');
+    const saveBtnText = document.getElementById('saveBtnText');
+    const saveBtnSpinner = document.getElementById('saveBtnSpinner');
+
+    // Validation Regex Rules
+    // Name: letters, spaces, hyphens, periods, apostrophes (min 3, max 50)
+    const namePattern = /^[A-Za-z][A-Za-z\s.'-]{1,49}$/;
+    // Phone: Indian 10-digit standard or international 10-15 digits
+    const phonePattern = /^[6-9]\d{9}$/;
+
+    // Live update name character counter
+    function updateNameCharCount() {
+        const len = nameInput.value.length;
+        if (nameCharCount) {
+            nameCharCount.textContent = len + '/50';
+            if (len >= 45) {
+                nameCharCount.className = 'text-[10px] font-mono text-amber-600 font-bold';
+            } else {
+                nameCharCount.className = 'text-[10px] font-mono text-zinc-400';
+            }
+        }
+    }
+
+    // Validate Name Field
+    function validateName() {
+        const val = nameInput.value.trim();
+        updateNameCharCount();
+
+        if (!val) {
+            nameError.textContent = 'Full Legal Name is required.';
+            nameError.classList.remove('hidden');
+            nameInput.className = 'w-full px-4 py-3.5 bg-white border border-rose-500 bg-rose-50/20 ring-1 ring-rose-500 rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none transition-all font-sans';
+            return false;
+        }
+
+        if (val.length < 3) {
+            nameError.textContent = 'Name must be at least 3 characters long.';
+            nameError.classList.remove('hidden');
+            nameInput.className = 'w-full px-4 py-3.5 bg-white border border-rose-500 bg-rose-50/20 ring-1 ring-rose-500 rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none transition-all font-sans';
+            return false;
+        }
+
+        if (val.length > 50) {
+            nameError.textContent = 'Name cannot exceed 50 characters.';
+            nameError.classList.remove('hidden');
+            nameInput.className = 'w-full px-4 py-3.5 bg-white border border-rose-500 bg-rose-50/20 ring-1 ring-rose-500 rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none transition-all font-sans';
+            return false;
+        }
+
+        if (!namePattern.test(val)) {
+            nameError.textContent = 'Name must start with a letter and contain only letters, spaces, hyphens or apostrophes.';
+            nameError.classList.remove('hidden');
+            nameInput.className = 'w-full px-4 py-3.5 bg-white border border-rose-500 bg-rose-50/20 ring-1 ring-rose-500 rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none transition-all font-sans';
+            return false;
+        }
+
+        // Valid
+        nameError.classList.add('hidden');
+        nameInput.className = 'w-full px-4 py-3.5 bg-white border border-emerald-500/80 focus:border-[#0A4D2E] focus:ring-1 focus:ring-[#0A4D2E] rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none transition-all font-sans';
+        return true;
+    }
+
+    // Validate Phone Field
+    function validatePhone() {
+        const val = phoneInput.value.trim();
+
+        if (!val) {
+            phoneError.classList.add('hidden');
+            phoneInput.className = 'w-full px-4 py-3.5 bg-white border border-zinc-300 rounded-xl text-sm font-mono text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all';
+            return true;
+        }
+
+        // Strip non-digit characters if user typed spaces or dashes
+        const cleanDigits = val.replace(/[^0-9]/g, '');
+
+        if (cleanDigits.length !== 10 || !phonePattern.test(cleanDigits)) {
+            phoneError.textContent = 'Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.';
+            phoneError.classList.remove('hidden');
+            phoneInput.className = 'w-full px-4 py-3.5 bg-white border border-rose-500 bg-rose-50/20 ring-1 ring-rose-500 rounded-xl text-sm font-mono text-zinc-900 placeholder-zinc-400 focus:outline-none transition-all';
+            return false;
+        }
+
+        // Valid
+        phoneError.classList.add('hidden');
+        phoneInput.className = 'w-full px-4 py-3.5 bg-white border border-emerald-500/80 focus:border-[#0A4D2E] focus:ring-1 focus:ring-[#0A4D2E] rounded-xl text-sm font-mono text-zinc-900 placeholder-zinc-400 focus:outline-none transition-all';
+        return true;
+    }
+
+    // Validate Profile Image Picker
+    function validateImage(file) {
+        if (!file) {
+            imageError.classList.add('hidden');
+            return true;
+        }
+
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        const fileName = (file.name || '').toLowerCase();
+        const hasValidExt = fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png') || fileName.endsWith('.webp');
+
+        if (!validTypes.includes(file.type.toLowerCase()) && !hasValidExt) {
+            imageError.textContent = 'Invalid file type. Only JPG, JPEG, PNG, and WebP images are supported.';
+            imageError.classList.remove('hidden');
+            fileInput.value = '';
+            return false;
+        }
+
+        const maxSizeBytes = 5 * 1024 * 1024; // 5MB
+        if (file.size > maxSizeBytes) {
+            imageError.textContent = 'Image file is too large (' + (file.size / (1024 * 1024)).toFixed(1) + 'MB). Maximum size is 5MB.';
+            imageError.classList.remove('hidden');
+            fileInput.value = '';
+            return false;
+        }
+
+        imageError.classList.add('hidden');
+        return true;
+    }
+
+    // Event Listeners for Live Feedback
+    if (nameInput) {
+        nameInput.addEventListener('input', validateName);
+        nameInput.addEventListener('blur', validateName);
+        updateNameCharCount();
+    }
+
+    if (phoneInput) {
+        phoneInput.addEventListener('input', () => {
+            // Filter non-numeric characters gently
+            phoneInput.value = phoneInput.value.replace(/[^0-9+-\s]/g, '');
+            validatePhone();
+        });
+        phoneInput.addEventListener('blur', validatePhone);
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (validateImage(file)) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        avatarPreview.src = event.target.result;
+                        avatarPreview.classList.remove('hidden');
+                        if (avatarPlaceholder) avatarPlaceholder.classList.add('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+    }
+
+    // Form Submission Interception
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            const isNameValid = validateName();
+            const isPhoneValid = validatePhone();
+            const isImageValid = fileInput && fileInput.files[0] ? validateImage(fileInput.files[0]) : true;
+
+            if (!isNameValid || !isPhoneValid || !isImageValid) {
+                e.preventDefault();
+                // Scroll to top of form
+                window.scrollTo({ top: form.offsetTop - 80, behavior: 'smooth' });
+                return false;
+            }
+
+            // Disable submit button and show loading state
+            if (saveProfileBtn) {
+                saveProfileBtn.disabled = true;
+                saveProfileBtn.classList.add('opacity-80', 'cursor-not-allowed');
+                if (saveBtnSpinner) saveBtnSpinner.classList.remove('hidden');
+                if (saveBtnText) saveBtnText.textContent = 'Saving...';
+            }
+        });
+    }
+</script>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,1162 @@
+<%- include('../partials/header', { title: 'Vault Offer Management — DELTA Maison' }) %>
+
+<div class="flex min-h-screen bg-[#faf8f7] text-[#1b1c1c] font-sans antialiased">
+    <!-- Admin Sidebar -->
+    <%- include('../partials/sidebar', { activePage: 'offers' }) %>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        
+        <!-- Top Admin Header -->
+        <header class="h-20 bg-white border-b border-zinc-200/80 px-8 flex items-center justify-between sticky top-0 z-20 shadow-[0_2px_15px_rgba(0,0,0,0.02)]">
+            <div class="flex items-center gap-4">
+                <span class="text-xs uppercase tracking-[0.25em] text-[#0A4D2E] font-bold">Promotion & Valuation</span>
+                <span class="text-zinc-300">/</span>
+                <h1 class="text-lg font-serif font-normal text-zinc-900">Offer Management</h1>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button
+                    type="button"
+                    onclick="openCreateOfferModal()"
+                    class="bg-[#0A4D2E] hover:bg-[#083e25] text-white px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-semibold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+                >
+                    <svg class="w-4 h-4 text-[#c5a059]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span>+ Create Offer</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Body Content -->
+        <main class="flex-1 p-8 max-w-7xl w-full mx-auto space-y-6">
+            
+            <!-- Flash Message Alerts -->
+            <% if (typeof success !== 'undefined' && success) { %>
+                <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-xl text-xs flex items-center justify-between shadow-sm animate-fade-in">
+                    <div class="flex items-center gap-2.5">
+                        <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="font-medium"><%= success %></span>
+                    </div>
+                    <button type="button" onclick="this.parentElement.remove()" class="text-emerald-700 hover:text-emerald-900 text-sm cursor-pointer ml-3 font-semibold">✕</button>
+                </div>
+            <% } %>
+
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="bg-rose-50 border border-rose-200 text-rose-800 px-5 py-3.5 rounded-xl text-xs flex items-center justify-between shadow-sm animate-fade-in">
+                    <div class="flex items-center gap-2.5">
+                        <svg class="w-4 h-4 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        <span class="font-medium"><%= error %></span>
+                    </div>
+                    <button type="button" onclick="this.parentElement.remove()" class="text-rose-700 hover:text-rose-900 text-sm cursor-pointer ml-3 font-semibold">✕</button>
+                </div>
+            <% } %>
+
+            <!-- Stats Overview Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <!-- Stat 1: Total Offers -->
+                <div class="bg-white rounded-2xl p-5 border border-zinc-200/80 shadow-2xs space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-mono tracking-wider text-zinc-400 font-semibold">Total Offers</span>
+                        <span class="w-2 h-2 rounded-full bg-zinc-400"></span>
+                    </div>
+                    <p class="text-2xl font-serif text-zinc-900 font-bold"><%= stats.total || 0 %></p>
+                    <p class="text-[11px] text-zinc-500 font-light">Configured vault promotion campaigns</p>
+                </div>
+
+                <!-- Stat 2: Active Offers -->
+                <div class="bg-white rounded-2xl p-5 border border-zinc-200/80 shadow-2xs space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-mono tracking-wider text-emerald-700 font-semibold">Active Offers</span>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    </div>
+                    <p class="text-2xl font-serif text-emerald-700 font-bold"><%= stats.active || 0 %></p>
+                    <p class="text-[11px] text-zinc-500 font-light">Currently live on store prices</p>
+                </div>
+
+                <!-- Stat 3: Product Offers -->
+                <div class="bg-white rounded-2xl p-5 border border-zinc-200/80 shadow-2xs space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-mono tracking-wider text-amber-700 font-semibold">Product Offers</span>
+                        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                    </div>
+                    <p class="text-2xl font-serif text-amber-700 font-bold"><%= stats.productCount || 0 %></p>
+                    <p class="text-[11px] text-zinc-500 font-light">Specific timepiece offers</p>
+                </div>
+
+                <!-- Stat 4: Brand Offers -->
+                <div class="bg-white rounded-2xl p-5 border border-zinc-200/80 shadow-2xs space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-mono tracking-wider text-indigo-700 font-semibold">Maison Brand Offers</span>
+                        <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                    </div>
+                    <p class="text-2xl font-serif text-indigo-700 font-bold"><%= stats.brandCount || 0 %></p>
+                    <p class="text-[11px] text-zinc-500 font-light">Whole maison catalog offers</p>
+                </div>
+
+            </div>
+
+            <!-- Search, Filter & Control Toolbar -->
+            <div class="bg-white rounded-2xl border border-zinc-200/80 p-4 shadow-2xs">
+                <form id="offerFilterForm" method="GET" action="/admin/offers" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 text-xs">
+                    <input type="hidden" name="limit" value="<%= pagination.pageLimit %>">
+                    
+                    <!-- Search input -->
+                    <div class="lg:col-span-4 relative">
+                        <input 
+                            type="text" 
+                            name="search" 
+                            value="<%= search %>" 
+                            placeholder="Search offer title, timepiece, or maison..." 
+                            class="w-full pl-9 pr-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] focus:bg-white outline-none text-zinc-900 transition-colors placeholder:text-zinc-400"
+                        >
+                        <svg class="w-4 h-4 text-zinc-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+
+                    <!-- Offer Type Filter -->
+                    <div class="lg:col-span-2">
+                        <select 
+                            name="type" 
+                            class="w-full px-3 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] focus:bg-white outline-none text-zinc-700 cursor-pointer"
+                            onchange="document.getElementById('offerFilterForm').submit()"
+                        >
+                            <option value="all" <%= type === 'all' ? 'selected' : '' %>>All Types</option>
+                            <option value="product" <%= type === 'product' ? 'selected' : '' %>>Timepiece Only</option>
+                            <option value="brand" <%= type === 'brand' ? 'selected' : '' %>>Maison Brands</option>
+                        </select>
+                    </div>
+
+                    <!-- Status Filter -->
+                    <div class="lg:col-span-2">
+                        <select 
+                            name="status" 
+                            class="w-full px-3 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] focus:bg-white outline-none text-zinc-700 cursor-pointer"
+                            onchange="document.getElementById('offerFilterForm').submit()"
+                        >
+                            <option value="all" <%= status === 'all' ? 'selected' : '' %>>All Statuses</option>
+                            <option value="active" <%= status === 'active' ? 'selected' : '' %>>Active & Running</option>
+                            <option value="inactive" <%= status === 'inactive' ? 'selected' : '' %>>Paused / Inactive</option>
+                            <option value="expired" <%= status === 'expired' ? 'selected' : '' %>>Past Deadline</option>
+                        </select>
+                    </div>
+
+                    <!-- Sort -->
+                    <div class="lg:col-span-2">
+                        <select 
+                            name="sort" 
+                            class="w-full px-3 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] focus:bg-white outline-none text-zinc-700 cursor-pointer"
+                            onchange="document.getElementById('offerFilterForm').submit()"
+                        >
+                            <option value="newest" <%= sort === 'newest' ? 'selected' : '' %>>Newest First</option>
+                            <option value="oldest" <%= sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+                            <option value="discount_high" <%= sort === 'discount_high' ? 'selected' : '' %>>Highest Discount</option>
+                            <option value="discount_low" <%= sort === 'discount_low' ? 'selected' : '' %>>Lowest Discount</option>
+                            <option value="expiring_soon" <%= sort === 'expiring_soon' ? 'selected' : '' %>>Expiring Soon</option>
+                        </select>
+                    </div>
+
+                    <!-- Filter Actions -->
+                    <div class="lg:col-span-2 flex items-center gap-2">
+                        <button type="submit" class="flex-1 bg-zinc-900 hover:bg-black text-white py-2.5 rounded-xl font-medium transition-colors cursor-pointer text-center">
+                            Filter
+                        </button>
+                        <a href="/admin/offers" class="px-3 py-2.5 border border-zinc-200 hover:bg-zinc-100 rounded-xl text-zinc-600 transition-colors text-center" title="Reset Filters">
+                            ✕
+                        </a>
+                    </div>
+
+                </form>
+            </div>
+
+            <!-- Offers Data Table -->
+            <div class="bg-white rounded-3xl border border-zinc-200/80 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="bg-zinc-50/70 border-b border-zinc-200 text-zinc-500 font-mono uppercase tracking-wider text-[10px]">
+                                <th class="py-4 px-6">Campaign & Title</th>
+                                <th class="py-4 px-4">Offer Type</th>
+                                <th class="py-4 px-4">Target Allocation</th>
+                                <th class="py-4 px-4 text-center">Discount</th>
+                                <th class="py-4 px-4">Validity Timeline</th>
+                                <th class="py-4 px-4 text-center">Status</th>
+                                <th class="py-4 px-6 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-100">
+                            <% if (offers && offers.length > 0) { %>
+                                <% offers.forEach(offer => { %>
+                                    <% 
+                                        const now = new Date();
+                                        const isExpired = new Date(offer.endDate) < now;
+                                        const isRunning = offer.isActive && !isExpired && new Date(offer.startDate) <= now;
+                                    %>
+                                    <tr class="hover:bg-zinc-50/60 transition-colors">
+                                        
+                                        <!-- Campaign Title & Description -->
+                                        <td class="py-4 px-6">
+                                            <div class="space-y-0.5">
+                                                <div class="font-serif text-sm font-medium text-zinc-900"><%= offer.name %></div>
+                                                <% if (offer.description) { %>
+                                                    <div class="text-[11px] text-zinc-500 font-light truncate max-w-xs"><%= offer.description %></div>
+                                                <% } %>
+                                            </div>
+                                        </td>
+
+                                        <!-- Type -->
+                                        <td class="py-4 px-4">
+                                            <% if (offer.offerType === 'product') { %>
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-medium bg-amber-50 text-amber-800 border border-amber-200/60">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+                                                    Timepiece
+                                                </span>
+                                            <% } else { %>
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-medium bg-indigo-50 text-indigo-800 border border-indigo-200/60">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                                                    Maison Brand
+                                                </span>
+                                            <% } %>
+                                        </td>
+
+                                        <!-- Target Allocation -->
+                                        <td class="py-4 px-4">
+                                            <% if (offer.offerType === 'product' && offer.product) { %>
+                                                <div class="flex items-center gap-3">
+                                                    <% if (offer.product.images && offer.product.images.length > 0) { %>
+                                                        <img src="<%= offer.product.images[0] %>" alt="" class="w-8 h-8 rounded-lg object-cover border border-zinc-200 bg-zinc-50 flex-shrink-0">
+                                                    <% } %>
+                                                    <div class="truncate max-w-[180px]">
+                                                        <div class="font-medium text-zinc-900 truncate"><%= offer.product.name %></div>
+                                                        <div class="text-[10px] font-mono text-zinc-400">Regular: ₹<%= Number(offer.product.price).toLocaleString('en-IN') %></div>
+                                                    </div>
+                                                </div>
+                                            <% } else if (offer.offerType === 'brand' && offer.brand) { %>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-serif font-medium text-zinc-900"><%= offer.brand.name %></span>
+                                                    <span class="text-[10px] font-mono text-zinc-400">(All Models)</span>
+                                                </div>
+                                            <% } else { %>
+                                                <span class="text-zinc-400 italic">Unassigned target</span>
+                                            <% } %>
+                                        </td>
+
+                                        <!-- Discount -->
+                                        <td class="py-4 px-4 text-center">
+                                            <span class="inline-block px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#0A4D2E] text-white shadow-xs">
+                                                <%= offer.discountPercentage %>% OFF
+                                            </span>
+                                        </td>
+
+                                        <!-- Timeline -->
+                                        <td class="py-4 px-4 font-mono text-[11px] text-zinc-600 space-y-0.5">
+                                            <div>
+                                                <%= new Date(offer.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+                                                <span class="text-zinc-400">→</span>
+                                                <%= new Date(offer.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+                                            </div>
+                                            <% if (isExpired) { %>
+                                                <div class="text-[10px] text-rose-600 font-sans font-medium">Expired</div>
+                                            <% } else { %>
+                                                <% 
+                                                    const daysLeft = Math.ceil((new Date(offer.endDate) - now) / (1000 * 60 * 60 * 24));
+                                                %>
+                                                <div class="text-[10px] text-emerald-600 font-sans font-medium">
+                                                    <%= daysLeft > 0 ? `${daysLeft} day${daysLeft > 1 ? 's' : ''} remaining` : 'Ends today' %>
+                                                </div>
+                                            <% } %>
+                                        </td>
+
+                                        <!-- Status Badge -->
+                                        <td class="py-4 px-4 text-center">
+                                            <% if (isExpired) { %>
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-medium bg-rose-50 text-rose-700 border border-rose-200/60">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                                    Expired
+                                                </span>
+                                            <% } else if (offer.isActive) { %>
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                    Active
+                                                </span>
+                                            <% } else { %>
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-medium bg-zinc-100 text-zinc-600 border border-zinc-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
+                                                    Paused
+                                                </span>
+                                            <% } %>
+                                        </td>
+
+                                        <!-- Actions -->
+                                        <td class="py-4 px-6 text-right">
+                                            <div class="inline-flex items-center gap-1.5">
+                                                
+                                                <!-- Toggle Active/Inactive -->
+                                                <button
+                                                    type="button"
+                                                    onclick="toggleOffer('<%= offer._id %>', <%= offer.isActive %>)"
+                                                    class="p-2 rounded-lg hover:bg-zinc-100 text-zinc-600 transition-colors cursor-pointer"
+                                                    title="<%= offer.isActive ? 'Deactivate / Pause Offer' : 'Activate Offer' %>"
+                                                >
+                                                    <% if (offer.isActive) { %>
+                                                        <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                    <% } else { %>
+                                                        <svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                    <% } %>
+                                                </button>
+
+                                                <!-- Edit -->
+                                                <button
+                                                    type="button"
+                                                    onclick="openEditOfferModal('<%= offer._id %>')"
+                                                    class="p-2 rounded-lg hover:bg-zinc-100 text-zinc-600 transition-colors cursor-pointer"
+                                                    title="Edit Offer"
+                                                >
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                                </button>
+
+                                                <!-- Delete -->
+                                                <button
+                                                    type="button"
+                                                    data-id="<%= offer._id %>"
+                                                    data-name="<%= offer.name %>"
+                                                    onclick="confirmDeleteOffer(this.dataset.id, this.dataset.name)"
+                                                    class="p-2 rounded-lg hover:bg-rose-50 text-rose-600 transition-colors cursor-pointer"
+                                                    title="Archive / Remove Offer"
+                                                >
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+
+                                            </div>
+                                        </td>
+
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="py-16 text-center text-zinc-400 font-light space-y-3">
+                                        <div class="w-12 h-12 mx-auto rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg>
+                                        </div>
+                                        <p class="text-sm font-medium text-zinc-600">No promotion offers found in the vault catalog.</p>
+                                        <p class="text-xs text-zinc-400">Click the button below to initialize a new promotion campaign.</p>
+                                        <button onclick="openCreateOfferModal()" class="mt-2 text-xs uppercase tracking-wider text-[#0A4D2E] hover:underline font-semibold cursor-pointer">
+                                            + Create First Offer
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Footer -->
+                <% if (pagination && pagination.totalItems > 0) { %>
+                    <div class="px-6 py-4 bg-[#faf8f7] border-t border-zinc-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono select-none">
+                        
+                        <!-- Range & Limit Selector -->
+                        <div class="flex items-center gap-4 text-zinc-500">
+                            <span>
+                                Showing <strong class="text-zinc-900 font-semibold"><%= pagination.startItem %>–<%= Math.min(pagination.totalItems, pagination.startItem + offers.length - 1) %></strong> of <strong class="text-zinc-900 font-semibold"><%= pagination.totalItems %></strong> offers
+                            </span>
+
+                            <div class="h-3.5 w-px bg-zinc-200 hidden sm:block"></div>
+
+                            <div class="flex items-center gap-2">
+                                <span class="text-zinc-400 uppercase tracking-wider text-[10px]">Per page:</span>
+                                <select
+                                    onchange="changeLimit(this.value)"
+                                    class="bg-white border border-zinc-200 text-zinc-900 text-xs rounded-lg px-2 py-1 focus:outline-none focus:border-[#0A4D2E] cursor-pointer"
+                                >
+                                    <option value="5" <%= pagination.pageLimit === 5 ? 'selected' : '' %>>5</option>
+                                    <option value="10" <%= pagination.pageLimit === 10 ? 'selected' : '' %>>10</option>
+                                    <option value="20" <%= pagination.pageLimit === 20 ? 'selected' : '' %>>20</option>
+                                    <option value="50" <%= pagination.pageLimit === 50 ? 'selected' : '' %>>50</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Page Navigation Buttons -->
+                        <div class="flex items-center gap-1.5 font-mono">
+                            <!-- First Page Jump -->
+                            <% if (pagination.currentPage > 1) { %>
+                                <a
+                                    href="/admin/offers?page=1&limit=<%= pagination.pageLimit %>&search=<%= encodeURIComponent(search || '') %>&type=<%= encodeURIComponent(type || 'all') %>&status=<%= encodeURIComponent(status || 'all') %>&sort=<%= encodeURIComponent(sort || 'newest') %>"
+                                    title="First Page"
+                                    class="w-8 h-8 rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100 flex items-center justify-center text-xs font-semibold transition-colors shadow-2xs"
+                                >
+                                    «
+                                </a>
+                            <% } else { %>
+                                <span class="w-8 h-8 rounded-lg border border-zinc-100 bg-zinc-50 text-zinc-300 flex items-center justify-center text-xs cursor-not-allowed">
+                                    «
+                                </span>
+                            <% } %>
+
+                            <!-- Prev -->
+                            <% if (pagination.hasPrevPage) { %>
+                                <a
+                                    href="/admin/offers?page=<%= pagination.prevPage %>&limit=<%= pagination.pageLimit %>&search=<%= encodeURIComponent(search || '') %>&type=<%= encodeURIComponent(type || 'all') %>&status=<%= encodeURIComponent(status || 'all') %>&sort=<%= encodeURIComponent(sort || 'newest') %>"
+                                    title="Previous Page"
+                                    class="w-8 h-8 rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100 flex items-center justify-center text-xs font-semibold transition-colors shadow-2xs"
+                                >
+                                    ‹
+                                </a>
+                            <% } else { %>
+                                <span class="w-8 h-8 rounded-lg border border-zinc-100 bg-zinc-50 text-zinc-300 flex items-center justify-center text-xs cursor-not-allowed">
+                                    ‹
+                                </span>
+                            <% } %>
+
+                            <!-- Dynamic Page Numbers with Sliding Window & Ellipses -->
+                            <% if (pagination.pageNumbers && pagination.pageNumbers.length > 0) { %>
+                                <% pagination.pageNumbers.forEach(p => { %>
+                                    <% if (p === '...') { %>
+                                        <span class="w-7 text-center text-zinc-400 font-mono text-xs">…</span>
+                                    <% } else if (p === pagination.currentPage) { %>
+                                        <span class="w-8 h-8 rounded-lg flex items-center justify-center font-bold bg-[#0A4D2E] text-white text-xs font-mono shadow-2xs">
+                                            <%= p %>
+                                        </span>
+                                    <% } else { %>
+                                        <a
+                                            href="/admin/offers?page=<%= p %>&limit=<%= pagination.pageLimit %>&search=<%= encodeURIComponent(search || '') %>&type=<%= encodeURIComponent(type || 'all') %>&status=<%= encodeURIComponent(status || 'all') %>&sort=<%= encodeURIComponent(sort || 'newest') %>"
+                                            class="w-8 h-8 rounded-lg flex items-center justify-center border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100 hover:border-zinc-900 text-xs font-mono font-medium transition-colors shadow-2xs"
+                                        >
+                                            <%= p %>
+                                        </a>
+                                    <% } %>
+                                <% }) %>
+                            <% } else { %>
+                                <span class="w-8 h-8 rounded-lg flex items-center justify-center font-bold bg-[#0A4D2E] text-white text-xs font-mono shadow-2xs">
+                                    1
+                                </span>
+                            <% } %>
+
+                            <!-- Next -->
+                            <% if (pagination.hasNextPage) { %>
+                                <a
+                                    href="/admin/offers?page=<%= pagination.nextPage %>&limit=<%= pagination.pageLimit %>&search=<%= encodeURIComponent(search || '') %>&type=<%= encodeURIComponent(type || 'all') %>&status=<%= encodeURIComponent(status || 'all') %>&sort=<%= encodeURIComponent(sort || 'newest') %>"
+                                    title="Next Page"
+                                    class="w-8 h-8 rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100 flex items-center justify-center text-xs font-semibold transition-colors shadow-2xs"
+                                >
+                                    ›
+                                </a>
+                            <% } else { %>
+                                <span class="w-8 h-8 rounded-lg border border-zinc-100 bg-zinc-50 text-zinc-300 flex items-center justify-center text-xs cursor-not-allowed">
+                                    ›
+                                </span>
+                            <% } %>
+
+                            <!-- Last Page Jump -->
+                            <% if (pagination.currentPage < pagination.totalPages) { %>
+                                <a
+                                    href="/admin/offers?page=<%= pagination.totalPages %>&limit=<%= pagination.pageLimit %>&search=<%= encodeURIComponent(search || '') %>&type=<%= encodeURIComponent(type || 'all') %>&status=<%= encodeURIComponent(status || 'all') %>&sort=<%= encodeURIComponent(sort || 'newest') %>"
+                                    title="Last Page (<%= pagination.totalPages %>)"
+                                    class="w-8 h-8 rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100 flex items-center justify-center text-xs font-semibold transition-colors shadow-2xs"
+                                >
+                                    »
+                                </a>
+                            <% } else { %>
+                                <span class="w-8 h-8 rounded-lg border border-zinc-100 bg-zinc-50 text-zinc-300 flex items-center justify-center text-xs cursor-not-allowed">
+                                    »
+                                </span>
+                            <% } %>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- CREATE / EDIT OFFER MODAL -->
+<!-- ========================================== -->
+<div id="offerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl border border-zinc-200/80 max-w-lg w-full p-8 shadow-2xl space-y-6 animate-scale-up my-8">
+        
+        <div class="flex items-center justify-between border-b border-zinc-100 pb-4">
+            <div>
+                <h3 id="offerModalTitle" class="text-xl font-serif text-zinc-900 font-normal">Create Offer</h3>
+                <p class="text-xs text-zinc-500 font-light mt-0.5">Applied directly to timepieces with automated Best-Offer precedence.</p>
+            </div>
+            <button type="button" onclick="closeOfferModal()" class="text-zinc-400 hover:text-zinc-700 text-lg cursor-pointer">✕</button>
+        </div>
+
+        <form id="offerForm" onsubmit="handleOfferSubmit(event)" class="space-y-4 text-xs" novalidate>
+            <input type="hidden" id="offerId" name="offerId" value="">
+            
+            <!-- General Modal Alert Banner -->
+            <div id="offerModalError" class="p-3 bg-rose-50/90 border border-rose-200 text-rose-800 rounded-xl text-xs font-medium hidden flex items-center justify-between gap-2.5 shadow-2xs">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span id="offerModalErrorText" class="font-mono text-[11px]"></span>
+                </div>
+                <button type="button" onclick="clearOfferModalError()" class="text-rose-500 hover:text-rose-800 cursor-pointer text-xs">✕</button>
+            </div>
+
+            <!-- Title -->
+            <div class="space-y-1">
+                <label class="block font-semibold text-zinc-700 uppercase tracking-wider text-[10px]">
+                    Offer Campaign Title <span class="text-rose-500">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    id="offerName" 
+                    name="name" 
+                    placeholder="e.g. Rolex Chronometer Heritage 15% Offer"
+                    class="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] focus:bg-white outline-none text-zinc-900 transition-colors"
+                >
+                <p id="offerNameError" class="text-rose-600 text-[10px] font-mono mt-1 hidden"></p>
+            </div>
+
+            <!-- Offer Type Selector -->
+            <div class="space-y-1.5">
+                <label class="block font-semibold text-zinc-700 uppercase tracking-wider text-[10px]">Allocation Scope *</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="flex items-center gap-2 p-3 rounded-xl border border-zinc-200 bg-zinc-50/70 hover:bg-zinc-100/50 cursor-pointer transition-colors">
+                        <input type="radio" name="offerType" value="product" checked onchange="toggleScopeInputs('product')">
+                        <span class="font-medium text-zinc-800">Timepiece Only</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-3 rounded-xl border border-zinc-200 bg-zinc-50/70 hover:bg-zinc-100/50 cursor-pointer transition-colors">
+                        <input type="radio" name="offerType" value="brand" onchange="toggleScopeInputs('brand')">
+                        <span class="font-medium text-zinc-800">Maison Brand</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Product Dropdown (Visible when offerType === 'product') -->
+            <div id="productScopeWrapper" class="space-y-1">
+                <label class="block font-semibold text-zinc-700 uppercase tracking-wider text-[10px]">
+                    Target Timepiece <span class="text-rose-500">*</span>
+                </label>
+                <select 
+                    id="offerProductId" 
+                    name="productId" 
+                    class="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] focus:bg-white outline-none text-zinc-900 transition-colors"
+                >
+                    <option value="">-- Choose Timepiece from Vault --</option>
+                    <% if (typeof allProducts !== 'undefined' && allProducts) { %>
+                        <% allProducts.forEach(prod => { %>
+                            <option value="<%= prod._id %>">
+                                <%= prod.name %> (<%= prod.brand ? prod.brand.name : 'DELTA' %>) — Regular: ₹<%= Number(prod.price).toLocaleString('en-IN') %>
+                            </option>
+                        <% }) %>
+                    <% } %>
+                </select>
+                <p id="offerProductIdError" class="text-rose-600 text-[10px] font-mono mt-1 hidden"></p>
+            </div>
+
+            <!-- Brand Dropdown (Visible when offerType === 'brand') -->
+            <div id="brandScopeWrapper" class="space-y-1 hidden">
+                <label class="block font-semibold text-zinc-700 uppercase tracking-wider text-[10px]">
+                    Target Maison Brand <span class="text-rose-500">*</span>
+                </label>
+                <select 
+                    id="offerBrandId" 
+                    name="brandId" 
+                    class="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] focus:bg-white outline-none text-zinc-900 transition-colors"
+                >
+                    <option value="">-- Choose Maison Brand --</option>
+                    <% if (typeof allBrands !== 'undefined' && allBrands) { %>
+                        <% allBrands.forEach(b => { %>
+                            <option 
+                                value="<%= b._id %>"
+                                data-has-offer="<%= b.hasOffer ? 'true' : 'false' %>"
+                                data-existing-offer-id="<%= b.existingOffer ? b.existingOffer.offerId : '' %>"
+                                data-existing-offer-name="<%= b.existingOffer ? b.existingOffer.offerName : '' %>"
+                                data-existing-discount="<%= b.existingOffer ? b.existingOffer.discountPercentage : '' %>"
+                            >
+                                <%= b.name %><%= b.hasOffer ? ' • (Offer already active: ' + b.existingOffer.offerName + ' - ' + b.existingOffer.discountPercentage + '%)' : '' %>
+                            </option>
+                        <% }) %>
+                    <% } %>
+                </select>
+                <p id="offerBrandIdError" class="text-rose-600 text-[10px] font-mono mt-1 hidden"></p>
+                <p class="text-[10px] text-zinc-400">Discount will automatically apply to all timepieces under this Maison.</p>
+            </div>
+
+            <!-- Discount Percentage -->
+            <div class="space-y-1">
+                <label class="block font-semibold text-zinc-700 uppercase tracking-wider text-[10px]">
+                    Discount Percentage (%) <span class="text-rose-500">*</span>
+                </label>
+                <div class="relative">
+                    <input 
+                    type="number" 
+                    id="offerDiscountPercentage" 
+                    name="discountPercentage" 
+                    min="1" 
+                    max="79" 
+                    placeholder="e.g. 15"
+                    class="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] focus:bg-white outline-none text-zinc-900 font-mono text-sm transition-colors"
+                >
+                    <span class="absolute right-4 top-2.5 font-mono text-zinc-400 font-bold">%</span>
+                </div>
+                <p id="offerDiscountPercentageError" class="text-rose-600 text-[10px] font-mono mt-1 hidden"></p>
+            </div>
+
+            <!-- Timeline: Start & End Dates -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                    <label class="block font-semibold text-zinc-700 uppercase tracking-wider text-[10px]">
+                        Start Date <span class="text-rose-500">*</span>
+                    </label>
+                    <input 
+                        type="date" 
+                        id="offerStartDate" 
+                        name="startDate" 
+                        class="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] focus:bg-white outline-none text-zinc-900 font-mono transition-colors"
+                    >
+                    <p id="offerStartDateError" class="text-rose-600 text-[10px] font-mono mt-1 hidden"></p>
+                </div>
+                <div class="space-y-1">
+                    <label class="block font-semibold text-zinc-700 uppercase tracking-wider text-[10px]">
+                        End Date <span class="text-rose-500">*</span>
+                    </label>
+                    <input 
+                        type="date" 
+                        id="offerEndDate" 
+                        name="endDate" 
+                        class="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] focus:bg-white outline-none text-zinc-900 font-mono transition-colors"
+                    >
+                    <p id="offerEndDateError" class="text-rose-600 text-[10px] font-mono mt-1 hidden"></p>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="space-y-1">
+                <label class="block font-semibold text-zinc-700 uppercase tracking-wider text-[10px]">Description (Optional)</label>
+                <textarea 
+                    id="offerDescription" 
+                    name="description" 
+                    rows="2" 
+                    placeholder="Brief private notes or client benefit summary..."
+                    class="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] focus:bg-white outline-none text-zinc-900 transition-colors"
+                ></textarea>
+                <p id="offerDescriptionError" class="text-rose-600 text-[10px] font-mono mt-1 hidden"></p>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-zinc-100">
+                <button 
+                    type="button" 
+                    onclick="closeOfferModal()" 
+                    class="px-5 py-2.5 border border-zinc-200 hover:bg-zinc-100 rounded-xl text-zinc-700 transition-colors cursor-pointer"
+                >
+                    Cancel
+                </button>
+                <button 
+                    type="submit" 
+                    id="offerSubmitBtn" 
+                    class="bg-[#0A4D2E] hover:bg-[#083e25] text-white px-6 py-2.5 rounded-xl font-semibold uppercase tracking-wider text-xs shadow-sm transition-all cursor-pointer"
+                >
+                    Create Offer
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- JAVASCRIPT LOGIC & SWEETALERT INTEGRATION -->
+<!-- ========================================== -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // ====================================================================
+    // REAL-TIME CLIENT-SIDE VALIDATION & UI ERROR MANAGEMENT (DELTA STANDARD)
+    // ====================================================================
+    function setOfferFieldValidationUI(fieldName, errorMsg) {
+        const inputId = 'offer' + fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+        const errId = inputId + 'Error';
+        const input = document.getElementById(inputId);
+        const errElem = document.getElementById(errId);
+
+        if (errorMsg) {
+            if (input) {
+                input.classList.remove('border-zinc-200', 'bg-zinc-50', 'focus:border-[#0A4D2E]');
+                input.classList.add('border-rose-400', 'bg-rose-50/40', 'focus:border-rose-500');
+            }
+            if (errElem) {
+                errElem.textContent = errorMsg;
+                errElem.classList.remove('hidden');
+            }
+            return false;
+        } else {
+            if (input) {
+                input.classList.remove('border-rose-400', 'bg-rose-50/40', 'focus:border-rose-500');
+                input.classList.add('border-zinc-200', 'bg-zinc-50', 'focus:border-[#0A4D2E]');
+            }
+            if (errElem) {
+                errElem.textContent = '';
+                errElem.classList.add('hidden');
+            }
+            return true;
+        }
+    }
+
+    function clearAllOfferValidationUI() {
+        const fields = ['Name', 'ProductId', 'BrandId', 'DiscountPercentage', 'StartDate', 'EndDate', 'Description'];
+        fields.forEach(f => setOfferFieldValidationUI(f, null));
+        clearOfferModalError();
+    }
+
+    function showOfferModalError(msg) {
+        const err = document.getElementById('offerModalError');
+        const errText = document.getElementById('offerModalErrorText');
+        if (errText) errText.textContent = msg;
+        if (err) err.classList.remove('hidden');
+    }
+
+    function clearOfferModalError() {
+        const err = document.getElementById('offerModalError');
+        const errText = document.getElementById('offerModalErrorText');
+        if (errText) errText.textContent = '';
+        if (err) err.classList.add('hidden');
+    }
+
+    function toggleScopeInputs(scope) {
+        const prodWrapper = document.getElementById('productScopeWrapper');
+        const brandWrapper = document.getElementById('brandScopeWrapper');
+
+        if (scope === 'product') {
+            prodWrapper.classList.remove('hidden');
+            brandWrapper.classList.add('hidden');
+            setOfferFieldValidationUI('BrandId', null);
+        } else {
+            prodWrapper.classList.add('hidden');
+            brandWrapper.classList.remove('hidden');
+            setOfferFieldValidationUI('ProductId', null);
+        }
+        clearOfferModalError();
+    }
+
+    function validateOfferField(fieldName) {
+        const currentOfferId = document.getElementById('offerId')?.value || '';
+        const scope = document.querySelector('input[name="offerType"]:checked')?.value || 'product';
+
+        if (fieldName === 'Name') {
+            const input = document.getElementById('offerName');
+            const val = input ? input.value.trim() : '';
+            if (!val) {
+                return setOfferFieldValidationUI('Name', 'Offer campaign title is mandatory.');
+            }
+            if (val.length < 3) {
+                return setOfferFieldValidationUI('Name', 'Offer title must be at least 3 characters.');
+            }
+            if (val.length > 100) {
+                return setOfferFieldValidationUI('Name', 'Offer title cannot exceed 100 characters.');
+            }
+            return setOfferFieldValidationUI('Name', null);
+        }
+
+        if (fieldName === 'ProductId') {
+            if (scope !== 'product') return setOfferFieldValidationUI('ProductId', null);
+            const input = document.getElementById('offerProductId');
+            const val = input ? input.value : '';
+            if (!val) {
+                return setOfferFieldValidationUI('ProductId', 'Please choose a target timepiece from the vault catalog.');
+            }
+            return setOfferFieldValidationUI('ProductId', null);
+        }
+
+        if (fieldName === 'BrandId') {
+            if (scope !== 'brand') return setOfferFieldValidationUI('BrandId', null);
+            const input = document.getElementById('offerBrandId');
+            const val = input ? input.value : '';
+            if (!val) {
+                return setOfferFieldValidationUI('BrandId', 'Please choose a target Maison brand for this brand offer.');
+            }
+
+            const selectedOpt = input.options[input.selectedIndex];
+            const hasOffer = selectedOpt?.getAttribute('data-has-offer') === 'true';
+            const existingOfferId = selectedOpt?.getAttribute('data-existing-offer-id') || '';
+            const existingOfferName = selectedOpt?.getAttribute('data-existing-offer-name') || '';
+            const existingDiscount = selectedOpt?.getAttribute('data-existing-discount') || '';
+
+            if (hasOffer && existingOfferId !== currentOfferId) {
+                return setOfferFieldValidationUI('BrandId', `A brand offer for this Maison already exists ("${existingOfferName}" - ${existingDiscount}% off). Only one offer per brand is allowed.`);
+            }
+            return setOfferFieldValidationUI('BrandId', null);
+        }
+
+        if (fieldName === 'DiscountPercentage') {
+            const input = document.getElementById('offerDiscountPercentage');
+            const raw = input ? input.value.trim() : '';
+            if (raw === '') {
+                return setOfferFieldValidationUI('DiscountPercentage', 'Discount percentage is mandatory.');
+            }
+            const val = Number(raw);
+            if (isNaN(val) || val <= 0) {
+                return setOfferFieldValidationUI('DiscountPercentage', 'Discount must be a positive number greater than 0.');
+            }
+            if (val < 1) {
+                return setOfferFieldValidationUI('DiscountPercentage', 'Discount percentage must be at least 1%.');
+            }
+            if (val >= 80) {
+                return setOfferFieldValidationUI('DiscountPercentage', 'Discount percentage must be less than 80% (cannot be 80% or greater).');
+            }
+            return setOfferFieldValidationUI('DiscountPercentage', null);
+        }
+
+        if (fieldName === 'StartDate') {
+            const input = document.getElementById('offerStartDate');
+            const val = input ? input.value : '';
+            if (!val) {
+                return setOfferFieldValidationUI('StartDate', 'Start date is mandatory.');
+            }
+            return setOfferFieldValidationUI('StartDate', null);
+        }
+
+        if (fieldName === 'EndDate') {
+            const startInput = document.getElementById('offerStartDate');
+            const endInput = document.getElementById('offerEndDate');
+            const startVal = startInput ? startInput.value : '';
+            const endVal = endInput ? endInput.value : '';
+
+            if (!endVal) {
+                return setOfferFieldValidationUI('EndDate', 'Expiration date is mandatory.');
+            }
+            if (startVal && endVal <= startVal) {
+                return setOfferFieldValidationUI('EndDate', 'Expiration date must be later than the promotional start date.');
+            }
+            return setOfferFieldValidationUI('EndDate', null);
+        }
+
+        if (fieldName === 'Description') {
+            const input = document.getElementById('offerDescription');
+            const val = input ? input.value.trim() : '';
+            if (val.length > 500) {
+                return setOfferFieldValidationUI('Description', 'Description cannot exceed 500 characters.');
+            }
+            return setOfferFieldValidationUI('Description', null);
+        }
+
+        return true;
+    }
+
+    function validateOfferForm() {
+        const scope = document.querySelector('input[name="offerType"]:checked')?.value || 'product';
+        const fields = ['Name', scope === 'product' ? 'ProductId' : 'BrandId', 'DiscountPercentage', 'StartDate', 'EndDate', 'Description'];
+        
+        let isValid = true;
+        let firstInvalidInput = null;
+
+        for (const f of fields) {
+            const fieldValid = validateOfferField(f);
+            if (!fieldValid) {
+                isValid = false;
+                const inputId = 'offer' + f.charAt(0).toUpperCase() + f.slice(1);
+                const input = document.getElementById(inputId);
+                if (!firstInvalidInput && input && input.offsetParent !== null) {
+                    firstInvalidInput = input;
+                }
+            }
+        }
+
+        if (!isValid) {
+            showOfferModalError('Please correct the highlighted validation issues before proceeding.');
+            if (firstInvalidInput) {
+                firstInvalidInput.focus();
+            }
+        } else {
+            clearOfferModalError();
+        }
+
+        return isValid;
+    }
+
+    function initOfferFormValidation() {
+        // Text/Numeric inputs: real-time input and blur
+        ['Name', 'DiscountPercentage', 'Description'].forEach(f => {
+            const input = document.getElementById('offer' + f);
+            if (input) {
+                input.addEventListener('input', () => validateOfferField(f));
+                input.addEventListener('blur', () => validateOfferField(f));
+            }
+        });
+
+        // Dropdowns and Date inputs: change and blur
+        ['ProductId', 'BrandId', 'StartDate', 'EndDate'].forEach(f => {
+            const input = document.getElementById('offer' + f);
+            if (input) {
+                input.addEventListener('change', () => {
+                    validateOfferField(f);
+                    if (f === 'StartDate') validateOfferField('EndDate');
+                });
+                input.addEventListener('blur', () => validateOfferField(f));
+            }
+        });
+    }
+
+    // ==========================================
+    // MODAL OPEN / CLOSE HANDLERS
+    // ==========================================
+    function openCreateOfferModal() {
+        clearAllOfferValidationUI();
+        document.getElementById('offerModalTitle').textContent = 'Create Offer';
+        document.getElementById('offerId').value = '';
+        document.getElementById('offerForm').reset();
+        
+        // Set default dates: Today -> +30 Days
+        const today = new Date();
+        const nextMonth = new Date();
+        nextMonth.setDate(today.getDate() + 30);
+        
+        document.getElementById('offerStartDate').value = today.toISOString().split('T')[0];
+        document.getElementById('offerEndDate').value = nextMonth.toISOString().split('T')[0];
+        
+        // Select product scope by default
+        document.querySelector('input[name="offerType"][value="product"]').checked = true;
+        toggleScopeInputs('product');
+
+        const submitBtn = document.getElementById('offerSubmitBtn');
+        if (submitBtn) submitBtn.textContent = 'Create Offer';
+
+        const modal = document.getElementById('offerModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    async function openEditOfferModal(offerId) {
+        clearAllOfferValidationUI();
+        try {
+            const res = await fetch(`/admin/offers/${offerId}`);
+            const data = await res.json();
+            if (!data.success || !data.offer) {
+                Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Could not fetch offer details.' });
+                return;
+            }
+
+            const offer = data.offer;
+            document.getElementById('offerModalTitle').textContent = 'Edit Offer';
+            document.getElementById('offerId').value = offer._id;
+            document.getElementById('offerName').value = offer.name;
+            document.getElementById('offerDiscountPercentage').value = offer.discountPercentage;
+            document.getElementById('offerDescription').value = offer.description || '';
+
+            if (offer.startDate) {
+                document.getElementById('offerStartDate').value = new Date(offer.startDate).toISOString().split('T')[0];
+            }
+            if (offer.endDate) {
+                document.getElementById('offerEndDate').value = new Date(offer.endDate).toISOString().split('T')[0];
+            }
+
+            const typeRadio = document.querySelector(`input[name="offerType"][value="${offer.offerType}"]`);
+            if (typeRadio) typeRadio.checked = true;
+            toggleScopeInputs(offer.offerType);
+
+            if (offer.offerType === 'product' && offer.product) {
+                document.getElementById('offerProductId').value = offer.product._id || offer.product;
+            } else if (offer.offerType === 'brand' && offer.brand) {
+                document.getElementById('offerBrandId').value = offer.brand._id || offer.brand;
+            }
+
+            const submitBtn = document.getElementById('offerSubmitBtn');
+            if (submitBtn) submitBtn.textContent = 'Update Offer';
+
+            const modal = document.getElementById('offerModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network failure while loading offer.' });
+        }
+    }
+
+    function closeOfferModal() {
+        clearAllOfferValidationUI();
+        const modal = document.getElementById('offerModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    // ==========================================
+    // FORM SUBMISSION & BACKEND ERROR MAPPING
+    // ==========================================
+    async function handleOfferSubmit(e) {
+        e.preventDefault();
+        
+        // 1. Run full client-side validation
+        const isValid = validateOfferForm();
+        if (!isValid) {
+            return; // Modal stays open with highlighted errors
+        }
+
+        const submitBtn = document.getElementById('offerSubmitBtn');
+        const offerId = document.getElementById('offerId').value;
+        const isEditing = Boolean(offerId);
+
+        const formData = {
+            name: document.getElementById('offerName').value.trim(),
+            offerType: document.querySelector('input[name="offerType"]:checked').value,
+            discountPercentage: Number(document.getElementById('offerDiscountPercentage').value),
+            startDate: document.getElementById('offerStartDate').value,
+            endDate: document.getElementById('offerEndDate').value,
+            description: document.getElementById('offerDescription').value.trim()
+        };
+
+        if (formData.offerType === 'product') {
+            formData.productId = document.getElementById('offerProductId').value;
+        } else {
+            formData.brandId = document.getElementById('offerBrandId').value;
+        }
+
+        submitBtn.disabled = true;
+        const origBtnText = submitBtn.textContent;
+        submitBtn.textContent = isEditing ? 'Updating Offer...' : 'Creating Offer...';
+
+        try {
+            const url = isEditing ? `/admin/offers/${offerId}/edit` : '/admin/offers';
+            const method = 'POST';
+
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                closeOfferModal();
+                window.location.href = isEditing ? '/admin/offers?success=updated' : '/admin/offers?success=created';
+            } else {
+                // Keep modal open and map server validation message to UI
+                showOfferModalError(data.message || 'Could not save offer.');
+                
+                if (data.errors) {
+                    if (data.errors.name) setOfferFieldValidationUI('Name', data.errors.name);
+                    if (data.errors.productId) setOfferFieldValidationUI('ProductId', data.errors.productId);
+                    if (data.errors.brandId) setOfferFieldValidationUI('BrandId', data.errors.brandId);
+                    if (data.errors.discountPercentage) setOfferFieldValidationUI('DiscountPercentage', data.errors.discountPercentage);
+                    if (data.errors.startDate) setOfferFieldValidationUI('StartDate', data.errors.startDate);
+                    if (data.errors.endDate) setOfferFieldValidationUI('EndDate', data.errors.endDate);
+                    if (data.errors.description) setOfferFieldValidationUI('Description', data.errors.description);
+                }
+                
+                const msg = (data.message || '').toLowerCase();
+                if (msg.includes('brand') || msg.includes('maison')) {
+                    setOfferFieldValidationUI('BrandId', data.message);
+                    document.getElementById('offerBrandId')?.focus();
+                } else if (msg.includes('discount') || msg.includes('percentage')) {
+                    setOfferFieldValidationUI('DiscountPercentage', data.message);
+                    document.getElementById('offerDiscountPercentage')?.focus();
+                } else if (msg.includes('title') || msg.includes('characters') || msg.includes('name')) {
+                    setOfferFieldValidationUI('Name', data.message);
+                    document.getElementById('offerName')?.focus();
+                } else if (msg.includes('start date')) {
+                    setOfferFieldValidationUI('StartDate', data.message);
+                    document.getElementById('offerStartDate')?.focus();
+                } else if (msg.includes('date') || msg.includes('expiration')) {
+                    setOfferFieldValidationUI('EndDate', data.message);
+                    document.getElementById('offerEndDate')?.focus();
+                } else if (msg.includes('timepiece') || msg.includes('product')) {
+                    setOfferFieldValidationUI('ProductId', data.message);
+                    document.getElementById('offerProductId')?.focus();
+                } else if (msg.includes('description')) {
+                    setOfferFieldValidationUI('Description', data.message);
+                    document.getElementById('offerDescription')?.focus();
+                }
+            }
+        } catch (err) {
+            showOfferModalError('A network communication error occurred. Please try again.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = origBtnText;
+        }
+    }
+
+    // ==========================================
+    // STATUS TOGGLE & ARCHIVE ACTIONS
+    // ==========================================
+    async function toggleOffer(offerId, currentStatus) {
+        const actionText = currentStatus ? 'pause' : 'activate';
+        const result = await Swal.fire({
+            title: `Confirm Status Change?`,
+            text: `Do you wish to ${actionText} this offer? Product valuations will be updated immediately.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#0A4D2E',
+            cancelButtonColor: '#71717a',
+            confirmButtonText: `Yes, ${actionText}`
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            const res = await fetch(`/admin/offers/${offerId}/toggle`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.location.href = `/admin/offers?success=${currentStatus ? 'paused' : 'activated'}`;
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to update offer status.' });
+        }
+    }
+
+    async function confirmDeleteOffer(offerId, offerName) {
+        const result = await Swal.fire({
+            title: 'Archive Offer?',
+            text: `Are you sure you want to remove "${offerName}"? Any affected timepiece prices will be recalculated.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e11d48',
+            cancelButtonColor: '#71717a',
+            confirmButtonText: 'Yes, Archive'
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            const res = await fetch(`/admin/offers/${offerId}/delete`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.location.href = '/admin/offers?success=deleted';
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to archive offer.' });
+        }
+    }
+
+    function changeLimit(limit) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('limit', limit);
+        url.searchParams.set('page', '1');
+        window.location.href = url.toString();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initOfferFormValidation();
+        <% if (typeof success !== 'undefined' && success) { %>
+            if (typeof window.showToast === 'function') {
+                window.showToast(<%- JSON.stringify(success) %>, 'success');
+            }
+        <% } %>
+        <% if (typeof error !== 'undefined' && error) { %>
+            if (typeof window.showToast === 'function') {
+                window.showToast(<%- JSON.stringify(error) %>, 'error');
+            }
+        <% } %>
+    });
+</script>
+
+<%- include('../partials/footer') %>

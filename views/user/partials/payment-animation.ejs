@@ -1,0 +1,407 @@
+<!-- ===================================================================== -->
+<!-- DELTA HAUTE HORLOGERIE — LUXURY PAYMENT PROCESSING ANIMATION OVERLAY -->
+<!-- ===================================================================== -->
+<div 
+    id="deltaPaymentAnimationOverlay" 
+    class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/85 backdrop-blur-md p-4 transition-all duration-300"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="deltaPayAnimTitle"
+>
+    <!-- Background Luxury Atmospheric Aura -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-tr from-[#0A4D2E]/25 via-[#c5a059]/15 to-transparent rounded-full blur-3xl animate-pulse"></div>
+    </div>
+
+    <!-- Confetti Canvas (Celebratory Bloom on Success) -->
+    <canvas id="deltaPayAnimCanvas" class="absolute inset-0 pointer-events-none z-10 w-full h-full"></canvas>
+
+    <!-- Modal Card -->
+    <div class="relative z-20 bg-gradient-to-b from-[#0f172a] via-[#090d16] to-[#04070d] border border-[#c5a059]/40 rounded-3xl p-7 sm:p-9 max-w-sm sm:max-w-md w-full shadow-2xl shadow-black/80 text-center space-y-6 overflow-hidden">
+        
+        <!-- Subtle Top Glow Strip -->
+        <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-24 bg-[#c5a059]/20 blur-xl rounded-full pointer-events-none"></div>
+
+        <!-- Security Gateway Pill -->
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-[#c5a059]/30 text-[10px] font-mono tracking-[0.2em] uppercase text-[#c5a059] font-bold">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+            <span id="deltaPayAnimMethodTag">RAZORPAY 256-BIT ENCRYPTION</span>
+        </div>
+
+        <!-- Center Horological Mechanism / Spinner Animation -->
+        <div class="relative w-36 h-36 mx-auto flex items-center justify-center">
+            
+            <!-- Outer Chronometer Bezel (Clockwise) -->
+            <svg class="absolute inset-0 w-36 h-36 animate-[spin_14s_linear_infinite]" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="56" fill="none" stroke="#c5a059" stroke-width="1.5" stroke-dasharray="2 6" opacity="0.6"/>
+                <circle cx="60" cy="60" r="51" fill="none" stroke="#c5a059" stroke-width="0.8" opacity="0.3"/>
+                <!-- 12-Hour Bezel Indices -->
+                <line x1="60" y1="4" x2="60" y2="12" stroke="#c5a059" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="116" y1="60" x2="108" y2="60" stroke="#c5a059" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="60" y1="116" x2="60" y2="108" stroke="#c5a059" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="4" y1="60" x2="12" y2="60" stroke="#c5a059" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="88" y1="12" x2="84" y2="19" stroke="#c5a059" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+                <line x1="108" y1="32" x2="101" y2="36" stroke="#c5a059" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+                <line x1="108" y1="88" x2="101" y2="84" stroke="#c5a059" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+                <line x1="88" y1="108" x2="84" y2="101" stroke="#c5a059" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+                <line x1="32" y1="108" x2="36" y2="101" stroke="#c5a059" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+                <line x1="12" y1="88" x2="19" y2="84" stroke="#c5a059" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+                <line x1="12" y1="32" x2="19" y2="36" stroke="#c5a059" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+                <line x1="32" y1="12" x2="36" y2="19" stroke="#c5a059" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+            </svg>
+
+            <!-- Inner Escapement Gear (Counter-Clockwise) -->
+            <svg class="absolute inset-0 w-36 h-36 animate-[spin_7s_linear_infinite_reverse]" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="44" fill="none" stroke="#0A4D2E" stroke-width="1.5" stroke-dasharray="6 8" opacity="0.7"/>
+                <circle cx="60" cy="60" r="38" fill="none" stroke="#10b981" stroke-width="1" stroke-dasharray="1 4" opacity="0.5"/>
+            </svg>
+
+            <!-- Dynamic SVG Circular Progress Arc -->
+            <svg class="absolute inset-0 w-36 h-36 -rotate-90" viewBox="0 0 120 120">
+                <circle 
+                    id="deltaPayProgressTrack"
+                    cx="60" 
+                    cy="60" 
+                    r="47" 
+                    fill="none" 
+                    stroke="rgba(255, 255, 255, 0.08)" 
+                    stroke-width="3"
+                />
+                <circle 
+                    id="deltaPayProgressBar"
+                    cx="60" 
+                    cy="60" 
+                    r="47" 
+                    fill="none" 
+                    stroke="url(#deltaGoldGrad)" 
+                    stroke-width="3.5"
+                    stroke-linecap="round"
+                    stroke-dasharray="295"
+                    stroke-dashoffset="295"
+                    class="transition-all duration-500 ease-out"
+                />
+                <defs>
+                    <linearGradient id="deltaGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#c5a059" />
+                        <stop offset="50%" stop-color="#f5d485" />
+                        <stop offset="100%" stop-color="#0A4D2E" />
+                    </linearGradient>
+                </defs>
+            </svg>
+
+            <!-- Center Core Medallion -->
+            <div id="deltaPayCenterIconWrap" class="w-20 h-20 rounded-full bg-gradient-to-br from-[#0c1424] via-[#052616] to-[#01140b] border-2 border-[#c5a059] flex items-center justify-center shadow-lg shadow-black/60 relative z-20 transition-all duration-500">
+                
+                <!-- State 1: Processing Lock / Shield Icon -->
+                <div id="deltaPayIconProcessing" class="transition-transform duration-300">
+                    <svg class="w-8 h-8 text-[#c5a059] animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                </div>
+
+                <!-- State 2: Verified Green & Gold Checkmark -->
+                <div id="deltaPayIconSuccess" class="hidden transform scale-0 transition-all duration-500">
+                    <svg class="w-10 h-10 text-emerald-400 drop-shadow-[0_0_12px_rgba(16,185,129,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+
+                <!-- State 3: Decline / Error Cross -->
+                <div id="deltaPayIconError" class="hidden transform scale-0 transition-all duration-300">
+                    <svg class="w-9 h-9 text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.6)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Text Statement Area -->
+        <div class="space-y-2">
+            <h3 id="deltaPayAnimTitle" class="text-xl sm:text-2xl font-serif font-normal text-white tracking-wide">
+                Authorizing Settlement
+            </h3>
+            <p id="deltaPayAnimSubtitle" class="text-xs text-zinc-400 font-light leading-relaxed min-h-[36px] transition-opacity duration-200">
+                Establishing 256-bit encrypted handshake with banking network...
+            </p>
+        </div>
+
+        <!-- Valuation Due Pill -->
+        <div class="inline-flex items-center justify-between gap-3 px-4 py-2 bg-white/5 rounded-2xl border border-white/10 text-xs font-mono w-full">
+            <span class="text-zinc-400 uppercase text-[10px] tracking-wider">Settlement Valuation:</span>
+            <span id="deltaPayAnimAmount" class="font-bold text-[#c5a059] text-sm">₹0</span>
+        </div>
+
+        <!-- Linear Progress Bar -->
+        <div class="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+            <div id="deltaPayLinearBar" class="bg-gradient-to-r from-[#0A4D2E] via-[#c5a059] to-emerald-400 h-full w-1/4 rounded-full transition-all duration-300"></div>
+        </div>
+
+        <!-- Trust Subtext -->
+        <div class="flex items-center justify-center gap-2 text-[10px] text-zinc-500 font-mono tracking-wider">
+            <span>🛡</span>
+            <span>VERIFIED BY DELTA VAULT ESCROW PROTOCOL</span>
+        </div>
+
+    </div>
+</div>
+
+<script>
+/**
+ * DELTA Luxury Horology Payment Animation Controller
+ * High-precision animation engine supporting live & simulated Razorpay, Wallet & Retry flows.
+ */
+window.DeltaPaymentAnimation = (function() {
+    let overlayEl = null;
+    let titleEl = null;
+    let subtitleEl = null;
+    let amountEl = null;
+    let methodTagEl = null;
+    let circularBarEl = null;
+    let linearBarEl = null;
+    let iconWrapEl = null;
+    let iconProcEl = null;
+    let iconSuccEl = null;
+    let iconErrEl = null;
+    let canvasEl = null;
+    let stepInterval = null;
+    let particles = [];
+    let animFrameId = null;
+
+    function initDOMElements() {
+        if (overlayEl) return;
+        overlayEl = document.getElementById('deltaPaymentAnimationOverlay');
+        titleEl = document.getElementById('deltaPayAnimTitle');
+        subtitleEl = document.getElementById('deltaPayAnimSubtitle');
+        amountEl = document.getElementById('deltaPayAnimAmount');
+        methodTagEl = document.getElementById('deltaPayAnimMethodTag');
+        circularBarEl = document.getElementById('deltaPayProgressBar');
+        linearBarEl = document.getElementById('deltaPayLinearBar');
+        iconWrapEl = document.getElementById('deltaPayCenterIconWrap');
+        iconProcEl = document.getElementById('deltaPayIconProcessing');
+        iconSuccEl = document.getElementById('deltaPayIconSuccess');
+        iconErrEl = document.getElementById('deltaPayIconError');
+        canvasEl = document.getElementById('deltaPayAnimCanvas');
+    }
+
+    const PROGRESS_CIRCUMFERENCE = 295; // 2 * PI * 47 ≈ 295.3
+
+    function setProgress(percent) {
+        initDOMElements();
+        const p = Math.min(100, Math.max(0, percent));
+        if (circularBarEl) {
+            const offset = PROGRESS_CIRCUMFERENCE - (p / 100) * PROGRESS_CIRCUMFERENCE;
+            circularBarEl.style.strokeDashoffset = offset;
+        }
+        if (linearBarEl) {
+            linearBarEl.style.width = p + '%';
+        }
+    }
+
+    // Step sequence messages for rich visual progression
+    const STEPS = [
+        "Establishing 256-bit encrypted handshake with banking network...",
+        "Authenticating transaction with issuer 3D Secure / UPI protocol...",
+        "Validating cryptographic HMAC-SHA256 signature payload...",
+        "Securing timepiece allocation in DELTA Private Vault escrow...",
+        "Registering verified ownership dossier to collector archive..."
+    ];
+
+    function start({ title, subtitle, amount, method }) {
+        initDOMElements();
+        if (!overlayEl) return;
+
+        clearInterval(stepInterval);
+        cancelAnimationFrame(animFrameId);
+        particles = [];
+
+        // Reset visual state
+        if (titleEl) titleEl.textContent = title || "Authorizing Settlement";
+        if (subtitleEl) subtitleEl.textContent = subtitle || STEPS[0];
+        if (amountEl) {
+            const num = Number(amount || 0);
+            amountEl.textContent = num > 0 ? ('₹' + num.toLocaleString('en-IN')) : 'Pending Valuation';
+        }
+        if (methodTagEl) methodTagEl.textContent = (method || 'RAZORPAY SECURE GATEWAY').toUpperCase();
+
+        if (iconWrapEl) {
+            iconWrapEl.className = "w-20 h-20 rounded-full bg-gradient-to-br from-[#0c1424] via-[#052616] to-[#01140b] border-2 border-[#c5a059] flex items-center justify-center shadow-lg shadow-black/60 relative z-20 transition-all duration-500";
+        }
+        if (iconProcEl) { iconProcEl.classList.remove('hidden'); iconProcEl.style.transform = 'scale(1)'; }
+        if (iconSuccEl) { iconSuccEl.classList.add('hidden'); iconSuccEl.style.transform = 'scale(0)'; }
+        if (iconErrEl) { iconErrEl.classList.add('hidden'); iconErrEl.style.transform = 'scale(0)'; }
+
+        setProgress(15);
+
+        // Show overlay
+        overlayEl.classList.remove('hidden');
+        overlayEl.classList.add('flex');
+
+        // Progressive step ticker
+        let stepIdx = 0;
+        let currentPct = 20;
+
+        stepInterval = setInterval(() => {
+            stepIdx++;
+            currentPct = Math.min(88, currentPct + 18);
+            setProgress(currentPct);
+
+            if (subtitleEl && STEPS[stepIdx]) {
+                subtitleEl.style.opacity = '0';
+                setTimeout(() => {
+                    if (subtitleEl && STEPS[stepIdx]) {
+                        subtitleEl.textContent = STEPS[stepIdx];
+                        subtitleEl.style.opacity = '1';
+                    }
+                }, 180);
+            }
+        }, 750);
+    }
+
+    function launchConfettiBloom() {
+        if (!canvasEl) return;
+        const ctx = canvasEl.getContext('2d');
+        if (!ctx) return;
+
+        canvasEl.width = window.innerWidth;
+        canvasEl.height = window.innerHeight;
+
+        const colors = ['#c5a059', '#e8c97e', '#f5d896', '#0A4D2E', '#10b981', '#34d399', '#ffffff'];
+        particles = [];
+
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+
+        for (let i = 0; i < 75; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const velocity = 3 + Math.random() * 8;
+            particles.push({
+                x: centerX,
+                y: centerY,
+                vx: Math.cos(angle) * velocity,
+                vy: Math.sin(angle) * velocity - 2,
+                size: 3 + Math.random() * 5,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                alpha: 1,
+                decay: 0.012 + Math.random() * 0.015,
+                rotation: Math.random() * 360,
+                spin: (Math.random() - 0.5) * 8
+            });
+        }
+
+        function renderConfetti() {
+            ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+            let activeCount = 0;
+
+            particles.forEach(p => {
+                if (p.alpha > 0) {
+                    activeCount++;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.18; // gravity
+                    p.alpha = Math.max(0, p.alpha - p.decay);
+                    p.rotation += p.spin;
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rotation * Math.PI) / 180);
+                    ctx.globalAlpha = p.alpha;
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 1.4);
+                    ctx.restore();
+                }
+            });
+
+            if (activeCount > 0) {
+                animFrameId = requestAnimationFrame(renderConfetti);
+            } else {
+                ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+            }
+        }
+
+        renderConfetti();
+    }
+
+    function success({ title, subtitle, redirectUrl, delayMs = 1200 }) {
+        initDOMElements();
+        clearInterval(stepInterval);
+        setProgress(100);
+
+        if (titleEl) titleEl.textContent = title || "Payment Successfully Settled";
+        if (subtitleEl) subtitleEl.textContent = subtitle || "✓ Provenance confirmed. Finalizing allocation receipt...";
+
+        // Transition to success checkmark
+        if (iconProcEl) {
+            iconProcEl.style.transform = 'scale(0)';
+            setTimeout(() => iconProcEl.classList.add('hidden'), 200);
+        }
+
+        setTimeout(() => {
+            if (iconSuccEl) {
+                iconSuccEl.classList.remove('hidden');
+                setTimeout(() => { iconSuccEl.style.transform = 'scale(1.1)'; }, 20);
+                setTimeout(() => { iconSuccEl.style.transform = 'scale(1)'; }, 250);
+            }
+            if (iconWrapEl) {
+                iconWrapEl.className = "w-20 h-20 rounded-full bg-gradient-to-br from-[#052616] via-[#0A4D2E] to-[#04331d] border-2 border-emerald-400 flex items-center justify-center shadow-xl shadow-emerald-500/30 relative z-20 transition-all duration-500 ring-4 ring-emerald-500/20";
+            }
+            launchConfettiBloom();
+        }, 180);
+
+        // Haptic feedback if supported
+        if (navigator.vibrate) {
+            navigator.vibrate([40, 60, 80]);
+        }
+
+        // Redirect after brief celebration
+        if (redirectUrl) {
+            setTimeout(() => {
+                window.location.href = redirectUrl;
+            }, delayMs);
+        }
+    }
+
+    function fail({ title, subtitle, onComplete }) {
+        initDOMElements();
+        clearInterval(stepInterval);
+
+        if (titleEl) titleEl.textContent = title || "Payment Authorization Incomplete";
+        if (subtitleEl) subtitleEl.textContent = subtitle || "Transaction declined by cardholder bank / 3DS timeout.";
+
+        if (iconProcEl) iconProcEl.classList.add('hidden');
+        if (iconSuccEl) iconSuccEl.classList.add('hidden');
+        if (iconErrEl) {
+            iconErrEl.classList.remove('hidden');
+            setTimeout(() => { iconErrEl.style.transform = 'scale(1)'; }, 20);
+        }
+
+        if (iconWrapEl) {
+            iconWrapEl.className = "w-20 h-20 rounded-full bg-gradient-to-br from-[#240c14] via-[#330412] to-[#140106] border-2 border-rose-500 flex items-center justify-center shadow-xl shadow-rose-500/30 relative z-20 transition-all duration-500 ring-4 ring-rose-500/20 animate-bounce";
+        }
+
+        setTimeout(() => {
+            hide();
+            if (typeof onComplete === 'function') onComplete();
+        }, 1100);
+    }
+
+    function hide() {
+        initDOMElements();
+        clearInterval(stepInterval);
+        cancelAnimationFrame(animFrameId);
+        if (overlayEl) {
+            overlayEl.classList.add('hidden');
+            overlayEl.classList.remove('flex');
+        }
+    }
+
+    return {
+        start,
+        success,
+        fail,
+        hide,
+        setProgress
+    };
+})();
+</script>

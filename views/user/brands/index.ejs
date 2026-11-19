@@ -1,0 +1,182 @@
+<%- include('../partials/header', { title: 'Swiss Maisons & Complete Collection — DELTA' }) %>
+<%- include('../partials/navbar') %>
+
+<div class="bg-[#faf8f7] min-h-screen text-[#1b1c1c] pb-24">
+    
+    <!-- Title Section (Matching Reference Screenshot: SWISS MANUFACTURE / Complete Collection) -->
+    <div class="pt-16 pb-12 text-center space-y-2 max-w-2xl mx-auto px-6">
+        <span class="text-[10px] uppercase tracking-[0.35em] text-[#c5a059] font-mono font-bold block">
+            SWISS MANUFACTURE
+        </span>
+        <h1 class="text-4xl sm:text-5xl font-serif font-normal tracking-tight text-zinc-900">
+            Complete Collection
+        </h1>
+    </div>
+
+    <!-- Brands & Timepieces Dynamic Showcase -->
+    <main class="max-w-7xl mx-auto px-6 space-y-24">
+        
+        <% 
+            const totalProductsCount = (typeof brandCollections !== 'undefined') 
+                ? brandCollections.reduce((acc, b) => acc + (b.products ? b.products.length : 0), 0)
+                : 0;
+        %>
+
+        <% if (totalProductsCount > 0) { %>
+            <% brandCollections.forEach((b, idx) => { %>
+                <% if (b.products && b.products.length > 0) { %>
+                    <section class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start border-b border-zinc-200/80 pb-20">
+                        
+                        <!-- Left Brand Info Column (4 Cols) -->
+                        <div class="lg:col-span-4 space-y-4 pt-4">
+                            <h2 class="text-3xl sm:text-4xl font-serif text-zinc-900 font-normal"><%= b.name %></h2>
+                            <p class="text-xs text-zinc-600 font-light leading-relaxed max-w-sm">
+                                <%= b.description || ('Founded in ' + (b.foundedYear || '1875') + ' in ' + (b.origin || 'Switzerland') + '. Renowned for chronometric precision and Haute Horlogerie excellence.') %>
+                            </p>
+                            <a href="/shop?brand=<%= b.slug %>" class="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.2em] font-semibold text-[#c5a059] hover:underline underline-offset-4 pt-2 group">
+                                <span>Explore Maison</span>
+                                <span class="transition-transform group-hover:translate-x-1">→</span>
+                            </a>
+                        </div>
+
+                        <!-- Right Products 2x2 Grid (8 Cols) -->
+                        <div class="lg:col-span-8">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                                <% b.products.forEach(p => { %>
+                                    <div class="space-y-2.5 group relative">
+                                        <!-- Watch Studio Frame -->
+                                        <div class="relative group/frame block aspect-square rounded-2xl bg-[#f2eeeb] overflow-hidden p-4 group-hover:scale-[1.02] transition-transform flex items-center justify-center shadow-2xs">
+                                            <a href="/product/<%= p.slug %>" class="w-full h-full flex items-center justify-center">
+                                                <% if (p.images && p.images.length > 0) { %>
+                                                    <img src="<%= p.images[0] %>" alt="<%= p.name %>" class="w-full h-full object-cover">
+                                                <% } else { %>
+                                                    <div class="w-full h-full flex items-center justify-center text-zinc-300 text-3xl">⏱</div>
+                                                <% } %>
+                                            </a>
+
+                                            <!-- Wishlist Floating Heart Button -->
+                                            <button 
+                                                type="button" 
+                                                onclick="toggleWishlist('<%= p._id %>', this)" 
+                                                data-wishlist-id="<%= p._id %>"
+                                                class="wishlist-btn absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm text-zinc-400 hover:text-rose-600 flex items-center justify-center transition-all shadow-xs z-10 cursor-pointer"
+                                                title="Save to Private Collection"
+                                            >
+                                                <svg class="w-4 h-4 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+
+                                        <!-- Meta info -->
+                                        <div class="space-y-0.5">
+                                            <p class="text-[9px] uppercase tracking-wider font-mono text-zinc-400 font-semibold"><%= b.name %></p>
+                                            <a href="/product/<%= p.slug %>" class="block font-serif text-sm text-zinc-900 hover:text-[#0A4D2E] transition-colors leading-snug"><%= p.name %></a>
+                                            <% if (p.discountPrice && p.discountPrice < p.price) { %>
+                                                <div class="flex items-baseline gap-2 pt-0.5">
+                                                    <span class="text-xs font-mono font-bold text-[#0A4D2E]">
+                                                        ₹<%= Number(p.discountPrice).toLocaleString('en-IN') %>
+                                                    </span>
+                                                    <span class="text-[10px] font-mono text-zinc-400 line-through">
+                                                        ₹<%= Number(p.price).toLocaleString('en-IN') %>
+                                                    </span>
+                                                </div>
+                                            <% } else { %>
+                                                <p class="text-xs font-mono font-semibold text-[#0A4D2E] pt-0.5">
+                                                    ₹<%= Number(p.price).toLocaleString('en-IN') %>
+                                                </p>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            </div>
+                        </div>
+
+                    </section>
+                <% } %>
+            <% }) %>
+        <% } else { %>
+            <div class="py-24 text-center space-y-4 max-w-md mx-auto">
+                <div class="w-16 h-16 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto text-2xl">
+                    ⏱
+                </div>
+                <h3 class="text-2xl font-serif text-zinc-900">No Timepieces in Catalog</h3>
+                <p class="text-xs text-zinc-500 font-light leading-relaxed">
+                    Timepieces and brands created in the Admin Panel will dynamically display here under their respective Swiss Maisons.
+                </p>
+            </div>
+        <% } %>
+
+    </main>
+
+</div>
+
+<%- include('../partials/footer') %>
+
+<script>
+    let userBrandWishlistIds = new Set();
+
+    function applyHeartHighlights() {
+        document.querySelectorAll('.wishlist-btn').forEach(btn => {
+            const id = btn.getAttribute('data-wishlist-id');
+            const svg = btn.querySelector('svg');
+            if (id && userBrandWishlistIds.has(id)) {
+                btn.classList.add('text-rose-600', 'bg-rose-50', 'ring-1', 'ring-rose-200');
+                btn.classList.remove('text-zinc-400');
+                if (svg) svg.setAttribute('fill', 'currentColor');
+            } else {
+                btn.classList.remove('text-rose-600', 'bg-rose-50', 'ring-1', 'ring-rose-200');
+                btn.classList.add('text-zinc-400');
+                if (svg) svg.setAttribute('fill', 'none');
+            }
+        });
+    }
+
+    async function syncWishlistHearts() {
+        try {
+            const res = await fetch('/api/wishlist/ids');
+            const data = await res.json();
+            if (data && data.ids) {
+                userBrandWishlistIds = new Set(data.ids);
+                applyHeartHighlights();
+            }
+        } catch (e) {}
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        syncWishlistHearts();
+    });
+
+    async function toggleWishlist(productId, btn) {
+        try {
+            const res = await fetch('/wishlist/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ productId })
+            });
+            const data = await res.json();
+            if (res.status === 401 && data.redirect) {
+                window.location.href = data.redirect;
+                return;
+            }
+            if (data.success) {
+                if (data.added) {
+                    userBrandWishlistIds.add(productId);
+                    if (window.showToast) window.showToast(data.message || 'Timepiece saved to your private collection.', 'success');
+                } else {
+                    userBrandWishlistIds.delete(productId);
+                    if (window.showToast) window.showToast(data.message || 'Timepiece removed from collection.', 'info');
+                }
+                applyHeartHighlights();
+
+                if (window.updateNavbarCounters && data.count !== undefined) {
+                    window.updateNavbarCounters(undefined, data.count);
+                }
+            } else {
+                if (window.showToast) window.showToast(data.message || 'Unable to update collection.', 'error');
+            }
+        } catch (e) {
+            if (window.showToast) window.showToast('Connection error.', 'error');
+        }
+    }
+</script>

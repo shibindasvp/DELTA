@@ -1,0 +1,853 @@
+<%- include('../partials/header', { title: 'DELTA Vault Ledger & Reserve — Portfolio' }) %>
+<%- include('../partials/navbar', { activeNav: 'profile' }) %>
+
+<div class="bg-[#faf8f7] min-h-screen text-[#1b1c1c] py-12">
+    <div class="max-w-7xl mx-auto px-6 space-y-10">
+
+        <!-- Top Breadcrumbs & Page Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200/80 pb-6">
+            <div>
+                <div class="flex items-center gap-2 text-xs font-mono text-zinc-400 mb-2">
+                    <a href="/" class="hover:text-black transition-colors">Home</a>
+                    <span>/</span>
+                    <a href="/profile" class="hover:text-black transition-colors">Portfolio</a>
+                    <span>/</span>
+                    <span class="text-zinc-900 font-semibold">Vault Wallet</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-3xl sm:text-4xl font-serif text-zinc-900 font-normal">
+                        DELTA Vault Reserve & Wallet
+                    </h1>
+                    <span class="text-[10px] font-mono tracking-widest uppercase px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 font-bold border border-emerald-800">
+                        Active Ledger
+                    </span>
+                </div>
+                <p class="text-xs text-zinc-500 font-light mt-1">
+                    Instant Swiss horology liquidity reserve, order cancellation refunds, and verified ledger transactions.
+                </p>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button 
+                    type="button" 
+                    onclick="openAddMoneyModal()" 
+                    class="px-4 py-2.5 bg-[#c5a059] hover:bg-[#d4ad64] text-zinc-950 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer flex items-center gap-1.5 active:scale-95"
+                >
+                    <span class="text-sm leading-none font-bold">+</span> Add Money
+                </button>
+                <a 
+                    href="/profile" 
+                    class="px-4 py-2.5 border border-zinc-300 text-zinc-700 hover:text-black hover:border-black rounded-xl text-xs font-medium uppercase tracking-wider transition-colors bg-white shadow-2xs"
+                >
+                    Collector Profile
+                </a>
+                <a 
+                    href="/shop" 
+                    class="px-5 py-2.5 bg-[#0A4D2E] hover:bg-[#073822] text-white rounded-xl text-xs font-medium uppercase tracking-wider transition-colors shadow-xs"
+                >
+                    Explore Vault Catalog
+                </a>
+            </div>
+        </div>
+
+        <!-- 3-Card Summary Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Card 1: Available Vault Reserve (Balance) -->
+            <div class="bg-[#1c1c1c] text-white rounded-3xl p-8 flex flex-col justify-between relative overflow-hidden shadow-lg border border-zinc-800">
+                <div class="absolute -right-6 -bottom-6 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="space-y-3 relative z-10">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-mono uppercase tracking-[0.25em] text-[#c5a059] font-bold">
+                            Available Vault Reserve
+                        </span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    </div>
+                    <div class="text-4xl sm:text-5xl font-serif font-light text-white tracking-tight">
+                        ₹<%= Number(stats.balance || 0).toLocaleString('en-IN') %>
+                    </div>
+                    <p class="text-xs text-zinc-400 font-light">
+                        Liquid reserve available for immediate, one-click timepiece checkout without external payment delays.
+                    </p>
+                    <div class="pt-2">
+                        <button 
+                            type="button" 
+                            onclick="openAddMoneyModal()" 
+                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#c5a059] hover:bg-[#d4ad64] text-zinc-950 font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer hover:shadow-lg active:scale-95"
+                        >
+                            <svg class="w-4 h-4 text-zinc-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Add Money to Wallet
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-6 border-t border-zinc-800 mt-6 flex items-center justify-between text-xs text-zinc-400">
+                    <span class="font-mono text-[11px]">Currency: INR (₹)</span>
+                    <span class="text-emerald-400 font-medium text-[11px] flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                        Insured & Verified
+                    </span>
+                </div>
+            </div>
+
+            <!-- Card 2: Cumulative Refunded Credits -->
+            <div class="bg-white border border-zinc-200/90 rounded-3xl p-8 flex flex-col justify-between shadow-sm">
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-mono uppercase tracking-[0.25em] text-zinc-500 font-bold">
+                            Total Refunds Received
+                        </span>
+                        <span class="p-2 bg-emerald-50 text-emerald-700 rounded-xl text-xs">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="text-3xl sm:text-4xl font-serif font-light text-zinc-900 tracking-tight">
+                        ₹<%= Number(stats.totalCredits || 0).toLocaleString('en-IN') %>
+                    </div>
+                    <p class="text-xs text-zinc-500 font-light">
+                        Automatically credited from order cancellations and authorized timepiece returns with zero processing fee.
+                    </p>
+                </div>
+
+                <div class="pt-6 border-t border-zinc-100 mt-6 flex items-center justify-between text-xs text-zinc-500 font-mono text-[11px]">
+                    <span>Settlement Mode</span>
+                    <span class="text-zinc-800 font-semibold">Immediate Credit</span>
+                </div>
+            </div>
+
+            <!-- Card 3: Total Spent via Vault -->
+            <div class="bg-white border border-zinc-200/90 rounded-3xl p-8 flex flex-col justify-between shadow-sm">
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-mono uppercase tracking-[0.25em] text-zinc-500 font-bold">
+                            Total Vault Purchases
+                        </span>
+                        <span class="p-2 bg-zinc-100 text-zinc-700 rounded-xl text-xs">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="text-3xl sm:text-4xl font-serif font-light text-zinc-900 tracking-tight">
+                        ₹<%= Number(stats.totalDebits || 0).toLocaleString('en-IN') %>
+                    </div>
+                    <p class="text-xs text-zinc-500 font-light">
+                        Timepiece acquisitions settled using your Vault reserve at checkout.
+                    </p>
+                </div>
+
+                <div class="pt-6 border-t border-zinc-100 mt-6 flex items-center justify-between text-xs text-zinc-500 font-mono text-[11px]">
+                    <span>Total Audit Ledger Entries</span>
+                    <span class="text-zinc-800 font-semibold"><%= stats.totalTxCount || 0 %> Records</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Ledger History Section -->
+        <div class="bg-white rounded-3xl border border-zinc-200/90 p-8 space-y-6 shadow-sm">
+            
+            <!-- Section Header & Filter Tabs -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 pb-5">
+                <div>
+                    <h2 class="text-xl font-serif text-zinc-900 font-normal">
+                        Vault Audit Ledger & Transactions
+                    </h2>
+                    <p class="text-xs text-zinc-500 font-light mt-0.5">
+                        Real-time transparent financial record of all credits, debits, and refund allocations.
+                    </p>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex items-center gap-1.5 p-1 bg-zinc-100 rounded-xl text-xs font-mono self-start sm:self-auto">
+                    <a 
+                        href="/wallet" 
+                        class="px-3.5 py-1.5 rounded-lg transition-colors <%= (!selectedType) ? 'bg-white text-zinc-900 font-bold shadow-2xs' : 'text-zinc-600 hover:text-black' %>"
+                    >
+                        All Entries
+                    </a>
+                    <a 
+                        href="/wallet?type=Credit" 
+                        class="px-3.5 py-1.5 rounded-lg transition-colors <%= (selectedType === 'Credit') ? 'bg-white text-emerald-800 font-bold shadow-2xs' : 'text-zinc-600 hover:text-black' %>"
+                    >
+                        Credits & Refunds
+                    </a>
+                    <a 
+                        href="/wallet?type=Debit" 
+                        class="px-3.5 py-1.5 rounded-lg transition-colors <%= (selectedType === 'Debit') ? 'bg-white text-zinc-900 font-bold shadow-2xs' : 'text-zinc-600 hover:text-black' %>"
+                    >
+                        Vault Payments
+                    </a>
+                </div>
+            </div>
+
+            <!-- Ledger Table -->
+            <% if (transactions && transactions.length > 0) { %>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-zinc-100 text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                                <th class="py-3 px-4">Transaction ID & Date</th>
+                                <th class="py-3 px-4">Purpose & Reference</th>
+                                <th class="py-3 px-4">Type</th>
+                                <th class="py-3 px-4 text-right">Amount</th>
+                                <th class="py-3 px-4 text-right">Balance After</th>
+                                <th class="py-3 px-4 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-100 text-xs">
+                            <% transactions.forEach(tx => { %>
+                                <tr class="hover:bg-zinc-50/70 transition-colors">
+                                    <!-- ID & Date -->
+                                    <td class="py-4 px-4 font-mono">
+                                        <div class="font-bold text-zinc-900 tracking-tight">
+                                            <%= tx.transactionId %>
+                                        </div>
+                                        <div class="text-[11px] text-zinc-600 font-light mt-0.5">
+                                            <%= new Date(tx.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                                        </div>
+                                    </td>
+
+                                    <!-- Purpose & Description -->
+                                    <td class="py-4 px-4">
+                                        <div class="font-medium text-zinc-900">
+                                            <%= tx.purpose || 'Transaction' %>
+                                        </div>
+                                        <div class="text-[11px] text-zinc-600 font-light mt-0.5">
+                                            <%= tx.description || 'DELTA Vault Entry' %>
+                                            <% if (tx.orderNumber) { %>
+                                                — <a href="/orders/<%= tx.order || '' %>" class="text-[#0A4D2E] hover:underline font-mono font-medium"><%= tx.orderNumber %></a>
+                                            <% } %>
+                                        </div>
+                                    </td>
+
+                                    <!-- Type -->
+                                    <td class="py-4 px-4 font-mono">
+                                        <% if (tx.type === 'Credit') { %>
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                                <span>+</span> Credit
+                                            </span>
+                                        <% } else { %>
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-zinc-100 text-zinc-800 border border-zinc-200">
+                                                <span>-</span> Debit
+                                            </span>
+                                        <% } %>
+                                    </td>
+
+                                    <!-- Amount -->
+                                    <td class="py-4 px-4 text-right font-mono font-bold <%= tx.type === 'Credit' ? 'text-[#0A4D2E]' : 'text-zinc-900' %>">
+                                        <%= tx.type === 'Credit' ? '+' : '-' %>₹<%= Number(tx.amount || 0).toLocaleString('en-IN') %>
+                                    </td>
+
+                                    <!-- Balance After -->
+                                    <td class="py-4 px-4 text-right font-mono text-zinc-600">
+                                        ₹<%= Number(tx.balanceAfter || 0).toLocaleString('en-IN') %>
+                                    </td>
+
+                                    <!-- Status -->
+                                    <td class="py-4 px-4 text-center">
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-50 text-emerald-800">
+                                            ✓ Settled
+                                        </span>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <% if (pagination && pagination.totalPages > 1) { %>
+                    <div class="pt-6 border-t border-zinc-100 flex items-center justify-between text-xs font-mono">
+                        <div class="text-zinc-500">
+                            Showing <%= ((pagination.currentPage - 1) * pagination.pageLimit) + 1 %>–<%= Math.min(pagination.currentPage * pagination.pageLimit, pagination.totalCount) %> of <%= pagination.totalCount %> transactions
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <% if (pagination.hasPrevPage) { %>
+                                <a 
+                                    href="/wallet?page=<%= pagination.prevPage %><%= selectedType ? '&type=' + selectedType : '' %>"
+                                    class="px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:border-black hover:text-black transition-colors"
+                                >
+                                    ← Prev
+                                </a>
+                            <% } %>
+
+                            <span class="px-3 py-1.5 rounded-lg bg-zinc-100 font-bold text-zinc-900">
+                                Page <%= pagination.currentPage %> of <%= pagination.totalPages %>
+                            </span>
+
+                            <% if (pagination.hasNextPage) { %>
+                                <a 
+                                    href="/wallet?page=<%= pagination.nextPage %><%= selectedType ? '&type=' + selectedType : '' %>"
+                                    class="px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:border-black hover:text-black transition-colors"
+                                >
+                                    Next →
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+                <% } %>
+
+            <% } else { %>
+                <!-- Empty State -->
+                <div class="py-16 px-4 text-center space-y-4">
+                    <div class="w-16 h-16 rounded-full bg-zinc-100 text-zinc-400 mx-auto flex items-center justify-center">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="space-y-1">
+                        <h3 class="font-serif text-lg text-zinc-900">
+                            No Vault Transactions Recorded
+                        </h3>
+                        <p class="text-xs text-zinc-500 font-light max-w-md mx-auto">
+                            <% if (selectedType) { %>
+                                No <%= selectedType.toLowerCase() %> entries found in your audit log.
+                            <% } else { %>
+                                When you deposit funds, cancel an order, or return an authenticated timepiece, your balance will be updated immediately in this Vault reserve.
+                            <% } %>
+                        </p>
+                    </div>
+
+                    <% if (!selectedType) { %>
+                        <div class="pt-2">
+                            <button 
+                                type="button" 
+                                onclick="openAddMoneyModal()" 
+                                class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0A4D2E] hover:bg-[#073822] text-white font-mono text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-xs cursor-pointer"
+                            >
+                                <span class="text-sm font-bold">+</span> Add Money to Start Vault Reserve
+                            </button>
+                        </div>
+                    <% } %>
+
+                    <% if (selectedType) { %>
+                        <div>
+                            <a href="/wallet" class="inline-block text-xs font-mono text-[#0A4D2E] hover:underline">
+                                View all transactions →
+                            </a>
+                        </div>
+                    <% } %>
+                </div>
+            <% } %>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- ADD MONEY TO VAULT WALLET MODAL -->
+<!-- ========================================================= -->
+<div 
+    id="addMoneyModal" 
+    class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="addMoneyModalTitle"
+>
+    <div class="relative bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-zinc-100 overflow-hidden">
+        
+        <!-- Subtle Top Luxury Accent -->
+        <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-48 h-20 bg-[#c5a059]/15 blur-xl rounded-full pointer-events-none"></div>
+
+        <!-- Modal Header -->
+        <div class="flex items-start justify-between gap-4 relative z-10">
+            <div class="space-y-1">
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-mono font-bold uppercase tracking-wider">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Instant Vault Top-up
+                </div>
+                <h3 id="addMoneyModalTitle" class="text-xl sm:text-2xl font-serif text-zinc-900 font-normal">
+                    Deposit Funds to Wallet
+                </h3>
+                <p class="text-xs text-zinc-500 font-light">
+                    Add liquid reserve to your DELTA Vault for instant timepiece purchases.
+                </p>
+            </div>
+            <button 
+                type="button" 
+                onclick="closeAddMoneyModal()" 
+                class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-500 hover:text-black flex items-center justify-center text-sm font-bold transition-colors cursor-pointer flex-shrink-0"
+                aria-label="Close dialog"
+            >
+                ✕
+            </button>
+        </div>
+
+        <!-- Current Balance Summary -->
+        <div class="p-4 rounded-2xl bg-[#1c1c1c] text-white flex items-center justify-between relative z-10">
+            <div class="space-y-0.5">
+                <div class="text-[10px] font-mono uppercase tracking-wider text-[#c5a059] font-bold">
+                    Current Balance
+                </div>
+                <div class="text-xs text-zinc-400 font-light">
+                    Available Reserve
+                </div>
+            </div>
+            <div class="text-2xl font-serif text-white tracking-tight">
+                ₹<%= Number(stats.balance || 0).toLocaleString('en-IN') %>
+            </div>
+        </div>
+
+        <!-- Deposit Amount Form -->
+        <div class="space-y-4 relative z-10">
+            <div>
+                <label for="depositAmountInput" class="block text-xs font-mono font-bold text-zinc-700 uppercase tracking-wider mb-2">
+                    Enter Deposit Amount (INR)
+                </label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-serif text-zinc-400 font-bold pointer-events-none">
+                        ₹
+                    </span>
+                    <input 
+                        type="number" 
+                        id="depositAmountInput" 
+                        min="1" 
+                        max="500000" 
+                        step="1"
+                        placeholder="e.g. 25,000" 
+                        class="w-full pl-10 pr-4 py-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl text-lg font-mono font-bold text-zinc-900 placeholder:text-zinc-400 placeholder:font-normal focus:outline-none focus:border-[#0A4D2E] focus:bg-white focus:ring-2 focus:ring-[#0A4D2E]/20 transition-all"
+                        oninput="onDepositAmountChange(this.value)"
+                        onkeydown="if(event.key === 'Enter'){ event.preventDefault(); proceedToDeposit(); }"
+                    >
+                </div>
+                <div class="flex items-center justify-between text-[11px] font-mono text-zinc-500 mt-1.5 px-1">
+                    <span>Min: ₹1</span>
+                    <span>Max: ₹5,00,000 / transaction</span>
+                </div>
+            </div>
+
+            <!-- Quick Amount Chips -->
+            <div>
+                <div class="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-bold mb-2">
+                    Popular Allocations
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <button 
+                        type="button" 
+                        onclick="setQuickAmount(1000)" 
+                        class="px-3 py-2 rounded-xl border border-zinc-200 hover:border-[#0A4D2E] hover:bg-emerald-50/40 text-xs font-mono font-bold text-zinc-800 transition-all cursor-pointer text-center"
+                    >
+                        + ₹1,000
+                    </button>
+                    <button 
+                        type="button" 
+                        onclick="setQuickAmount(5000)" 
+                        class="px-3 py-2 rounded-xl border border-zinc-200 hover:border-[#0A4D2E] hover:bg-emerald-50/40 text-xs font-mono font-bold text-zinc-800 transition-all cursor-pointer text-center"
+                    >
+                        + ₹5,000
+                    </button>
+                    <button 
+                        type="button" 
+                        onclick="setQuickAmount(10000)" 
+                        class="px-3 py-2 rounded-xl border border-zinc-200 hover:border-[#0A4D2E] hover:bg-emerald-50/40 text-xs font-mono font-bold text-zinc-800 transition-all cursor-pointer text-center"
+                    >
+                        + ₹10,000
+                    </button>
+                    <button 
+                        type="button" 
+                        onclick="setQuickAmount(25000)" 
+                        class="px-3 py-2 rounded-xl border border-zinc-200 hover:border-[#0A4D2E] hover:bg-emerald-50/40 text-xs font-mono font-bold text-zinc-800 transition-all cursor-pointer text-center"
+                    >
+                        + ₹25,000
+                    </button>
+                    <button 
+                        type="button" 
+                        onclick="setQuickAmount(50000)" 
+                        class="px-3 py-2 rounded-xl border border-zinc-200 hover:border-[#0A4D2E] hover:bg-emerald-50/40 text-xs font-mono font-bold text-zinc-800 transition-all cursor-pointer text-center"
+                    >
+                        + ₹50,000
+                    </button>
+                    <button 
+                        type="button" 
+                        onclick="setQuickAmount(100000)" 
+                        class="px-3 py-2 rounded-xl border border-zinc-200 hover:border-[#0A4D2E] hover:bg-emerald-50/40 text-xs font-mono font-bold text-zinc-800 transition-all cursor-pointer text-center"
+                    >
+                        + ₹1,00,000
+                    </button>
+                </div>
+            </div>
+
+            <!-- Gateway Reassurance -->
+            <div class="p-3 rounded-xl bg-zinc-50 border border-zinc-200/80 flex items-center gap-3 text-xs text-zinc-600">
+                <div class="w-8 h-8 rounded-lg bg-emerald-100 text-[#0A4D2E] flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </div>
+                <div class="text-[11px] leading-tight">
+                    <span class="font-bold text-zinc-800">Razorpay Secure Banking Gateway</span>
+                    <p class="text-zinc-500 font-light mt-0.5">UPI (GPay, PhonePe, Paytm), Credit/Debit Cards & NetBanking supported.</p>
+                </div>
+            </div>
+
+            <!-- Inline Feedback Box -->
+            <div id="addMoneyFeedback" class="hidden text-xs rounded-xl p-3 font-mono"></div>
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="flex items-center gap-3 pt-2 relative z-10">
+            <button 
+                type="button" 
+                onclick="closeAddMoneyModal()" 
+                class="flex-1 py-3 px-4 border border-zinc-200 hover:border-zinc-400 text-zinc-700 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer text-center"
+            >
+                Cancel
+            </button>
+            <button 
+                type="button" 
+                id="proceedAddMoneyBtn" 
+                onclick="proceedToDeposit()" 
+                class="flex-2 py-3 px-5 bg-[#0A4D2E] hover:bg-[#073822] text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center justify-center gap-2 active:scale-98"
+            >
+                <span id="proceedAddMoneyText">Deposit Funds</span>
+                <span id="proceedAddMoneySpinner" class="hidden animate-spin h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full"></span>
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- SIMULATED TEST PAYMENT MODAL (Dev / Sandbox Gateway) -->
+<!-- ========================================================= -->
+<div 
+    id="walletSimulationModal" 
+    class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4 transition-all"
+    role="dialog"
+    aria-modal="true"
+>
+    <div class="relative bg-zinc-900 border border-[#c5a059]/40 rounded-3xl max-w-md w-full p-7 space-y-6 shadow-2xl text-white">
+        <div class="flex items-start justify-between">
+            <div class="space-y-1">
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-900/60 text-amber-300 border border-amber-600/60 text-[10px] font-mono font-bold uppercase tracking-wider">
+                    ⚡ Sandbox Simulator Active
+                </div>
+                <h3 class="text-xl font-serif text-white">Authorize Test Deposit</h3>
+            </div>
+            <button type="button" onclick="closeSimulationModal()" class="text-zinc-400 hover:text-white">✕</button>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-black/50 border border-zinc-800 space-y-2 text-xs font-mono">
+            <div class="flex justify-between text-zinc-400">
+                <span>Order ID:</span>
+                <span id="simOrderId" class="text-white font-bold"></span>
+            </div>
+            <div class="flex justify-between text-zinc-400">
+                <span>Deposit Amount:</span>
+                <span id="simDepositAmount" class="text-emerald-400 font-bold text-sm"></span>
+            </div>
+            <div class="flex justify-between text-zinc-400">
+                <span>Collector:</span>
+                <span class="text-zinc-300"><%= user.name %></span>
+            </div>
+        </div>
+
+        <p class="text-xs text-zinc-400 font-light">
+            You are operating in development mode with test credentials. Confirming will authenticate the test transaction signature and credit your Vault reserve immediately.
+        </p>
+
+        <div class="flex gap-3">
+            <button 
+                type="button" 
+                onclick="closeSimulationModal()" 
+                class="flex-1 py-3 border border-zinc-700 text-zinc-300 hover:text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider cursor-pointer"
+            >
+                Decline
+            </button>
+            <button 
+                type="button" 
+                id="simAuthorizeBtn" 
+                onclick="confirmSimulationPayment()" 
+                class="flex-2 py-3 bg-[#c5a059] hover:bg-[#d4ad64] text-zinc-950 rounded-xl text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+            >
+                <span id="simAuthorizeText">Authorize Deposit</span>
+                <span id="simAuthorizeSpinner" class="hidden animate-spin h-3.5 w-3.5 border-2 border-zinc-900 border-t-transparent rounded-full"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/payment-animation') %>
+
+<!-- Razorpay Checkout SDK -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+    let currentWalletDepositSession = null;
+
+    function openAddMoneyModal(presetAmount = null) {
+        const modal = document.getElementById('addMoneyModal');
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        hideAddMoneyFeedback();
+        const input = document.getElementById('depositAmountInput');
+        if (presetAmount && input) {
+            input.value = presetAmount;
+            onDepositAmountChange(presetAmount);
+        } else if (input) {
+            input.focus();
+        }
+    }
+
+    function closeAddMoneyModal() {
+        const modal = document.getElementById('addMoneyModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+        resetAddMoneyBtn();
+    }
+
+    function closeSimulationModal() {
+        const modal = document.getElementById('walletSimulationModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+        resetAddMoneyBtn();
+    }
+
+    function setQuickAmount(amt) {
+        const input = document.getElementById('depositAmountInput');
+        if (input) {
+            input.value = amt;
+            onDepositAmountChange(amt);
+        }
+    }
+
+    function onDepositAmountChange(val) {
+        const num = Number(val);
+        const btnText = document.getElementById('proceedAddMoneyText');
+        if (!btnText) return;
+        if (!isNaN(num) && num > 0) {
+            btnText.textContent = `Deposit ₹${num.toLocaleString('en-IN')}`;
+        } else {
+            btnText.textContent = 'Deposit Funds';
+        }
+    }
+
+    function showAddMoneyFeedback(msg, type = 'error') {
+        const el = document.getElementById('addMoneyFeedback');
+        if (!el) return;
+        el.className = 'text-xs rounded-xl p-3 font-mono ' + (
+            type === 'success' 
+                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+                : 'bg-rose-50 text-rose-700 border border-rose-200'
+        );
+        el.textContent = msg;
+        el.classList.remove('hidden');
+    }
+
+    function hideAddMoneyFeedback() {
+        const el = document.getElementById('addMoneyFeedback');
+        if (el) el.classList.add('hidden');
+    }
+
+    function resetAddMoneyBtn() {
+        const btn = document.getElementById('proceedAddMoneyBtn');
+        const text = document.getElementById('proceedAddMoneyText');
+        const spinner = document.getElementById('proceedAddMoneySpinner');
+        if (btn) btn.disabled = false;
+        if (text) text.classList.remove('hidden');
+        if (spinner) spinner.classList.add('hidden');
+
+        const simBtn = document.getElementById('simAuthorizeBtn');
+        const simText = document.getElementById('simAuthorizeText');
+        const simSpinner = document.getElementById('simAuthorizeSpinner');
+        if (simBtn) simBtn.disabled = false;
+        if (simText) simText.classList.remove('hidden');
+        if (simSpinner) simSpinner.classList.add('hidden');
+    }
+
+    async function proceedToDeposit() {
+        const input = document.getElementById('depositAmountInput');
+        const amount = Number(input?.value);
+
+        if (isNaN(amount) || amount < 1) {
+            showAddMoneyFeedback('Please enter a valid deposit amount of at least ₹1.');
+            return;
+        }
+
+        if (amount > 500000) {
+            showAddMoneyFeedback('Maximum single deposit limit is ₹5,00,000.');
+            return;
+        }
+
+        hideAddMoneyFeedback();
+
+        const btn = document.getElementById('proceedAddMoneyBtn');
+        const text = document.getElementById('proceedAddMoneyText');
+        const spinner = document.getElementById('proceedAddMoneySpinner');
+        if (btn) btn.disabled = true;
+        if (text) text.classList.add('hidden');
+        if (spinner) spinner.classList.remove('hidden');
+
+        try {
+            const res = await fetch('/wallet/add-money/create-order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ amount })
+            });
+
+            const initData = await res.json();
+            if (!res.ok || !initData.success) {
+                throw new Error(initData.message || 'Failed to initialize deposit order.');
+            }
+
+            currentWalletDepositSession = { initData, amount };
+
+            const isRealRazorpay = typeof window.Razorpay === 'function' &&
+                !initData.isSimulated &&
+                initData.keyId &&
+                !initData.keyId.includes('deltaVault') &&
+                !initData.keyId.includes('dummy') &&
+                initData.razorpayOrderId &&
+                !initData.razorpayOrderId.startsWith('order_delta_');
+
+            if (isRealRazorpay) {
+                const options = {
+                    key: initData.keyId,
+                    amount: initData.amount,
+                    currency: initData.currency || 'INR',
+                    name: 'DELTA Luxury Horology',
+                    description: 'Vault Wallet Liquidity Deposit',
+                    order_id: initData.razorpayOrderId,
+                    prefill: {
+                        name: initData.user?.name || '',
+                        email: initData.user?.email || '',
+                        contact: initData.user?.phone || ''
+                    },
+                    theme: {
+                        color: '#0A4D2E'
+                    },
+                    handler: async function (response) {
+                        await completeDepositVerification({
+                            amount,
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature
+                        });
+                    },
+                    modal: {
+                        ondismiss: function () {
+                            resetAddMoneyBtn();
+                            showAddMoneyFeedback('Payment window closed. Deposit was cancelled.');
+                        }
+                    }
+                };
+
+                try {
+                    const rzp = new window.Razorpay(options);
+                    rzp.on('payment.failed', function (resp) {
+                        resetAddMoneyBtn();
+                        const errMsg = resp.error?.description || resp.error?.reason || 'Payment declined by gateway.';
+                        showAddMoneyFeedback(errMsg);
+                    });
+                    rzp.open();
+                } catch (rzpErr) {
+                    console.warn('[Razorpay] Switching to simulation fallback:', rzpErr);
+                    openSimulationModal(initData, amount);
+                }
+            } else {
+                // Simulated development gateway
+                openSimulationModal(initData, amount);
+            }
+
+        } catch (err) {
+            resetAddMoneyBtn();
+            showAddMoneyFeedback(err.message || 'Unable to connect to payment gateway.');
+        }
+    }
+
+    function openSimulationModal(initData, amount) {
+        const modal = document.getElementById('walletSimulationModal');
+        const orderIdEl = document.getElementById('simOrderId');
+        const amountEl = document.getElementById('simDepositAmount');
+        if (orderIdEl) orderIdEl.textContent = initData.razorpayOrderId;
+        if (amountEl) amountEl.textContent = `₹${Number(amount).toLocaleString('en-IN')}`;
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+    }
+
+    async function confirmSimulationPayment() {
+        if (!currentWalletDepositSession) return;
+        const { initData, amount } = currentWalletDepositSession;
+
+        const simBtn = document.getElementById('simAuthorizeBtn');
+        const simText = document.getElementById('simAuthorizeText');
+        const simSpinner = document.getElementById('simAuthorizeSpinner');
+        if (simBtn) simBtn.disabled = true;
+        if (simText) simText.classList.add('hidden');
+        if (simSpinner) simSpinner.classList.remove('hidden');
+
+        await completeDepositVerification({
+            amount,
+            razorpay_order_id: initData.razorpayOrderId,
+            razorpay_payment_id: initData.testPaymentId,
+            razorpay_signature: initData.testSignature
+        });
+    }
+
+    async function completeDepositVerification(payload) {
+        try {
+            if (window.DeltaPaymentAnimation) {
+                window.DeltaPaymentAnimation.start({
+                    title: 'Verifying Vault Deposit',
+                    subtitle: 'Confirming cryptographic signature with banking network...',
+                    amount: payload.amount,
+                    method: 'Razorpay Secure'
+                });
+            }
+
+            const res = await fetch('/wallet/add-money/verify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || 'Deposit verification failed.');
+            }
+
+            closeAddMoneyModal();
+            closeSimulationModal();
+
+            if (window.DeltaPaymentAnimation) {
+                window.DeltaPaymentAnimation.success({
+                    title: 'Funds Deposited Successfully',
+                    subtitle: `₹${Number(payload.amount).toLocaleString('en-IN')} added to your DELTA Vault reserve.`,
+                    redirectUrl: '/wallet',
+                    delayMs: 1400
+                });
+            } else {
+                window.location.href = '/wallet';
+            }
+        } catch (err) {
+            if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+            resetAddMoneyBtn();
+            showAddMoneyFeedback(err.message || 'Failed to complete deposit.');
+        }
+    }
+</script>
+
+<%- include('../partials/footer') %>

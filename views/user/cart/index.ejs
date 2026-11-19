@@ -1,0 +1,551 @@
+<%- include('../partials/header', { title: 'My Shopping Bag — DELTA Vault' }) %>
+<%- include('../partials/navbar') %>
+
+<div class="bg-[#faf8f7] min-h-screen text-[#1b1c1c] py-12">
+    <div class="max-w-7xl mx-auto px-6 space-y-10">
+        
+        <!-- Header -->
+        <div class="space-y-1.5 border-b border-zinc-200 pb-6">
+            <h1 class="text-4xl sm:text-5xl font-serif font-normal tracking-tight text-zinc-900">
+                My Shopping Bag
+            </h1>
+            <div class="flex items-center gap-3 text-[10px] uppercase font-mono tracking-widest text-zinc-400">
+                <span id="cartItemCountHeader"><%= (cart && cart.totalItemCount) ? cart.totalItemCount : 0 %> ITEMS IN SELECTION</span>
+                <span>•</span>
+                <span class="text-[#0A4D2E] font-bold">SECURE VAULT CHECKOUT</span>
+            </div>
+        </div>
+
+        <!-- Flash Alert -->
+        <%- include('../partials/flash-message') %>
+
+        <div id="cartContentContainer">
+            <% if (cart && cart.items && cart.items.length > 0) { %>
+                <div id="populatedCartView" class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+                    
+                    <!-- Left: Cart Items List -->
+                    <div id="cartItemsList" class="lg:col-span-8 space-y-6">
+                        <% cart.items.forEach(item => { 
+                                const productSlug = (item.product && item.product.slug) ? item.product.slug : (item.product ? (item.product._id || item.product) : '');
+                                const variantParam = (item.variant && item.variant.color && item.variant.color !== 'Standard') ? ('?variant=' + encodeURIComponent(item.variant.color)) : '';
+                                const productDetailUrl = (!item.isUnavailable && productSlug) ? ('/product/' + productSlug + variantParam) : 'javascript:void(0)';
+
+                                let itemImage = '';
+                                if (item.variant && item.variant.images && item.variant.images.length > 0) {
+                                    itemImage = item.variant.images[0];
+                                } else if (item.product && item.product.images && item.product.images.length > 0) {
+                                    itemImage = item.product.images[0];
+                                }
+                            %>
+                            <div id="cart-item-row-<%= item._id %>" class="cart-item-card <%= item.isUnavailable ? 'bg-zinc-50/90 border-rose-200/90 ring-1 ring-rose-200/50' : 'bg-white border-zinc-200/80' %> rounded-3xl border p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-sm transition-all duration-300">
+                                
+                                <div class="flex items-start sm:items-center gap-6">
+                                    <!-- Dedicated Variant Thumbnail Photo -->
+                                    <a href="<%= productDetailUrl %>" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[#f2eeeb] overflow-hidden flex-shrink-0 flex items-center justify-center p-2 group <%= item.isUnavailable ? 'opacity-60 grayscale' : 'hover:opacity-95' %> transition-opacity border border-zinc-200/60 shadow-2xs">
+                                        <img src="<%= itemImage %>" alt="<%= item.product ? item.product.name : 'Timepiece' %> — <%= item.variant ? item.variant.color : '' %>" class="w-full h-full object-cover rounded-xl">
+                                    </a>
+
+                                    <div class="space-y-2">
+                                        <!-- Timepiece Title & Unavailability Flag -->
+                                        <div class="flex flex-wrap items-center gap-2.5">
+                                            <a href="<%= productDetailUrl %>" class="font-serif text-lg font-medium <%= item.isUnavailable ? 'text-zinc-600 line-through' : 'text-zinc-900 hover:text-[#0A4D2E]' %> transition-colors">
+                                                <%= (item.product && item.product.brand) ? item.product.brand.name : (item.product ? item.product.brandName : 'DELTA') %> <%= item.product ? item.product.name : 'Timepiece' %>
+                                            </a>
+
+                                            <% if (item.isOutOfStock) { %>
+                                                <span id="status-badge-<%= item._id %>" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800 border border-rose-200 font-mono">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span>
+                                                    <span>Sold Out in Vault</span>
+                                                </span>
+                                            <% } else if (item.isUnlisted) { %>
+                                                <span id="status-badge-<%= item._id %>" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-200 text-zinc-700 border border-zinc-300 font-mono">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
+                                                    <span>Currently Unavailable</span>
+                                                </span>
+                                            <% } else if (item.isQtyExceeded) { %>
+                                                <span id="status-badge-<%= item._id %>" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 font-mono">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+                                                    <span>Only <%= item.availableStock %> in Vault</span>
+                                                </span>
+                                            <% } else { %>
+                                                <span id="status-badge-<%= item._id %>" class="hidden"></span>
+                                            <% } %>
+                                        </div>
+
+                                        <!-- Prominent Distinct Variant Edition Badge & Reference SKU -->
+                                        <div class="flex flex-wrap items-center gap-2.5">
+                                            <span class="inline-flex items-center gap-2 px-3 py-1 bg-zinc-100 border border-zinc-200/80 rounded-full text-xs font-mono font-semibold text-zinc-900 shadow-2xs">
+                                                <span class="w-3.5 h-3.5 rounded-full border border-black/20 shadow-2xs inline-block flex-shrink-0" style="background-color: <%= (item.variant && item.variant.colorCode) ? item.variant.colorCode : '#1b1c1c' %>;"></span>
+                                                <span><%= (item.variant && item.variant.color) ? item.variant.color : 'Standard' %> Edition</span>
+                                            </span>
+
+                                            <span class="text-[11px] font-mono text-zinc-400">
+                                                Ref: <span class="text-zinc-600 font-semibold"><%= (item.variant && item.variant.sku) ? item.variant.sku : (item.product ? item.product.modelNumber : 'REF-DELTA') %></span>
+                                            </span>
+                                        </div>
+
+                                        <!-- Edition Specific Horology Specs -->
+                                        <p class="text-xs text-zinc-500 font-light leading-relaxed max-w-md">
+                                            <%= item.variant ? item.variant.material : 'Oystersteel' %> • <%= item.variant ? item.variant.dial : 'Baton Dial' %>
+                                        </p>
+
+                                        <% if (item.isUnavailable) { %>
+                                            <p class="text-[11px] text-rose-600 font-medium font-mono">
+                                                ⚠️ <%= item.unavailableReason || 'This timepiece is currently unlisted from the vault catalog.' %>
+                                            </p>
+                                        <% } %>
+
+                                        <!-- Quantity Controls & Remove -->
+                                        <div class="flex items-center gap-6 pt-1 text-xs font-mono">
+                                            <div class="flex items-center border <%= item.isUnavailable ? 'border-zinc-200 opacity-50' : 'border-zinc-300' %> rounded-lg px-2.5 py-1 gap-3 bg-zinc-50 shadow-2xs">
+                                                <span class="text-[10px] text-zinc-400 uppercase font-semibold">QTY</span>
+                                                <button type="button" onclick="ajaxUpdateQty('<%= item._id %>', 'decrement')" <%= item.isUnavailable ? 'disabled' : '' %> class="text-zinc-600 hover:text-black font-bold px-1 <%= item.isUnavailable ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer' %> select-none">−</button>
+                                                <span id="qty-val-<%= item._id %>" class="font-bold text-zinc-900 px-1"><%= item.quantity %></span>
+                                                <button 
+                                                    type="button" 
+                                                    id="inc-btn-<%= item._id %>"
+                                                    onclick="ajaxUpdateQty('<%= item._id %>', 'increment')" 
+                                                    <%= (item.isUnavailable || item.quantity >= item.availableStock || item.quantity >= 3) ? 'disabled' : '' %>
+                                                    title="<%= item.isUnavailable ? 'Timepiece currently not available' : ((item.quantity >= item.availableStock) ? ('Vault stock limit reached (' + item.availableStock + ')') : ((item.quantity >= 3) ? 'Maximum order limit (3) reached' : 'Add another unit')) %>"
+                                                    class="text-zinc-600 hover:text-black font-bold px-1 select-none <%= (item.isUnavailable || item.quantity >= item.availableStock || item.quantity >= 3) ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer' %>"
+                                                >+</button>
+                                            </div>
+
+                                            <% if (!item.isUnavailable) { %>
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <span id="max-badge-<%= item._id %>" class="text-[10px] text-amber-800 font-mono bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md <%= (item.isQtyExceeded || item.quantity >= item.availableStock || item.quantity >= 3) ? '' : 'hidden' %>">
+                                                        <%= item.isQtyExceeded ? ('Exceeds vault stock (' + item.availableStock + ' available)') : ((item.quantity >= item.availableStock) ? ('Vault stock limit (' + item.availableStock + ')') : 'Max 3 units reached') %>
+                                                    </span>
+
+                                                    <button 
+                                                        type="button" 
+                                                        id="adjust-btn-<%= item._id %>"
+                                                        onclick="ajaxAdjustToStock('<%= item._id %>')" 
+                                                        class="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-2xs <%= item.isQtyExceeded ? '' : 'hidden' %>"
+                                                        title="Reduce requested quantity to currently available vault stock"
+                                                    >
+                                                        <span>⚡ Set to <%= item.availableStock %> in Vault</span>
+                                                    </button>
+                                                </div>
+                                            <% } %>
+
+                                            <button type="button" onclick="ajaxRemoveItem('<%= item._id %>')" class="text-[10px] uppercase font-mono tracking-wider <%= item.isUnavailable ? 'text-rose-600 hover:text-rose-800' : 'text-zinc-400 hover:text-rose-600' %> transition-colors font-semibold underline underline-offset-4 cursor-pointer">
+                                                Remove
+                                            </button>
+                                        </div>
+
+                                        <% if (!item.isUnavailable) { %>
+                                            <div class="pt-0.5 flex items-center gap-1.5 text-[9px] font-mono uppercase tracking-wider text-[#0A4D2E] font-bold">
+                                                <span>🛡 DELTA CERTIFIED • <%= (item.variant && item.variant.color) ? item.variant.color.toUpperCase() : 'STANDARD' %> EDITION</span>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                </div>
+
+                                <!-- Valuation Breakdown: Unit & Total Item Price -->
+                                <div class="text-right sm:self-center font-mono w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-zinc-100 space-y-1">
+                                    <% if (item.isUnavailable) { %>
+                                        <span id="item-total-<%= item._id %>" class="text-base font-bold text-zinc-400 line-through block">
+                                            ₹<%= Number(item.itemTotal || (item.price * item.quantity)).toLocaleString('en-IN') %>
+                                        </span>
+                                        <span class="text-[10px] uppercase font-mono text-rose-600 font-semibold block mt-0.5">
+                                            Not Available (Excluded)
+                                        </span>
+                                    <% } else { %>
+                                        <span id="item-total-<%= item._id %>" class="text-lg font-bold text-zinc-900 block">
+                                            ₹<%= Number(item.itemTotal || (item.price * item.quantity)).toLocaleString('en-IN') %>
+                                        </span>
+                                        <span id="unit-price-<%= item._id %>" class="text-[11px] text-zinc-400 block font-normal">
+                                            <% if (item.quantity > 1) { %>
+                                                ₹<%= Number(item.price).toLocaleString('en-IN') %> each
+                                            <% } else { %>
+                                                Unit Price: ₹<%= Number(item.price).toLocaleString('en-IN') %>
+                                            <% } %>
+                                        </span>
+                                    <% } %>
+                                </div>
+
+                            </div>
+                        <% }) %>
+                    </div>
+
+                    <!-- Right: Order Summary -->
+                    <div class="lg:col-span-4 bg-[#fbf9f8] border border-zinc-200/80 rounded-3xl p-8 space-y-6 shadow-sm">
+                        <h2 class="text-xl font-serif text-zinc-900 border-b border-zinc-200 pb-4">
+                            Order Summary
+                        </h2>
+
+                        <!-- Calculations Breakdown -->
+                        <div class="space-y-3 text-xs font-mono text-zinc-600">
+                            <div class="flex items-center justify-between">
+                                <span class="font-sans text-zinc-500">Subtotal</span>
+                                <span id="summarySubtotal" class="font-bold text-zinc-900">₹<%= Number(cart.subtotal || 0).toLocaleString('en-IN') %></span>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <span class="font-sans text-zinc-500">White-Glove Insured Delivery</span>
+                                <span class="text-[#0A4D2E] font-bold uppercase font-sans text-[11px]">Complimentary</span>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <span class="font-sans text-zinc-500">Taxes & Duties (GST 18%)</span>
+                                <span class="text-zinc-500 font-sans italic text-[11px]">Included in total</span>
+                            </div>
+
+                            <div class="pt-6 border-t border-zinc-200 flex items-baseline justify-between text-base">
+                                <span class="text-xs uppercase tracking-wider font-mono font-bold text-zinc-900">TOTAL SELECTION</span>
+                                <span id="summaryGrandTotal" class="text-2xl font-bold text-zinc-900 font-mono">
+                                    ₹<%= Number(cart.subtotal || 0).toLocaleString('en-IN') %>
+                                </span>
+                            </div>
+                        </div>
+
+
+                        <div id="checkoutActionWrapper">
+                        <% if ((cart && cart.activeItemCount > 0) || (cart && cart.subtotal > 0)) { %>
+                            <% if (cart.hasUnavailableItems || cart.hasQtyExceeded) { %>
+                                <div class="space-y-2">
+                                    <button 
+                                        type="button" 
+                                        onclick="showStockLimitationNotice()" 
+                                        class="block w-full py-4 px-6 bg-amber-900 hover:bg-amber-950 text-white rounded-xl text-xs uppercase font-semibold tracking-[0.2em] transition-colors shadow-lg text-center cursor-pointer"
+                                    >
+                                        Resolve Inventory Issues to Checkout
+                                    </button>
+                                    <p class="text-[10px] text-amber-800 text-center font-mono">
+                                        Please adjust quantities or remove unavailable timepieces before proceeding.
+                                    </p>
+                                </div>
+                            <% } else { %>
+                                <a 
+                                    href="/checkout" 
+                                    class="block w-full py-4 px-6 bg-[#1a1c1e] hover:bg-black text-white rounded-xl text-xs uppercase font-semibold tracking-[0.2em] transition-colors shadow-lg text-center cursor-pointer"
+                                >
+                                    Proceed to Checkout
+                                </a>
+                            <% } %>
+                        <% } else { %>
+                            <button 
+                                type="button" 
+                                disabled 
+                                class="block w-full py-4 px-6 bg-zinc-200 text-zinc-400 rounded-xl text-xs uppercase font-semibold tracking-[0.2em] text-center cursor-not-allowed select-none"
+                            >
+                                No Available Timepieces
+                            </button>
+                        <% } %>
+                        </div>
+
+                        <div class="space-y-2 pt-2 text-center text-[10px] text-zinc-400 font-mono">
+                            <p class="flex items-center justify-center gap-1 text-zinc-600 font-semibold">
+                                <span>SECURE ENCRYPTED TRANSACTION</span>
+                            </p>
+                            <p class="font-sans text-zinc-400">Delta Concierge is available for personal assistance at 1-800-DELTA-H</p>
+                        </div>
+                    </div>
+
+                </div>
+            <% } else { %>
+                <div id="emptyCartView" class="py-24 text-center space-y-4 max-w-md mx-auto">
+                    <div class="w-16 h-16 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto">
+                        <svg class="w-8 h-8 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-serif text-zinc-900">Your Shopping Cart is Empty</h3>
+                    <p class="text-xs text-zinc-500 font-light leading-relaxed">
+                        Discover certified Swiss manufacture timepieces to add to your collector vault.
+                    </p>
+                    <div class="pt-2">
+                        <a href="/shop" class="inline-block px-7 py-3.5 bg-zinc-900 text-white rounded-xl text-xs uppercase tracking-wider font-semibold hover:bg-black transition-colors">
+                            Explore Haute Horlogerie
+                        </a>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Curated for Your Private Collection -->
+        <% if (typeof curatedProducts !== 'undefined' && curatedProducts && curatedProducts.length > 0) { %>
+            <div class="space-y-6 pt-16 border-t border-zinc-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] uppercase tracking-[0.25em] text-[#c5a059] font-mono font-bold block">HERITAGE SELECTION</span>
+                        <h2 class="text-2xl font-serif text-zinc-900">Curated for Your Private Collection</h2>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <a href="/shop" class="text-xs uppercase tracking-wider font-semibold text-zinc-600 hover:text-black">Explore All →</a>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <% curatedProducts.forEach(p => { %>
+                        <div class="space-y-3 flex flex-col justify-between">
+                            <a href="/product/<%= p.slug %>" class="block aspect-square rounded-2xl bg-[#f2eeeb] overflow-hidden p-4">
+                                <% if (p.images && p.images.length > 0) { %>
+                                    <img src="<%= p.images[0] %>" alt="<%= p.name %>" class="w-full h-full object-cover">
+                                <% } else { %>
+                                    <div class="w-full h-full flex items-center justify-center text-zinc-300">⏱</div>
+                                <% } %>
+                            </a>
+                            <div class="space-y-1">
+                                <p class="text-[9px] uppercase tracking-wider font-mono text-zinc-400"><%= p.brand ? p.brand.name : p.brandName %></p>
+                                <h3 class="font-serif text-base text-zinc-900 truncate"><%= p.name %></h3>
+                                <p class="text-xs font-mono font-semibold text-[#0A4D2E]">₹<%= Number(p.discountPrice || p.price).toLocaleString('en-IN') %></p>
+                            </div>
+                            <button onclick="window.location.href='/product/<%= p.slug %>'" class="w-full py-2.5 border border-zinc-900 hover:bg-zinc-900 hover:text-white rounded-xl text-[10px] uppercase tracking-wider font-semibold transition-colors cursor-pointer">View Timepiece</button>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+
+<script>
+    async function ajaxAdjustToStock(itemId) {
+        await ajaxUpdateQty(itemId, 'adjust_to_stock');
+    }
+
+    async function ajaxUpdateQty(itemId, action) {
+        try {
+            const res = await fetch('/cart/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ itemId, action })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                showToast(data.message || 'Unable to adjust quantity.', 'warning');
+                return;
+            }
+
+            // Sync all cart items in DOM
+            if (data.cart && data.cart.items) {
+                // If target item was removed by setting to 0
+                const targetItem = data.cart.items.find(i => i._id === itemId);
+                if (!targetItem && (action === 'decrement' || action === 'adjust_to_stock')) {
+                    const row = document.getElementById('cart-item-row-' + itemId);
+                    if (row) {
+                        row.style.opacity = '0';
+                        row.style.transform = 'translateY(-10px) scale(0.95)';
+                        setTimeout(() => {
+                            row.remove();
+                            if (!data.cart.items || data.cart.items.length === 0) {
+                                renderEmptyCartView();
+                            }
+                        }, 250);
+                    }
+                }
+
+                data.cart.items.forEach(it => {
+                    const id = it._id;
+                    const qtyVal = document.getElementById('qty-val-' + id);
+                    const itemTotal = document.getElementById('item-total-' + id);
+                    const unitPriceElem = document.getElementById('unit-price-' + id);
+                    const incBtn = document.getElementById('inc-btn-' + id);
+                    const maxBadge = document.getElementById('max-badge-' + id);
+                    const adjustBtn = document.getElementById('adjust-btn-' + id);
+                    const statusBadge = document.getElementById('status-badge-' + id);
+
+                    if (qtyVal) qtyVal.textContent = it.quantity;
+                    if (itemTotal) itemTotal.textContent = '₹' + Number(it.itemTotal).toLocaleString('en-IN');
+                    if (unitPriceElem && it.price) {
+                        unitPriceElem.textContent = it.quantity > 1 ? ('₹' + Number(it.price).toLocaleString('en-IN') + ' each') : ('Unit Price: ₹' + Number(it.price).toLocaleString('en-IN'));
+                    }
+
+                    // Update Status Badge
+                    if (statusBadge) {
+                        if (it.isOutOfStock) {
+                            statusBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800 border border-rose-200 font-mono';
+                            statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span><span>Sold Out in Vault</span>';
+                        } else if (it.isUnlisted) {
+                            statusBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-200 text-zinc-700 border border-zinc-300 font-mono';
+                            statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span><span>Currently Unavailable</span>';
+                        } else if (it.isQtyExceeded) {
+                            statusBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 font-mono';
+                            statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span><span>Only ' + it.availableStock + ' in Vault</span>';
+                        } else {
+                            statusBadge.className = 'hidden';
+                        }
+                    }
+
+                    // Update Adjust Button
+                    if (adjustBtn) {
+                        if (it.isQtyExceeded) {
+                            adjustBtn.classList.remove('hidden');
+                            adjustBtn.innerHTML = `<span>⚡ Set to ${it.availableStock} in Vault</span>`;
+                        } else {
+                            adjustBtn.classList.add('hidden');
+                        }
+                    }
+
+                    // Update Increment button & Max badge
+                    const maxReached = it.quantity >= it.availableStock || it.quantity >= 3;
+                    if (maxReached) {
+                        if (incBtn) {
+                            incBtn.disabled = true;
+                            incBtn.className = 'text-zinc-600 hover:text-black font-bold px-1 select-none opacity-30 cursor-not-allowed';
+                            incBtn.title = it.quantity >= it.availableStock ? 'Vault stock limit reached (' + it.availableStock + ')' : 'Maximum order limit (3) reached';
+                        }
+                        if (maxBadge) {
+                            maxBadge.textContent = it.isQtyExceeded ? ('Exceeds vault stock (' + it.availableStock + ' available)') : (it.quantity >= it.availableStock ? 'Vault stock limit (' + it.availableStock + ')' : 'Max 3 units reached');
+                            maxBadge.classList.remove('hidden');
+                        }
+                    } else {
+                        if (incBtn) {
+                            incBtn.disabled = false;
+                            incBtn.className = 'text-zinc-600 hover:text-black font-bold px-1 select-none cursor-pointer';
+                            incBtn.title = 'Add another unit';
+                        }
+                        if (maxBadge) maxBadge.classList.add('hidden');
+                    }
+                });
+            }
+
+            // Update summary & checkout button state
+            updateSummaryTotals(data.cart.subtotal, data.cart.totalItemCount);
+            updateCheckoutState(data.cart);
+
+            if (window.updateNavbarCounters) {
+                window.updateNavbarCounters(data.cart.totalItemCount);
+            }
+            showToast('Shopping bag updated.', 'info', 2000);
+        } catch (e) {
+            showToast('Connection error updating quantity.', 'error');
+        }
+    }
+
+    async function ajaxRemoveItem(itemId) {
+        try {
+            const res = await fetch('/cart/remove', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ itemId })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                showToast(data.message || 'Unable to remove timepiece.', 'error');
+                return;
+            }
+
+            // Animate card removal
+            const row = document.getElementById('cart-item-row-' + itemId);
+            if (row) {
+                row.style.opacity = '0';
+                row.style.transform = 'translateY(-10px) scale(0.95)';
+                setTimeout(() => {
+                    row.remove();
+                    if (!data.cart.items || data.cart.items.length === 0) {
+                        renderEmptyCartView();
+                    }
+                }, 250);
+            }
+
+            // Update summary & checkout button state
+            updateSummaryTotals(data.cart.subtotal, data.cart.totalItemCount);
+            updateCheckoutState(data.cart);
+
+            if (window.updateNavbarCounters) {
+                window.updateNavbarCounters(data.cart.totalItemCount);
+            }
+            showToast(data.message || 'Item removed from shopping bag successfully.', 'success');
+        } catch (e) {
+            showToast('Connection error removing item.', 'error');
+        }
+    }
+
+    function updateCheckoutState(cart) {
+        const wrapper = document.getElementById('checkoutActionWrapper');
+        if (!wrapper) return;
+
+        if (!cart || !cart.items || cart.items.length === 0) {
+            wrapper.innerHTML = `
+                <button 
+                    type="button" 
+                    disabled 
+                    class="block w-full py-4 px-6 bg-zinc-200 text-zinc-400 rounded-xl text-xs uppercase font-semibold tracking-[0.2em] text-center cursor-not-allowed select-none"
+                >
+                    Shopping Bag Empty
+                </button>
+            `;
+            return;
+        }
+
+        if (cart.hasUnavailableItems || cart.hasQtyExceeded) {
+            wrapper.innerHTML = `
+                <div class="space-y-2">
+                    <button 
+                        type="button" 
+                        onclick="showStockLimitationNotice()" 
+                        class="block w-full py-4 px-6 bg-amber-900 hover:bg-amber-950 text-white rounded-xl text-xs uppercase font-semibold tracking-[0.2em] transition-colors shadow-lg text-center cursor-pointer"
+                    >
+                        Resolve Inventory Issues to Checkout
+                    </button>
+                    <p class="text-[10px] text-amber-800 text-center font-mono">
+                        Please adjust requested quantities or remove unavailable timepieces before proceeding.
+                    </p>
+                </div>
+            `;
+        } else if (cart.activeItemCount > 0 || cart.subtotal > 0) {
+            wrapper.innerHTML = `
+                <a 
+                    href="/checkout" 
+                    class="block w-full py-4 px-6 bg-[#1a1c1e] hover:bg-black text-white rounded-xl text-xs uppercase font-semibold tracking-[0.2em] transition-colors shadow-lg text-center cursor-pointer"
+                >
+                    Proceed to Checkout
+                </a>
+            `;
+        } else {
+            wrapper.innerHTML = `
+                <button 
+                    type="button" 
+                    disabled 
+                    class="block w-full py-4 px-6 bg-zinc-200 text-zinc-400 rounded-xl text-xs uppercase font-semibold tracking-[0.2em] text-center cursor-not-allowed select-none"
+                >
+                    No Available Timepieces
+                </button>
+            `;
+        }
+    }
+
+    function updateSummaryTotals(subtotal, totalItemCount) {
+        const subElem = document.getElementById('summarySubtotal');
+        const grandElem = document.getElementById('summaryGrandTotal');
+        const headerCount = document.getElementById('cartItemCountHeader');
+
+        const formattedSubtotal = '₹' + Number(subtotal || 0).toLocaleString('en-IN');
+        if (subElem) subElem.textContent = formattedSubtotal;
+        if (grandElem) grandElem.textContent = formattedSubtotal;
+        if (headerCount && totalItemCount !== undefined) {
+            headerCount.textContent = totalItemCount + ' ITEMS IN SELECTION';
+        }
+    }
+
+    function renderEmptyCartView() {
+        const container = document.getElementById('cartContentContainer');
+        if (!container) return;
+        container.innerHTML = `
+            <div id="emptyCartView" class="py-24 text-center space-y-4 max-w-md mx-auto">
+                <div class="w-16 h-16 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto">
+                    <svg class="w-8 h-8 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-serif text-zinc-900">Your Shopping Cart is Empty</h3>
+                <p class="text-xs text-zinc-500 font-light leading-relaxed">
+                    Discover certified Swiss manufacture timepieces to add to your collector vault.
+                </p>
+                <div class="pt-2">
+                    <a href="/shop" class="inline-block px-7 py-3.5 bg-zinc-900 text-white rounded-xl text-xs uppercase tracking-wider font-semibold hover:bg-black transition-colors">
+                        Explore Haute Horlogerie
+                    </a>
+                </div>
+            </div>
+        `;
+    }
+    function showStockLimitationNotice() {
+        showToast('Please adjust requested quantities or remove unavailable timepieces from your shopping bag before proceeding to checkout.', 'warning', 4000);
+    }
+</script>

@@ -1,0 +1,420 @@
+<%- include('../partials/header', { title: 'Add New Address — DELTA Vault' }) %>
+<%- include('../partials/navbar') %>
+
+<div class="bg-[#faf8f7] min-h-screen text-[#1b1c1c] py-12">
+    <main class="max-w-2xl mx-auto px-6 space-y-8">
+        
+        <!-- Breadcrumb & Header -->
+        <div class="space-y-1.5 border-b border-zinc-200 pb-6">
+            <div class="flex items-center gap-2 text-[10px] uppercase font-mono tracking-widest text-zinc-400">
+                <a href="/profile" class="hover:text-zinc-900 transition-colors">Client Portfolio</a>
+                <span>/</span>
+                <a href="/addresses" class="hover:text-zinc-900 transition-colors">Vault Addresses</a>
+                <span>/</span>
+                <span class="text-zinc-900 font-bold">New Vault</span>
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-serif font-normal tracking-tight text-zinc-900">
+                Add Delivery Address
+            </h1>
+            <p class="text-xs text-zinc-500 font-light">
+                Register a new residence or vault location for white-glove courier dispatch.
+            </p>
+        </div>
+
+        <%- include('../partials/flash-message') %>
+
+        <div class="bg-white border border-zinc-200/80 rounded-3xl p-8 sm:p-10 shadow-sm">
+            <form action="/addresses/add" method="POST" class="space-y-5" id="addressForm" novalidate>
+                
+                <!-- Full Name & Phone -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600 mb-2">Recipient Full Name</label>
+                        <input
+                            type="text"
+                            name="fullName"
+                            id="fullName"
+                            required
+                            value="<%= (typeof address !== 'undefined' && address && address.fullName) ? address.fullName : '' %>"
+                            placeholder="e.g. Shibin Das"
+                            class="w-full px-4 py-3 bg-white border <%= typeof errors !== 'undefined' && errors.fullName ? 'border-rose-500' : 'border-zinc-300' %> rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all font-sans"
+                        >
+                        <p id="nameError" class="text-rose-600 text-xs mt-1.5 <%= typeof errors !== 'undefined' && errors.fullName ? '' : 'hidden' %>">
+                            <%= typeof errors !== 'undefined' && errors.fullName ? errors.fullName : '' %>
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600 mb-2">Contact Phone</label>
+                        <input
+                            type="tel"
+                            name="phone"
+                            id="phone"
+                            required
+                            value="<%= (typeof address !== 'undefined' && address && address.phone) ? address.phone : '' %>"
+                            placeholder="9876543210"
+                            class="w-full px-4 py-3 bg-white border <%= typeof errors !== 'undefined' && errors.phone ? 'border-rose-500' : 'border-zinc-300' %> rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all font-sans"
+                        >
+                        <p id="phoneError" class="text-rose-600 text-xs mt-1.5 <%= typeof errors !== 'undefined' && errors.phone ? '' : 'hidden' %>">
+                            <%= typeof errors !== 'undefined' && errors.phone ? errors.phone : '' %>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Address Line -->
+                <div>
+                    <label class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600 mb-2">Vault / Residence Address Line</label>
+                    <input
+                        type="text"
+                        name="addressLine"
+                        id="addressLine"
+                        required
+                        value="<%= (typeof address !== 'undefined' && address && address.addressLine) ? address.addressLine : '' %>"
+                        placeholder="Suite 400, Grand Horizon Residences, Royal Avenue"
+                        class="w-full px-4 py-3 bg-white border <%= typeof errors !== 'undefined' && errors.addressLine ? 'border-rose-500' : 'border-zinc-300' %> rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all font-sans"
+                    >
+                    <p id="addressLineError" class="text-rose-600 text-xs mt-1.5 <%= typeof errors !== 'undefined' && errors.addressLine ? '' : 'hidden' %>">
+                        <%= typeof errors !== 'undefined' && errors.addressLine ? errors.addressLine : '' %>
+                    </p>
+                </div>
+
+                <!-- Pincode, City & State -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600 mb-2">Pincode *</label>
+                        <div class="relative">
+                            <input
+                                type="text"
+                                name="pincode"
+                                id="pincode"
+                                required
+                                maxlength="6"
+                                value="<%= (typeof address !== 'undefined' && address && address.pincode) ? address.pincode : '' %>"
+                                placeholder="6 digits (e.g. 400001)"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                class="w-full px-4 py-3 bg-white border <%= typeof errors !== 'undefined' && errors.pincode ? 'border-rose-500 ring-1 ring-rose-500' : 'border-zinc-300' %> rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all font-sans font-mono"
+                            >
+                            <div id="pincodeSpinner" class="absolute right-3 top-1/2 -translate-y-1/2 hidden">
+                                <svg class="animate-spin h-4 w-4 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <p id="pincodeError" class="text-rose-600 text-xs mt-1.5 <%= typeof errors !== 'undefined' && errors.pincode ? '' : 'hidden' %>">
+                            <%= typeof errors !== 'undefined' && errors.pincode ? errors.pincode : '' %>
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600 mb-2">City *</label>
+                        <input
+                            type="text"
+                            name="city"
+                            id="city"
+                            required
+                            value="<%= (typeof address !== 'undefined' && address && address.city) ? address.city : '' %>"
+                            placeholder="City"
+                            class="w-full px-4 py-3 bg-white border <%= typeof errors !== 'undefined' && errors.city ? 'border-rose-500' : 'border-zinc-300' %> rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all font-sans"
+                        >
+                        <p id="cityError" class="text-rose-600 text-xs mt-1.5 <%= typeof errors !== 'undefined' && errors.city ? '' : 'hidden' %>">
+                            <%= typeof errors !== 'undefined' && errors.city ? errors.city : '' %>
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600 mb-2">State *</label>
+                        <input
+                            type="text"
+                            name="state"
+                            id="state"
+                            required
+                            value="<%= (typeof address !== 'undefined' && address && address.state) ? address.state : '' %>"
+                            placeholder="State"
+                            class="w-full px-4 py-3 bg-white border <%= typeof errors !== 'undefined' && errors.state ? 'border-rose-500' : 'border-zinc-300' %> rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all font-sans"
+                        >
+                        <p id="stateError" class="text-rose-600 text-xs mt-1.5 <%= typeof errors !== 'undefined' && errors.state ? '' : 'hidden' %>">
+                            <%= typeof errors !== 'undefined' && errors.state ? errors.state : '' %>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Landmark & Alt Phone -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600 mb-2">Landmark (Optional)</label>
+                        <input
+                            type="text"
+                            name="landmark"
+                            id="landmark"
+                            value="<%= (typeof address !== 'undefined' && address && address.landmark) ? address.landmark : '' %>"
+                            placeholder="Near Banking Centre"
+                            class="w-full px-4 py-3 bg-white border border-zinc-300 rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all font-sans"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600 mb-2">Alternative Phone (Optional)</label>
+                        <input
+                            type="tel"
+                            name="altPhone"
+                            id="altPhone"
+                            value="<%= (typeof address !== 'undefined' && address && address.altPhone) ? address.altPhone : '' %>"
+                            placeholder="9876543211"
+                            class="w-full px-4 py-3 bg-white border border-zinc-300 rounded-xl text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all font-sans"
+                        >
+                    </div>
+                </div>
+
+                <!-- Address Type Selector -->
+                <div>
+                    <label class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-600 mb-2">Destination Type</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <label class="flex items-center justify-center p-3 border border-zinc-200 rounded-xl cursor-pointer hover:border-zinc-900 transition-all text-xs font-semibold uppercase tracking-wider text-zinc-700 has-[:checked]:border-[#0A4D2E] has-[:checked]:bg-emerald-50/50 has-[:checked]:text-[#0A4D2E]">
+                            <input type="radio" name="addressType" value="home" class="sr-only" <%= (typeof address === 'undefined' || !address || !address.addressType || address.addressType === 'home') ? 'checked' : '' %>>
+                            <span>Home</span>
+                        </label>
+                        <label class="flex items-center justify-center p-3 border border-zinc-200 rounded-xl cursor-pointer hover:border-zinc-900 transition-all text-xs font-semibold uppercase tracking-wider text-zinc-700 has-[:checked]:border-[#0A4D2E] has-[:checked]:bg-emerald-50/50 has-[:checked]:text-[#0A4D2E]">
+                            <input type="radio" name="addressType" value="office" class="sr-only" <%= (typeof address !== 'undefined' && address && address.addressType === 'office') ? 'checked' : '' %>>
+                            <span>Vault / Office</span>
+                        </label>
+                        <label class="flex items-center justify-center p-3 border border-zinc-200 rounded-xl cursor-pointer hover:border-zinc-900 transition-all text-xs font-semibold uppercase tracking-wider text-zinc-700 has-[:checked]:border-[#0A4D2E] has-[:checked]:bg-emerald-50/50 has-[:checked]:text-[#0A4D2E]">
+                            <input type="radio" name="addressType" value="other" class="sr-only" <%= (typeof address !== 'undefined' && address && address.addressType === 'other') ? 'checked' : '' %>>
+                            <span>Concierge</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Default Checkbox -->
+                <div class="flex items-center gap-3 pt-2">
+                    <input
+                        type="checkbox"
+                        name="isDefault"
+                        id="isDefault"
+                        value="true"
+                        <%= (typeof address !== 'undefined' && address && (address.isDefault === true || address.isDefault === 'true' || address.isDefault === 'on')) ? 'checked' : '' %>
+                        class="w-4 h-4 rounded border-zinc-300 text-[#0A4D2E] focus:ring-[#0A4D2E] cursor-pointer"
+                    >
+                    <label for="isDefault" class="text-xs text-zinc-700 cursor-pointer select-none">
+                        Designate this address as my primary delivery vault
+                    </label>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-zinc-100">
+                    <a href="/addresses" class="px-6 py-3.5 border border-zinc-300 hover:border-zinc-900 rounded-xl text-xs uppercase tracking-wider font-semibold text-zinc-700 hover:text-black transition-colors">
+                        Cancel
+                    </a>
+                    <button
+                        type="submit"
+                        class="bg-[#1b1c1c] hover:bg-black text-white px-8 py-3.5 rounded-xl text-xs uppercase tracking-[0.2em] font-semibold transition-all duration-200 shadow-sm cursor-pointer"
+                    >
+                        Save Address
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script>
+    const nameRegex = /^[A-Za-z][A-Za-z\s]{2,49}$/;
+    const phoneRegex = /^[6-9]\d{9}$/;
+    const pincodeRegex = /^[1-9][0-9]{5}$/;
+
+    const form = document.getElementById('addressForm');
+    const nameInput = document.getElementById('fullName');
+    const phoneInput = document.getElementById('phone');
+    const addressLineInput = document.getElementById('addressLine');
+    const cityInput = document.getElementById('city');
+    const stateInput = document.getElementById('state');
+    const pincodeInput = document.getElementById('pincode');
+
+    const nameError = document.getElementById('nameError');
+    const phoneError = document.getElementById('phoneError');
+    const addressLineError = document.getElementById('addressLineError');
+    const cityError = document.getElementById('cityError');
+    const stateError = document.getElementById('stateError');
+    const pincodeError = document.getElementById('pincodeError');
+
+    const pincodeSpinner = document.getElementById('pincodeSpinner');
+
+    function clearFieldValidation(input, errEl) {
+        if (errEl) {
+            errEl.textContent = '';
+            errEl.classList.add('hidden');
+        }
+        if (input) {
+            input.classList.remove('border-rose-500', 'ring-1', 'ring-rose-500');
+            input.classList.add('border-zinc-300');
+        }
+    }
+
+    function setFieldValidationError(input, errEl, msg) {
+        if (errEl) {
+            errEl.textContent = msg;
+            errEl.classList.remove('hidden');
+        }
+        if (input) {
+            input.classList.add('border-rose-500', 'ring-1', 'ring-rose-500');
+            input.classList.remove('border-zinc-300');
+        }
+    }
+
+    // Real-time clearance of validation errors on valid user input
+    nameInput.addEventListener('input', () => {
+        const val = nameInput.value.trim();
+        if (val && nameRegex.test(val)) {
+            clearFieldValidation(nameInput, nameError);
+        }
+    });
+
+    phoneInput.addEventListener('input', () => {
+        phoneInput.value = phoneInput.value.replace(/[^0-9]/g, '');
+        const val = phoneInput.value.trim();
+        if (val && phoneRegex.test(val)) {
+            clearFieldValidation(phoneInput, phoneError);
+        }
+    });
+
+    addressLineInput.addEventListener('input', () => {
+        const val = addressLineInput.value.trim();
+        if (val && val.length >= 5) {
+            clearFieldValidation(addressLineInput, addressLineError);
+        }
+    });
+
+    cityInput.addEventListener('input', () => {
+        const val = cityInput.value.trim();
+        if (val && /^[A-Za-z\s]{2,50}$/.test(val)) {
+            clearFieldValidation(cityInput, cityError);
+        }
+    });
+
+    stateInput.addEventListener('input', () => {
+        const val = stateInput.value.trim();
+        if (val && /^[A-Za-z\s]{2,50}$/.test(val)) {
+            clearFieldValidation(stateInput, stateError);
+        }
+    });
+
+    let pincodeTimer = null;
+    let lastPincodeQuery = "";
+
+    async function handlePincodeLookup() {
+        const val = (pincodeInput.value || '').replace(/\D/g, '').slice(0, 6);
+        pincodeInput.value = val;
+
+        if (val.length < 6) {
+            lastPincodeQuery = "";
+            return;
+        }
+
+        if (!pincodeRegex.test(val)) {
+            setFieldValidationError(pincodeInput, pincodeError, 'Please enter a valid 6-digit Indian pincode (cannot start with 0).');
+            return;
+        }
+
+        clearFieldValidation(pincodeInput, pincodeError);
+
+        if (val === lastPincodeQuery) return;
+
+        if (pincodeSpinner) pincodeSpinner.classList.remove('hidden');
+
+        try {
+            const res = await fetch('/addresses/pincode/' + val);
+            const data = await res.json();
+
+            if (data.success && data.city && data.state) {
+                lastPincodeQuery = val;
+                cityInput.value = data.city;
+                stateInput.value = data.state;
+
+                clearFieldValidation(cityInput, cityError);
+                clearFieldValidation(stateInput, stateError);
+
+                // Smooth highlight feedback
+                [cityInput, stateInput].forEach(inp => {
+                    inp.classList.add('border-emerald-500', 'ring-1', 'ring-emerald-500');
+                    setTimeout(() => {
+                        inp.classList.remove('border-emerald-500', 'ring-1', 'ring-emerald-500');
+                    }, 1200);
+                });
+            } else {
+                setFieldValidationError(pincodeInput, pincodeError, data.message || 'Invalid or unrecognized pincode.');
+            }
+        } catch {
+            // Silently fail lookup errors on network glitch
+        } finally {
+            if (pincodeSpinner) pincodeSpinner.classList.add('hidden');
+        }
+    }
+
+    pincodeInput.addEventListener('input', () => {
+        const val = (pincodeInput.value || '').replace(/\D/g, '');
+        if (val.length === 6 && pincodeRegex.test(val)) {
+            clearFieldValidation(pincodeInput, pincodeError);
+        }
+        clearTimeout(pincodeTimer);
+        pincodeTimer = setTimeout(handlePincodeLookup, 200);
+    });
+    pincodeInput.addEventListener('change', handlePincodeLookup);
+    pincodeInput.addEventListener('blur', handlePincodeLookup);
+
+    // Initial check if pre-filled with 6 digits
+    if (pincodeInput.value && pincodeInput.value.trim().length === 6) {
+        lastPincodeQuery = pincodeInput.value.trim();
+    }
+
+    form.addEventListener('submit', (e) => {
+        let hasError = false;
+
+        if (!nameInput.value.trim() || !nameRegex.test(nameInput.value.trim())) {
+            setFieldValidationError(nameInput, nameError, 'Name must be 3-50 letters/spaces and start with a letter.');
+            hasError = true;
+        } else {
+            clearFieldValidation(nameInput, nameError);
+        }
+
+        if (!phoneInput.value.trim() || !phoneRegex.test(phoneInput.value.trim())) {
+            setFieldValidationError(phoneInput, phoneError, 'Please provide a valid 10-digit mobile number.');
+            hasError = true;
+        } else {
+            clearFieldValidation(phoneInput, phoneError);
+        }
+
+        if (!addressLineInput.value.trim() || addressLineInput.value.trim().length < 5) {
+            setFieldValidationError(addressLineInput, addressLineError, 'Address line must contain at least 5 characters.');
+            hasError = true;
+        } else {
+            clearFieldValidation(addressLineInput, addressLineError);
+        }
+
+        if (!cityInput.value.trim() || !/^[A-Za-z\s]{2,50}$/.test(cityInput.value.trim())) {
+            setFieldValidationError(cityInput, cityError, 'Please enter a valid city name.');
+            hasError = true;
+        } else {
+            clearFieldValidation(cityInput, cityError);
+        }
+
+        if (!stateInput.value.trim() || !/^[A-Za-z\s]{2,50}$/.test(stateInput.value.trim())) {
+            setFieldValidationError(stateInput, stateError, 'Please enter a valid state name.');
+            hasError = true;
+        } else {
+            clearFieldValidation(stateInput, stateError);
+        }
+
+        if (!pincodeInput.value.trim() || !pincodeRegex.test(pincodeInput.value.trim())) {
+            setFieldValidationError(pincodeInput, pincodeError, 'Please enter a valid 6-digit Indian pincode.');
+            hasError = true;
+        } else {
+            clearFieldValidation(pincodeInput, pincodeError);
+        }
+
+        if (hasError) {
+            e.preventDefault();
+        }
+    });
+</script>
+
+<%- include('../partials/footer') %>

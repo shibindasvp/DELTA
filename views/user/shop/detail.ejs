@@ -1,0 +1,1476 @@
+<%
+    const safeProduct = (typeof product !== 'undefined' && product) ? product : { _id: '', name: 'Timepiece', brand: { name: 'Manufacture', slug: '' }, price: 0, discountPrice: 0, stock: 0, images: [], variants: [], specifications: {}, ratings: { average: 5, count: 0 }, description: '' };
+    const safeRelated = (typeof relatedProducts !== 'undefined' && Array.isArray(relatedProducts)) ? relatedProducts : [];
+    const isProductUnavailable = Boolean((typeof isUnavailable !== 'undefined' && isUnavailable) || safeProduct.isDeleted || safeProduct.isActive === false || (safeProduct.brand && (safeProduct.brand.isDeleted || safeProduct.brand.isActive === false)));
+    const unavailableMessage = (typeof unavailableReason !== 'undefined' && unavailableReason) ? unavailableReason : 'This timepiece is currently unavailable. It has been unlisted or temporarily removed from the vault.';
+%>
+<%- include('../partials/header', { title: ((typeof product !== 'undefined' && product && safeProduct.name) ? safeProduct.name : 'Timepiece') + (isProductUnavailable ? ' (Unavailable)' : '') + ' — DELTA Haute Horlogerie' }) %>
+<%- include('../partials/navbar') %>
+
+<div class="bg-[#faf8f7] min-h-screen text-[#1b1c1c] pb-24">
+    
+    <!-- Breadcrumb Navigation -->
+    <div class="max-w-7xl mx-auto px-6 pt-6 pb-4">
+        <div class="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-zinc-400 font-mono">
+            <a href="/" class="hover:text-black transition-colors">Home</a>
+            <span>/</span>
+            <a href="/shop" class="hover:text-black transition-colors">The Shop</a>
+            <span>/</span>
+            <span class="text-zinc-900 font-semibold truncate"><%= safeProduct.name %></span>
+        </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-6 pt-6 space-y-12">
+        
+        <!-- Flash Alert if present -->
+        <%- include('../partials/flash-message') %>
+
+        <!-- Blocked / Unlisted Unavailable Product Notice Banner -->
+        <% if (isProductUnavailable) { %>
+            <div class="p-5 sm:p-6 rounded-3xl bg-amber-50/95 border-2 border-amber-300/80 text-amber-950 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in" id="productUnavailableNotice">
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-200/90 border border-amber-300 flex-shrink-0 flex items-center justify-center text-amber-900 text-lg shadow-2xs font-bold">
+                        ⚠️
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] uppercase font-mono tracking-widest font-bold px-2 py-0.5 rounded-md bg-amber-200/90 text-amber-900 border border-amber-300">
+                                Product Unavailable
+                            </span>
+                            <span class="text-xs font-serif font-medium text-amber-800">Catalog Vault Notice</span>
+                        </div>
+                        <p class="text-xs sm:text-sm font-light text-amber-900 leading-relaxed font-sans">
+                            <%= unavailableMessage %>
+                        </p>
+                    </div>
+                </div>
+                <div class="flex-shrink-0 sm:self-center">
+                    <a href="/shop" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-black text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-sm">
+                        <span>Explore Available Timepieces</span>
+                        <span>→</span>
+                    </a>
+                </div>
+            </div>
+        <% } %>
+
+        <!-- Top Section: 2 Columns (Dossier & Watch Frame with 3-Image Gallery) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            
+            <!-- Left Column: Title, Description, Pricing & CTA Buttons -->
+            <div class="lg:col-span-6 space-y-6">
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-[11px] uppercase tracking-[0.3em] font-sans font-semibold text-[#885c1d]">
+                            <%= safeProduct.brand ? safeProduct.brand.name : (safeProduct.brandName || 'MANUFACTURE MAISON') %>
+                        </span>
+                        <% if (isProductUnavailable) { %>
+                            <span class="text-[9px] uppercase font-mono tracking-widest font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-200">
+                                Unavailable
+                            </span>
+                        <% } %>
+                    </div>
+                    <h1 class="text-3xl sm:text-5xl font-serif font-normal text-zinc-900 tracking-tight leading-tight">
+                        <%= safeProduct.name %>
+                    </h1>
+
+                    <!-- Rating Star Summary Snippet -->
+                    <div class="flex items-center gap-2 pt-1">
+                        <a href="#reviewsSection" class="inline-flex items-center gap-1.5 group cursor-pointer text-xs" title="View Customer Reviews">
+                            <div class="flex text-amber-500 text-xs tracking-tight">
+                                <% const topRating = (typeof reviewStats !== 'undefined' && reviewStats) ? (reviewStats.averageRating || 0) : 0; %>
+                                <% const topReviewsCount = (typeof reviewStats !== 'undefined' && reviewStats) ? (reviewStats.totalReviews || 0) : 0; %>
+                                <% for (let i = 1; i <= 5; i++) { %>
+                                    <span><%= topRating >= i ? '★' : (topRating >= (i - 0.5) ? '★' : '☆') %></span>
+                                <% } %>
+                            </div>
+                            <span class="font-mono font-bold text-zinc-800 group-hover:text-[#0A4D2E] transition-colors">
+                                <%= topReviewsCount > 0 ? topRating.toFixed(1) : 'No reviews yet' %>
+                            </span>
+                            <% if (topReviewsCount > 0) { %>
+                                <span class="text-zinc-400 font-light group-hover:text-zinc-600 transition-colors">
+                                    (<%= topReviewsCount %> <%= topReviewsCount === 1 ? 'Review' : 'Reviews' %>)
+                                </span>
+                            <% } else { %>
+                                <span class="text-xs text-[#0A4D2E] underline underline-offset-2 ml-1">Be the first to review</span>
+                            <% } %>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <p id="detailDescription" class="text-xs sm:text-sm text-zinc-600 font-light leading-relaxed max-w-xl">
+                        <%= (safeProduct.variants && safeProduct.variants[0] && safeProduct.variants[0].description) ? safeProduct.variants[0].description : (safeProduct.description || 'The ultimate watch of prestige. Crafted exclusively in precious metals and platinum, featuring the iconic day display and superlative mechanical caliber.') %>
+                    </p>
+                </div>
+
+                <!-- Valuation -->
+                <div class="pt-2 space-y-1">
+                    <% 
+                        const firstVariantDiscount = safeProduct.variants && safeProduct.variants[0] ? safeProduct.variants[0].discountPrice : null;
+                        const firstVariantPrice = safeProduct.variants && safeProduct.variants[0] ? safeProduct.variants[0].price : safeProduct.price;
+                        const activeInitialPrice = (firstVariantDiscount && firstVariantDiscount < firstVariantPrice) ? firstVariantDiscount : (safeProduct.discountPrice && safeProduct.discountPrice < safeProduct.price ? safeProduct.discountPrice : firstVariantPrice);
+                        const initialRegularPrice = firstVariantPrice;
+                        const initialHasDiscount = activeInitialPrice < initialRegularPrice;
+                        const initialDiscountPct = initialHasDiscount ? Math.round(((initialRegularPrice - activeInitialPrice) / initialRegularPrice) * 100) : 0;
+                    %>
+                    <div class="flex items-baseline gap-3">
+                        <span id="detailCurrentPrice" class="text-3xl sm:text-4xl font-serif font-semibold text-zinc-900 font-mono">
+                            ₹<%= Number(activeInitialPrice).toLocaleString('en-IN') %>
+                        </span>
+                        <span id="detailDiscountBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#0A4D2E] text-white shadow-xs <%= initialHasDiscount ? '' : 'hidden' %>">
+                            <%= initialDiscountPct %>% Special Offer
+                        </span>
+                    </div>
+                    <span id="detailRegularPrice" class="text-xs text-zinc-400 line-through font-mono block <%= initialHasDiscount ? '' : 'hidden' %>">
+                        Regular Price: ₹<%= Number(initialRegularPrice).toLocaleString('en-IN') %>
+                    </span>
+                </div>
+
+                <!-- Available Timepiece Editions / Variants Selection -->
+                <% if (safeProduct.variants && safeProduct.variants.length > 0) { %>
+                    <div class="p-4 bg-white border border-zinc-200/80 rounded-2xl space-y-2.5 shadow-xs">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] uppercase font-mono tracking-wider font-bold text-zinc-500">
+                                Select Edition & Finish
+                            </span>
+                            <span id="selectedVariantLabel" class="text-xs font-semibold text-[#0A4D2E]">
+                                <%= safeProduct.variants[0].color %>
+                            </span>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <% safeProduct.variants.forEach((v, idx) => { %>
+                                <button 
+                                    type="button" 
+                                    onclick="selectVariant(Number(this.getAttribute('data-variant-idx')))"
+                                    class="variant-pill-btn flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium transition-all cursor-pointer <%= idx === 0 ? 'border-[#0A4D2E] bg-emerald-50/50 text-[#0A4D2E] ring-1 ring-[#0A4D2E] shadow-xs' : 'border-zinc-200 hover:border-zinc-400 bg-white text-zinc-700' %>"
+                                    data-variant-idx="<%= idx %>"
+                                    title="<%= v.material %> • <%= v.dial %>"
+                                >
+                                    <span class="w-3 h-3 rounded-full border border-black/20 flex-shrink-0" style="background-color: <%= (v.colorCode && v.colorCode.trim()) ? v.colorCode : '#1b1c1c' %>"></span>
+                                    <span><%= v.color %></span>
+                                    <% if (v.stock !== undefined) { %>
+                                        <span class="text-[10px] font-mono text-zinc-400">(<%= v.stock %> in vault)</span>
+                                    <% } %>
+                                </button>
+                            <% }) %>
+                        </div>
+                    </div>
+                <% } %>
+
+                <!-- CTA Action Buttons -->
+                <div class="pt-2 space-y-4">
+                    <div class="flex items-center gap-4 max-w-md">
+                        <% 
+                           const initialVariantStock = (safeProduct.variants && safeProduct.variants[0] && safeProduct.variants[0].stock !== undefined) ? safeProduct.variants[0].stock : safeProduct.stock;
+                           const isInitialSoldOut = !isProductUnavailable && (initialVariantStock <= 0);
+                        %>
+                        <% if (isProductUnavailable) { %>
+                            <button
+                                type="button"
+                                disabled
+                                id="buyNowBtn"
+                                class="flex-1 py-4 px-6 bg-zinc-200 text-zinc-500 text-xs font-semibold uppercase tracking-[0.2em] rounded-xl cursor-not-allowed text-center opacity-70 border border-zinc-300 shadow-none select-none"
+                                title="This timepiece is currently unavailable"
+                            >
+                                Unavailable
+                            </button>
+                            <button
+                                type="button"
+                                disabled
+                                id="addToCartBtn"
+                                class="flex-1 py-4 px-6 bg-zinc-100 text-zinc-400 border border-zinc-200 text-xs font-semibold uppercase tracking-[0.2em] rounded-xl cursor-not-allowed text-center opacity-70 shadow-none select-none"
+                                title="This timepiece is currently unavailable"
+                            >
+                                Unavailable
+                            </button>
+                        <% } else if (isInitialSoldOut) { %>
+                            <button
+                                type="button"
+                                disabled
+                                id="buyNowBtn"
+                                onclick="buyNow('<%= safeProduct._id %>')"
+                                class="flex-1 py-4 px-6 bg-zinc-200 text-zinc-500 text-xs font-semibold uppercase tracking-[0.2em] rounded-xl cursor-not-allowed text-center opacity-70 border border-zinc-300 shadow-none select-none"
+                                title="Selected variant is currently sold out in the vault"
+                            >
+                                Sold Out in Vault
+                            </button>
+                            <button
+                                type="button"
+                                disabled
+                                id="addToCartBtn"
+                                onclick="addToCartAction('<%= safeProduct._id %>')"
+                                class="flex-1 py-4 px-6 bg-zinc-100 text-zinc-400 border border-zinc-200 text-xs font-semibold uppercase tracking-[0.2em] rounded-xl cursor-not-allowed text-center opacity-70 shadow-none select-none"
+                                title="Selected variant is currently sold out in the vault"
+                            >
+                                Sold Out
+                            </button>
+                        <% } else { %>
+                            <button
+                                type="button"
+                                id="buyNowBtn"
+                                onclick="buyNow('<%= safeProduct._id %>')"
+                                class="flex-1 py-4 px-6 bg-[#0A4D2E] hover:bg-[#073822] text-white text-xs font-semibold uppercase tracking-[0.2em] rounded-xl transition-all shadow-md cursor-pointer text-center"
+                            >
+                                Buy Now
+                            </button>
+                            <button
+                                type="button"
+                                id="addToCartBtn"
+                                onclick="addToCartAction('<%= safeProduct._id %>')"
+                                class="flex-1 py-4 px-6 bg-white hover:bg-zinc-50 text-zinc-900 border border-zinc-300 text-xs font-semibold uppercase tracking-[0.2em] rounded-xl transition-all shadow-sm cursor-pointer text-center"
+                            >
+                                Add to Cart
+                            </button>
+                        <% } %>
+                        <button
+                            type="button"
+                            onclick="toggleDetailWishlist('<%= safeProduct._id %>', this)"
+                            id="detailWishlistBtn"
+                            class="py-4 px-4 bg-white hover:bg-zinc-50 text-zinc-600 hover:text-rose-600 border border-zinc-300 rounded-xl transition-all shadow-sm cursor-pointer flex items-center justify-center"
+                            title="Save to Private Collection"
+                        >
+                            <svg class="w-5 h-5 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-4 text-[10px] uppercase font-mono tracking-wider text-zinc-500">
+                        <% if (isProductUnavailable) { %>
+                            <span id="detailStockBadge" class="inline-flex items-center gap-1.5 text-rose-700 font-bold bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+                                <span class="w-2 h-2 rounded-full bg-rose-600"></span>
+                                <span>Currently Unavailable</span>
+                            </span>
+                        <% } else if (isInitialSoldOut) { %>
+                            <span id="detailStockBadge" class="inline-flex items-center gap-1.5 text-rose-600 font-bold">
+                                <span class="w-2 h-2 rounded-full bg-rose-600"></span>
+                                <span>Sold Out in Vault</span>
+                            </span>
+                        <% } else { %>
+                            <span id="detailStockBadge" class="inline-flex items-center gap-1.5 text-emerald-700 font-bold">
+                                <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+                                <span><%= (safeProduct.variants && safeProduct.variants[0] && safeProduct.variants[0].stock !== undefined) ? safeProduct.variants[0].stock + ' Units in Vault' : safeProduct.stock + ' Units in Vault' %></span>
+                            </span>
+                        <% } %>
+                        <span>•</span>
+                        <span id="detailSkuTag" class="text-zinc-400">Ref: <%= (safeProduct.variants && safeProduct.variants[0] && safeProduct.variants[0].sku) ? safeProduct.variants[0].sku : (safeProduct.modelNumber || 'REF-DELTA') %></span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Interactive 3-Image Showcase & Gallery Strip -->
+            <div class="lg:col-span-6 space-y-4">
+                
+                <!-- Main Watch Image Container with Subtle Zoom Lens & Navigation Controls -->
+                <div class="relative group">
+                    <% if (isProductUnavailable) { %>
+                        <div class="absolute top-4 left-4 z-20 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-950/85 backdrop-blur-md text-amber-300 border border-amber-400/40 shadow-md">
+                            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                            <span class="text-[10px] font-mono uppercase tracking-widest font-bold">Unavailable</span>
+                        </div>
+                    <% } %>
+                    <div 
+                        id="zoomContainer"
+                        class="aspect-square w-full rounded-3xl bg-[#f2eeeb] overflow-hidden flex items-center justify-center p-8 relative cursor-crosshair shadow-sm border border-zinc-200/60 select-none"
+                        onmousemove="handleZoom(event)"
+                        onmouseleave="resetZoom()"
+                    >
+                        <img 
+                            id="mainZoomImage"
+                            src="<%= safeProduct.images && safeProduct.images.length > 0 ? safeProduct.images[0] : '' %>" 
+                            alt="<%= safeProduct.name %>"
+                            class="w-full h-full object-cover transition-transform duration-100 ease-out pointer-events-none <%= isProductUnavailable ? 'grayscale-[20%] opacity-90' : '' %>"
+                        >
+                    </div>
+
+                    <!-- Left / Right Carousel Arrow Overlays -->
+                    <button 
+                        type="button" 
+                        id="galleryPrevBtn"
+                        onclick="prevImage()"
+                        class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white text-zinc-800 flex items-center justify-center shadow-lg transition-all opacity-0 group-hover:opacity-100 cursor-pointer text-lg font-bold z-20 <%= (safeProduct.images && safeProduct.images.length > 1) ? '' : 'hidden' %>"
+                        title="Previous Image"
+                    >
+                        ‹
+                    </button>
+                    <button 
+                        type="button" 
+                        id="galleryNextBtn"
+                        onclick="nextImage()"
+                        class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white text-zinc-800 flex items-center justify-center shadow-lg transition-all opacity-0 group-hover:opacity-100 cursor-pointer text-lg font-bold z-20 <%= (safeProduct.images && safeProduct.images.length > 1) ? '' : 'hidden' %>"
+                        title="Next Image"
+                    >
+                        ›
+                    </button>
+
+                    <!-- Image Counter Badge -->
+                    <span 
+                        id="imageCounterBadge" 
+                        class="absolute bottom-4 right-4 bg-black/70 backdrop-blur-md text-white text-[10px] font-mono px-3 py-1 rounded-full shadow-sm z-10"
+                    >
+                        1 / <%= (safeProduct.images && safeProduct.images.length > 0) ? safeProduct.images.length : 1 %>
+                    </span>
+                </div>
+
+                <!-- 3-Image Interactive Thumbnail Strip -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between px-1">
+                        <span id="galleryCountText" class="text-[10px] uppercase font-mono tracking-widest font-semibold text-zinc-500">
+                            <%= (safeProduct.images && safeProduct.images.length > 0) ? safeProduct.images.length + ' Photos' : '1 Photo' %>
+                        </span>
+
+                        <!-- Variant Color Swatches -->
+                        <% if (safeProduct.variants && safeProduct.variants.length > 0) { %>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] uppercase tracking-wider text-zinc-400 font-mono">Editions:</span>
+                                <% safeProduct.variants.forEach((v, idx) => { %>
+                                    <button 
+                                        type="button" 
+                                        data-variant-idx="<%= idx %>"
+                                        onclick="selectVariant(Number(this.getAttribute('data-variant-idx')))"
+                                        class="variant-color-btn w-6 h-6 rounded-full border border-black/20 shadow-xs transition-all hover:scale-110 cursor-pointer <%= idx === 0 ? 'ring-2 ring-zinc-900 ring-offset-2 scale-110' : '' %>" 
+                                        style="background-color: <%= (v.colorCode && v.colorCode.trim()) ? v.colorCode : '#1b1c1c' %>"
+                                        title="<%= v.color %> • <%= v.material %>"
+                                    ></button>
+                                <% }) %>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Thumbnails Row -->
+                    <div id="thumbnailStrip" class="flex items-center gap-3 overflow-x-auto py-1 scrollbar-none">
+                        <% if (safeProduct.images && safeProduct.images.length > 0) { %>
+                            <% safeProduct.images.forEach((img, i) => { %>
+                                <button 
+                                    type="button" 
+                                    data-img-src="<%= img %>" data-img-index="<%= i %>" onclick="switchImage(this.getAttribute('data-img-src'), Number(this.getAttribute('data-img-index')))" 
+                                    data-img-index="<%= i %>"
+                                    class="thumbnail-card relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-[#f2eeeb] overflow-hidden p-1.5 border-2 transition-all cursor-pointer <%= i === 0 ? 'border-[#0A4D2E] ring-2 ring-[#0A4D2E]/20 shadow-md scale-105 opacity-100' : 'border-zinc-200 hover:border-zinc-400 opacity-70 hover:opacity-100' %>"
+                                >
+                                    <img src="<%= img %>" alt="<%= safeProduct.name %> - Angle <%= i + 1 %>" class="w-full h-full object-cover rounded-xl pointer-events-none">
+                                    <span class="absolute bottom-1 right-1 bg-black/60 text-white text-[8px] font-mono px-1 rounded">#<%= i + 1 %></span>
+                                </button>
+                            <% }) %>
+                        <% } %>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Middle Section: Technical Specifications (4 Cards) -->
+        <div class="space-y-8 pt-8">
+            <div class="text-center space-y-1">
+                <h2 class="text-2xl sm:text-3xl font-serif font-normal text-zinc-900 tracking-tight">
+                    Technical Specifications
+                </h2>
+                <div class="w-12 h-0.5 bg-zinc-900 mx-auto mt-2"></div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Case -->
+                <div class="bg-white border border-zinc-200/80 p-6 rounded-2xl space-y-2 shadow-xs">
+                    <span class="text-[10px] uppercase tracking-[0.25em] font-mono text-zinc-400 block font-semibold">Case</span>
+                    <h3 id="specCaseTitle" class="text-sm font-semibold text-zinc-900 font-serif">
+                        <%= (safeProduct.specs && safeProduct.specs.case && safeProduct.specs.case.trim()) ? safeProduct.specs.case : (safeProduct.variants && safeProduct.variants[0] ? safeProduct.variants[0].material : 'Manufacture Case') %>
+                    </h3>
+                    <p id="specCaseDesc" class="text-xs text-zinc-500 font-light leading-relaxed">
+                        <%= (safeProduct.specs && safeProduct.specs.caseDetails && safeProduct.specs.caseDetails.trim()) ? safeProduct.specs.caseDetails : 'Solid manufacture casing with scratch-resistant sapphire crystal.' %>
+                    </p>
+                </div>
+                <!-- Dial -->
+                <div class="bg-white border border-zinc-200/80 p-6 rounded-2xl space-y-2 shadow-xs">
+                    <span class="text-[10px] uppercase tracking-[0.25em] font-mono text-zinc-400 block font-semibold">Dial</span>
+                    <h3 id="specDialTitle" class="text-sm font-semibold text-zinc-900 font-serif">
+                        <%= (safeProduct.specs && safeProduct.specs.dial && safeProduct.specs.dial.trim()) ? safeProduct.specs.dial : (safeProduct.variants && safeProduct.variants[0] ? safeProduct.variants[0].dial : 'Manufacture Dial') %>
+                    </h3>
+                    <p id="specDialDesc" class="text-xs text-zinc-500 font-light leading-relaxed">
+                        <%= (safeProduct.specs && safeProduct.specs.dialDetails && safeProduct.specs.dialDetails.trim()) ? safeProduct.specs.dialDetails : 'Exclusive manufacture finish with applied markers and Chromalight.' %>
+                    </p>
+                </div>
+                <!-- Movement -->
+                <div class="bg-white border border-zinc-200/80 p-6 rounded-2xl space-y-2 shadow-xs">
+                    <span class="text-[10px] uppercase tracking-[0.25em] font-mono text-zinc-400 block font-semibold">Movement</span>
+                    <h3 id="specMovementTitle" class="text-sm font-semibold text-zinc-900 font-serif">
+                        <%= (safeProduct.specs && safeProduct.specs.movement && safeProduct.specs.movement.trim()) ? safeProduct.specs.movement : 'Mechanical Calibre' %>
+                    </h3>
+                    <p id="specMovementDesc" class="text-xs text-zinc-500 font-light leading-relaxed">
+                        <%= (safeProduct.specs && safeProduct.specs.movementDetails && safeProduct.specs.movementDetails.trim()) ? safeProduct.specs.movementDetails : 'Manufacture mechanical self-winding movement with approx 70 hours reserve.' %>
+                    </p>
+                </div>
+                <!-- Bracelet -->
+                <div class="bg-white border border-zinc-200/80 p-6 rounded-2xl space-y-2 shadow-xs">
+                    <span class="text-[10px] uppercase tracking-[0.25em] font-mono text-zinc-400 block font-semibold">Bracelet</span>
+                    <h3 id="specBraceletTitle" class="text-sm font-semibold text-zinc-900 font-serif">
+                        <%= (safeProduct.specs && safeProduct.specs.bracelet && safeProduct.specs.bracelet.trim()) ? safeProduct.specs.bracelet : 'Integrated Bracelet / Strap' %>
+                    </h3>
+                    <p id="specBraceletDesc" class="text-xs text-zinc-500 font-light leading-relaxed">
+                        <%= (safeProduct.specs && safeProduct.specs.braceletDetails && safeProduct.specs.braceletDetails.trim()) ? safeProduct.specs.braceletDetails : 'Solid links with concealed folding safety clasp.' %>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- The Art of Craftsmanship Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center bg-white border border-zinc-200/80 p-8 sm:p-12 rounded-3xl shadow-sm">
+            <div class="lg:col-span-6 aspect-video bg-[#f2eeeb] rounded-2xl overflow-hidden flex items-center justify-center p-4 border border-zinc-100">
+                <img src="<%= safeProduct.images && safeProduct.images.length > 1 ? safeProduct.images[1] : (safeProduct.images && safeProduct.images.length > 0 ? safeProduct.images[0] : '') %>" alt="Craftsmanship" class="w-full h-full object-cover rounded-xl">
+            </div>
+            <div class="lg:col-span-6 space-y-4">
+                <h3 class="text-2xl sm:text-3xl font-serif italic text-zinc-900">
+                    The Art of Craftsmanship
+                </h3>
+                <p class="text-xs sm:text-sm text-zinc-600 font-light leading-relaxed">
+                    Beyond timekeeping, every Delta curation represents the pinnacle of human ingenuity and micro-engineering. Hand-finished chamfers, Côtes de Genève stripes, and superlative chronometric testing guarantee a lifetime of unmatched prestige.
+                </p>
+            </div>
+        </div>
+
+        <!-- Related Timepieces -->
+        <% if (safeRelated && safeRelated.length > 0) { %>
+            <div class="space-y-6 pt-6">
+                <div class="flex items-center justify-between border-b border-zinc-200 pb-3">
+                    <h2 class="text-xl sm:text-2xl font-serif font-normal text-zinc-900">Related Timepieces</h2>
+                    <a href="/shop?brand=<%= safeProduct.brand ? safeProduct.brand.slug : '' %>" class="text-xs uppercase tracking-wider font-semibold text-zinc-600 hover:text-black">View All →</a>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <% safeRelated.slice(0, 3).forEach(rel => { %>
+                        <div class="group space-y-3">
+                            <a href="/product/<%= rel.slug %>" class="block aspect-square w-full rounded-2xl bg-[#f2eeeb] overflow-hidden p-4 group-hover:scale-[1.02] transition-transform border border-zinc-200/50">
+                                <img src="<%= rel.images && rel.images.length > 0 ? rel.images[0] : '' %>" alt="<%= rel.name %>" class="w-full h-full object-cover">
+                            </a>
+                            <div class="space-y-1">
+                                <p class="text-[10px] uppercase tracking-wider font-mono text-zinc-400"><%= rel.brand ? rel.brand.name : rel.brandName %></p>
+                                <a href="/product/<%= rel.slug %>" class="block font-serif text-base text-zinc-900 hover:text-[#0A4D2E] transition-colors"><%= rel.name %></a>
+                                <p class="text-xs font-mono font-semibold text-[#0A4D2E]">₹<%= Number(rel.discountPrice || rel.price).toLocaleString('en-IN') %></p>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+        <% } %>
+
+        <!-- Dynamic Customer Reviews Section -->
+        <section id="reviewsSection" class="bg-white border border-zinc-200/80 p-6 sm:p-12 rounded-3xl space-y-10 shadow-sm scroll-mt-24">
+            
+            <!-- Section Header -->
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 border-b border-zinc-100 pb-8">
+                <div class="space-y-1">
+                    <span class="text-[10px] uppercase tracking-[0.25em] font-mono text-zinc-400 font-semibold block">Horology Testimonials</span>
+                    <h2 class="text-2xl sm:text-3xl font-serif font-normal text-zinc-900 tracking-tight">Customer Reviews</h2>
+                    <p class="text-xs text-zinc-500 font-light">Authentic impressions from verified timepiece owners and collectors.</p>
+                </div>
+                <div>
+                    <% if (typeof user !== 'undefined' && user) { %>
+                        <button 
+                            type="button" 
+                            onclick="toggleReviewForm()" 
+                            id="writeReviewBtn" 
+                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A4D2E] hover:bg-[#083e25] text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+                        >
+                            <svg class="w-4 h-4 text-[#c5a059]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            <span><%= (typeof userReview !== 'undefined' && userReview) ? 'Edit Your Review' : '+ Write a Review' %></span>
+                        </button>
+                    <% } else { %>
+                        <a 
+                            href="/login?redirect=<%= encodeURIComponent('/product/' + safeProduct.slug + '#reviewsSection') %>" 
+                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-black text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-sm"
+                        >
+                            <span>Sign In to Review</span>
+                            <span>→</span>
+                        </a>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Rating Overview & Breakdown Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-[#faf8f7] border border-zinc-200/60 p-6 sm:p-8 rounded-2xl">
+                
+                <!-- Left: Big Rating Number & Stars -->
+                <div class="md:col-span-5 text-center md:text-left space-y-2 md:border-r border-zinc-200/80 md:pr-8">
+                    <% const avgScore = (typeof reviewStats !== 'undefined' && reviewStats) ? (reviewStats.averageRating || 0) : 0; %>
+                    <% const totalCount = (typeof reviewStats !== 'undefined' && reviewStats) ? (reviewStats.totalReviews || 0) : 0; %>
+                    
+                    <div class="flex items-baseline justify-center md:justify-start gap-2">
+                        <span class="text-4xl sm:text-5xl font-serif font-bold text-zinc-900 font-mono"><%= totalCount > 0 ? avgScore.toFixed(1) : '0.0' %></span>
+                        <span class="text-sm text-zinc-400 font-light font-mono">/ 5.0</span>
+                    </div>
+
+                    <div class="flex items-center justify-center md:justify-start text-amber-500 text-lg tracking-tight">
+                        <% for (let s = 1; s <= 5; s++) { %>
+                            <span><%= avgScore >= s ? '★' : (avgScore >= (s - 0.5) ? '★' : '☆') %></span>
+                        <% } %>
+                    </div>
+
+                    <p class="text-xs text-zinc-500 font-light">
+                        <%= totalCount > 0 ? `Based on ${totalCount} verified ${totalCount === 1 ? 'collector review' : 'collector reviews'}` : 'No verified collector reviews yet.' %>
+                    </p>
+                </div>
+
+                <!-- Right: Distribution Progress Bars (5★ to 1★) -->
+                <div class="md:col-span-7 space-y-2">
+                    <% const counts = (typeof reviewStats !== 'undefined' && reviewStats && reviewStats.ratingCounts) ? reviewStats.ratingCounts : { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }; %>
+                    <% const pcts = (typeof reviewStats !== 'undefined' && reviewStats && reviewStats.ratingPercentages) ? reviewStats.ratingPercentages : { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }; %>
+
+                    <% [5, 4, 3, 2, 1].forEach(star => { %>
+                        <div class="flex items-center gap-3 text-xs">
+                            <span class="w-12 font-mono text-[11px] text-zinc-600 font-medium flex items-center justify-end gap-1">
+                                <span><%= star %></span>
+                                <span class="text-amber-500">★</span>
+                            </span>
+                            <div class="flex-1 h-2 rounded-full bg-zinc-200/80 overflow-hidden">
+                                <div class="h-full bg-[#0A4D2E] rounded-full transition-all duration-500" style="width: <%= pcts[star] || 0 %>%"></div>
+                            </div>
+                            <span class="w-8 font-mono text-[10px] text-zinc-400 text-right"><%= counts[star] || 0 %></span>
+                        </div>
+                    <% }) %>
+                </div>
+
+            </div>
+
+            <!-- Interactive Review Form (Collapsible) -->
+            <% if (typeof user !== 'undefined' && user) { %>
+                <div id="reviewFormContainer" class="hidden transition-all duration-300">
+                    <form id="productReviewForm" onsubmit="submitProductReview(event)" class="bg-[#fcfbfa] border-2 border-[#0A4D2E]/30 rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm">
+                        
+                        <div class="flex items-center justify-between border-b border-zinc-200/80 pb-4">
+                            <div>
+                                <h3 id="reviewFormTitle" class="text-lg font-serif font-normal text-zinc-900">
+                                    <%= (typeof userReview !== 'undefined' && userReview) ? 'Edit Your Collector Review' : 'Write a Collector Review' %>
+                                </h3>
+                                <p class="text-xs text-zinc-500 font-light mt-0.5">Share your firsthand feedback regarding this timepiece.</p>
+                            </div>
+                            <button type="button" onclick="toggleReviewForm(false)" class="text-zinc-400 hover:text-zinc-700 text-base font-bold cursor-pointer">✕</button>
+                        </div>
+
+                        <!-- Inline Form Error Alert -->
+                        <div id="reviewFormError" class="hidden p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center gap-2">
+                            <span class="w-4 h-4 rounded-full bg-rose-200 text-rose-800 flex items-center justify-center font-bold text-[10px] flex-shrink-0">✕</span>
+                            <span id="reviewFormErrorText"></span>
+                        </div>
+
+                        <!-- Star Rating Selector -->
+                        <div class="space-y-2">
+                            <label class="block font-semibold text-zinc-700 uppercase tracking-wider text-[10px]">
+                                Your Rating <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="hidden" id="reviewRatingInput" name="rating" value="<%= (typeof userReview !== 'undefined' && userReview) ? userReview.rating : 5 %>">
+                            
+                            <div class="flex items-center gap-3">
+                                <div id="starPickerGroup" class="flex items-center gap-1 text-2xl sm:text-3xl cursor-pointer select-none">
+                                    <% const currRating = (typeof userReview !== 'undefined' && userReview) ? userReview.rating : 5; %>
+                                    <% for (let i = 1; i <= 5; i++) { %>
+                                        <button 
+                                            type="button" 
+                                            data-star-val="<%= i %>" 
+                                            class="star-picker-btn text-amber-500 hover:scale-110 transition-transform cursor-pointer focus:outline-none"
+                                            title="<%= i %> Stars"
+                                        >
+                                            ★
+                                        </button>
+                                    <% } %>
+                                </div>
+                                <span id="ratingDescriptor" class="text-xs font-mono font-semibold text-[#0A4D2E] ml-2">
+                                    5 Stars — Masterpiece & Superlative
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Headline Input -->
+                        <div class="space-y-1">
+                            <label class="block font-semibold text-zinc-700 uppercase tracking-wider text-[10px]">
+                                Review Headline (Optional)
+                            </label>
+                            <input 
+                                type="text" 
+                                id="reviewTitleInput" 
+                                name="title" 
+                                maxlength="100" 
+                                placeholder="e.g. Magnificent dial symmetry and flawless wrist presence" 
+                                value="<%= (typeof userReview !== 'undefined' && userReview && userReview.title) ? userReview.title : '' %>"
+                                class="w-full px-4 py-3 bg-white border border-zinc-300 rounded-xl focus:border-[#0A4D2E] focus:ring-1 focus:ring-[#0A4D2E] outline-none text-zinc-900 text-xs transition-colors"
+                            >
+                        </div>
+
+                        <!-- Detailed Feedback Textarea -->
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between">
+                                <label class="block font-semibold text-zinc-700 uppercase tracking-wider text-[10px]">
+                                    Detailed Collector Feedback <span class="text-rose-500">*</span>
+                                </label>
+                                <span id="reviewCharCounter" class="text-[10px] font-mono text-zinc-400">0 / 1000</span>
+                            </div>
+                            <textarea 
+                                id="reviewCommentInput" 
+                                name="comment" 
+                                rows="4" 
+                                minlength="4" 
+                                maxlength="1000" 
+                                required
+                                placeholder="Detail your impressions of the mechanical finish, wrist ergonomics, case proportions, timekeeping accuracy, and delivery packaging..."
+                                class="w-full px-4 py-3 bg-white border border-zinc-300 rounded-xl focus:border-[#0A4D2E] focus:ring-1 focus:ring-[#0A4D2E] outline-none text-zinc-900 text-xs transition-colors leading-relaxed"
+                            ><%= (typeof userReview !== 'undefined' && userReview && userReview.comment) ? userReview.comment : '' %></textarea>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="flex items-center justify-end gap-3 pt-2">
+                            <button 
+                                type="button" 
+                                onclick="toggleReviewForm(false)" 
+                                class="px-5 py-2.5 border border-zinc-300 hover:bg-zinc-100 rounded-xl text-zinc-700 text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                type="submit" 
+                                id="reviewSubmitBtn" 
+                                class="px-6 py-2.5 bg-[#0A4D2E] hover:bg-[#083e25] text-white rounded-xl text-xs font-semibold uppercase tracking-wider shadow-sm transition-all cursor-pointer flex items-center gap-2"
+                            >
+                                <span><%= (typeof userReview !== 'undefined' && userReview) ? 'Update Review' : 'Submit Review' %></span>
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            <% } %>
+
+            <!-- User's Own Published Review (Pinned Card) -->
+            <% if (typeof userReview !== 'undefined' && userReview) { %>
+                <div class="p-6 bg-emerald-50/50 border border-emerald-200/90 rounded-2xl space-y-3 relative shadow-xs">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-100 pb-3">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-full bg-[#0A4D2E] text-white flex items-center justify-center font-bold text-xs uppercase shadow-xs">
+                                <%= (user && user.name) ? user.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : 'ME' %>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold text-zinc-900">Your Published Review</span>
+                                    <span class="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-[#0A4D2E] text-white">Author</span>
+                                    <% if (userReview.isVerifiedPurchase) { %>
+                                        <span class="px-2 py-0.5 rounded-full text-[9px] font-mono font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                                            ✓ Verified Vault Collector
+                                        </span>
+                                    <% } %>
+                                </div>
+                                <span class="text-[10px] text-zinc-400 font-mono">
+                                    Published on <%= new Date(userReview.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                                    <% if (userReview.updatedAt && new Date(userReview.updatedAt) > new Date(userReview.createdAt)) { %>
+                                        • (Edited)
+                                    <% } %>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 self-end sm:self-auto">
+                            <button 
+                                type="button" 
+                                onclick="openEditMyReview()" 
+                                class="text-xs text-[#0A4D2E] hover:underline font-semibold font-mono flex items-center gap-1 cursor-pointer"
+                            >
+                                ✏️ Edit
+                            </button>
+                            <span class="text-zinc-300">|</span>
+                            <button 
+                                type="button" 
+                                onclick="deleteMyReview('<%= userReview._id %>')" 
+                                class="text-xs text-rose-600 hover:underline font-semibold font-mono flex items-center gap-1 cursor-pointer"
+                            >
+                                ✕ Delete
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stars & Content -->
+                    <div class="flex text-amber-500 text-xs tracking-tight">
+                        <% for (let i = 1; i <= 5; i++) { %>
+                            <span><%= userReview.rating >= i ? '★' : '☆' %></span>
+                        <% } %>
+                    </div>
+
+                    <% if (userReview.title) { %>
+                        <h4 class="text-sm font-serif font-medium text-zinc-900"><%= userReview.title %></h4>
+                    <% } %>
+
+                    <p class="text-xs text-zinc-700 font-light leading-relaxed whitespace-pre-line font-sans"><%= userReview.comment %></p>
+                </div>
+            <% } %>
+
+            <!-- All Reviews Feed -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm uppercase font-mono tracking-wider font-semibold text-zinc-700">
+                        Collector Impressions (<%= (typeof reviews !== 'undefined' && reviews) ? reviews.length : 0 %>)
+                    </h3>
+                </div>
+
+                <% if (typeof reviews !== 'undefined' && reviews && reviews.length > 0) { %>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <% reviews.forEach(r => { %>
+                            <% const isOwnReview = (typeof userReview !== 'undefined' && userReview && userReview._id.toString() === r._id.toString()); %>
+                            <div class="p-6 bg-zinc-50/80 hover:bg-zinc-50 border border-zinc-200/70 rounded-2xl space-y-3 transition-colors <%= isOwnReview ? 'ring-1 ring-[#0A4D2E]/30 bg-emerald-50/20' : '' %>">
+                                
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-zinc-200 text-zinc-700 flex items-center justify-center font-bold text-xs uppercase flex-shrink-0">
+                                            <% const rName = (r.user && r.user.name) ? r.user.name : 'Collector'; %>
+                                            <%= rName.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() %>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-semibold text-zinc-900 leading-tight">
+                                                <%= (r.user && r.user.name) ? r.user.name : 'Vault Connoisseur' %>
+                                                <% if (isOwnReview) { %>
+                                                    <span class="text-[9px] font-mono text-[#0A4D2E] font-bold ml-1">(You)</span>
+                                                <% } %>
+                                            </p>
+                                            <p class="text-[10px] text-zinc-400 font-mono">
+                                                <%= new Date(r.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <% if (r.isVerifiedPurchase) { %>
+                                        <span class="px-2 py-0.5 rounded-full text-[9px] font-mono font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1 flex-shrink-0">
+                                            ✓ Verified
+                                        </span>
+                                    <% } %>
+                                </div>
+
+                                <!-- Stars -->
+                                <div class="flex text-amber-500 text-xs tracking-tight">
+                                    <% for (let i = 1; i <= 5; i++) { %>
+                                        <span><%= r.rating >= i ? '★' : '☆' %></span>
+                                    <% } %>
+                                </div>
+
+                                <!-- Title -->
+                                <% if (r.title) { %>
+                                    <h4 class="text-xs font-serif font-medium text-zinc-900 leading-snug"><%= r.title %></h4>
+                                <% } %>
+
+                                <!-- Comment -->
+                                <p class="text-xs text-zinc-600 font-light leading-relaxed whitespace-pre-line font-sans"><%= r.comment %></p>
+
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <!-- Empty State -->
+                    <div class="p-12 text-center bg-zinc-50/60 rounded-3xl border border-dashed border-zinc-200 space-y-4">
+                        <div class="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center mx-auto text-xl text-zinc-400">
+                            ⏱
+                        </div>
+                        <div class="space-y-1">
+                            <h4 class="text-base font-serif font-normal text-zinc-800">No Collector Reviews Yet</h4>
+                            <p class="text-xs text-zinc-500 font-light max-w-sm mx-auto">
+                                Be the first connoisseur to add a review and share your impressions of this timepiece.
+                            </p>
+                        </div>
+                        <div>
+                            <% if (typeof user !== 'undefined' && user) { %>
+                                <button 
+                                    type="button" 
+                                    onclick="toggleReviewForm(true)" 
+                                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A4D2E] hover:bg-[#083e25] text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+                                >
+                                    <span>+ Write the First Review</span>
+                                </button>
+                            <% } else { %>
+                                <a 
+                                    href="/login?redirect=<%= encodeURIComponent('/product/' + safeProduct.slug + '#reviewsSection') %>" 
+                                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-black text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-sm"
+                                >
+                                    <span>Sign In to Write a Review</span>
+                                    <span>→</span>
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+
+        </section>
+
+    </main>
+</div>
+
+<%- include('../partials/footer') %>
+
+<script>
+    // State management for 3-image gallery & variants
+    const baseProductPrice = Number(JSON.parse(decodeURIComponent("<%- encodeURIComponent(JSON.stringify(safeProduct.price || 0)) %>")));
+    const baseProductDiscountPrice = JSON.parse(decodeURIComponent("<%- encodeURIComponent(JSON.stringify(safeProduct.discountPrice || null)) %>"));
+    const baseProductDescription = JSON.parse(decodeURIComponent("<%- encodeURIComponent(JSON.stringify(safeProduct.description || 'The ultimate watch of prestige. Crafted exclusively in precious metals and platinum.')) %>"));
+    const baseProductModelNumber = JSON.parse(decodeURIComponent("<%- encodeURIComponent(JSON.stringify(safeProduct.modelNumber || 'REF-DELTA')) %>"));
+    const defaultProductPrimaryImages = JSON.parse(decodeURIComponent("<%- encodeURIComponent(JSON.stringify(safeProduct.images && safeProduct.images.length > 0 ? safeProduct.images : [])) %>"));
+    const productVariantsList = JSON.parse(decodeURIComponent("<%- encodeURIComponent(JSON.stringify(safeProduct.variants && safeProduct.variants.length > 0 ? safeProduct.variants : [])) %>"));
+    const baseProductStock = Number(JSON.parse(decodeURIComponent("<%- encodeURIComponent(JSON.stringify(safeProduct.stock !== undefined ? safeProduct.stock : 0)) %>")));
+    const isProductUnavailable = <%= isProductUnavailable ? 'true' : 'false' %>;
+
+    let currentGalleryImages = (defaultProductPrimaryImages && defaultProductPrimaryImages.length > 0) ? defaultProductPrimaryImages : [];
+    let currentActiveImageIndex = 0;
+    let activeVariantColor = (productVariantsList && productVariantsList.length > 0 && productVariantsList[0].color) ? productVariantsList[0].color : 'Standard';
+    let activeVariantId = (productVariantsList && productVariantsList.length > 0 && productVariantsList[0]._id) ? productVariantsList[0]._id : '';
+
+    function handleZoom(e) {
+        const container = document.getElementById('zoomContainer');
+        const img = document.getElementById('mainZoomImage');
+        if (!container || !img) return;
+        const rect = container.getBoundingClientRect();
+        const xPercent = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+        const yPercent = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+        img.style.transformOrigin = xPercent + '% ' + yPercent + '%';
+        img.style.transform = "scale(1.8)";
+    }
+
+    function resetZoom() {
+        const img = document.getElementById('mainZoomImage');
+        if (!img) return;
+        img.style.transform = "scale(1)";
+        img.style.transformOrigin = "center center";
+    }
+
+    function switchImage(src, index) {
+        currentActiveImageIndex = index;
+        const mainImg = document.getElementById('mainZoomImage');
+        if (mainImg) {
+            mainImg.src = src;
+        }
+
+        // Update badge
+        const badge = document.getElementById('imageCounterBadge');
+        if (badge && currentGalleryImages.length > 0) {
+            badge.textContent = (index + 1) + ' / ' + currentGalleryImages.length;
+        }
+
+        // Highlight active thumbnail
+        const cards = document.querySelectorAll('.thumbnail-card');
+        cards.forEach((c, idx) => {
+            if (idx === index) {
+                c.className = 'thumbnail-card relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-[#f2eeeb] overflow-hidden p-1.5 border-2 transition-all cursor-pointer border-[#0A4D2E] ring-2 ring-[#0A4D2E]/20 shadow-md scale-105 opacity-100';
+            } else {
+                c.className = 'thumbnail-card relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-[#f2eeeb] overflow-hidden p-1.5 border-2 transition-all cursor-pointer border-zinc-200 hover:border-zinc-400 opacity-70 hover:opacity-100';
+            }
+        });
+    }
+
+    function prevImage() {
+        if (!currentGalleryImages || currentGalleryImages.length <= 1) return;
+        let newIdx = currentActiveImageIndex - 1;
+        if (newIdx < 0) newIdx = currentGalleryImages.length - 1;
+        switchImage(currentGalleryImages[newIdx], newIdx);
+    }
+
+    function nextImage() {
+        if (!currentGalleryImages || currentGalleryImages.length <= 1) return;
+        let newIdx = currentActiveImageIndex + 1;
+        if (newIdx >= currentGalleryImages.length) newIdx = 0;
+        switchImage(currentGalleryImages[newIdx], newIdx);
+    }
+
+    function renderThumbnailStrip(images) {
+        const strip = document.getElementById('thumbnailStrip');
+        const countText = document.getElementById('galleryCountText');
+        if (!strip) return;
+
+        strip.innerHTML = '';
+        currentGalleryImages = (images && Array.isArray(images) && images.length > 0) ? images : defaultProductPrimaryImages;
+        if (!currentGalleryImages || currentGalleryImages.length === 0) {
+            currentGalleryImages = [];
+        }
+        currentActiveImageIndex = 0;
+
+        if (countText) {
+            countText.textContent = (currentGalleryImages.length > 0) ? (currentGalleryImages.length + ' Photos') : '0 Photos';
+        }
+
+        if (currentGalleryImages.length > 0) {
+            const mainImg = document.getElementById('mainZoomImage');
+            if (mainImg) mainImg.src = currentGalleryImages[0];
+
+            const badge = document.getElementById('imageCounterBadge');
+            if (badge) badge.textContent = '1 / ' + currentGalleryImages.length;
+        }
+
+        // Show or hide prev/next carousel overlay buttons
+        const prevBtn = document.getElementById('galleryPrevBtn');
+        const nextBtn = document.getElementById('galleryNextBtn');
+        if (prevBtn && nextBtn) {
+            if (currentGalleryImages.length > 1) {
+                prevBtn.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+            } else {
+                prevBtn.classList.add('hidden');
+                nextBtn.classList.add('hidden');
+            }
+        }
+
+        currentGalleryImages.forEach((img, i) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.dataset.imgIndex = i;
+            btn.className = 'thumbnail-card relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-[#f2eeeb] overflow-hidden p-1.5 border-2 transition-all cursor-pointer ' + 
+                (i === 0 ? 'border-[#0A4D2E] ring-2 ring-[#0A4D2E]/20 shadow-md scale-105 opacity-100' : 'border-zinc-200 hover:border-zinc-400 opacity-70 hover:opacity-100');
+            btn.onclick = () => switchImage(img, i);
+            btn.innerHTML = `
+                <img src="${img}" alt="Angle ${i + 1}" class="w-full h-full object-cover rounded-xl pointer-events-none">
+                <span class="absolute bottom-1 right-1 bg-black/60 text-white text-[8px] font-mono px-1 rounded">#${i + 1}</span>
+            `;
+            strip.appendChild(btn);
+        });
+    }
+
+    function selectVariant(idx) {
+        if (!productVariantsList || !productVariantsList[idx]) return;
+        const v = productVariantsList[idx];
+
+        activeVariantColor = v.color || 'Standard';
+        activeVariantId = v._id || '';
+
+        // 1. Update Pill Buttons
+        document.querySelectorAll('.variant-pill-btn').forEach((b, i) => {
+            if (i === idx) {
+                b.className = 'variant-pill-btn flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium transition-all cursor-pointer border-[#0A4D2E] bg-emerald-50/50 text-[#0A4D2E] ring-1 ring-[#0A4D2E] shadow-xs';
+            } else {
+                b.className = 'variant-pill-btn flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium transition-all cursor-pointer border-zinc-200 hover:border-zinc-400 bg-white text-zinc-700';
+            }
+        });
+
+        // 2. Update Color Swatch Dots
+        document.querySelectorAll('.variant-color-btn').forEach((b, i) => {
+            if (i === idx) {
+                b.className = 'variant-color-btn w-6 h-6 rounded-full border border-black/20 shadow-xs transition-all hover:scale-110 cursor-pointer ring-2 ring-zinc-900 ring-offset-2 scale-110';
+            } else {
+                b.className = 'variant-color-btn w-6 h-6 rounded-full border border-black/20 shadow-xs transition-all hover:scale-110 cursor-pointer';
+            }
+        });
+
+        // 3. Update Label
+        const label = document.getElementById('selectedVariantLabel');
+        if (label) label.textContent = v.color;
+
+        // 4. Update Valuation / Pricing
+        const currentPriceElem = document.getElementById('detailCurrentPrice');
+        const regularPriceElem = document.getElementById('detailRegularPrice');
+        const discountBadge = document.getElementById('detailDiscountBadge');
+
+        const vPrice = (v.price !== undefined && v.price !== null && !isNaN(Number(v.price))) ? Number(v.price) : baseProductPrice;
+        const vDiscount = (v.discountPrice !== undefined && v.discountPrice !== null && v.discountPrice !== '' && !isNaN(Number(v.discountPrice))) ? Number(v.discountPrice) : null;
+        const effectivePrice = (vDiscount && vDiscount < vPrice) ? vDiscount : vPrice;
+
+        if (currentPriceElem) currentPriceElem.textContent = '₹' + effectivePrice.toLocaleString('en-IN');
+        if (regularPriceElem) {
+            if (vDiscount && vDiscount < vPrice) {
+                const pct = Math.round(((vPrice - vDiscount) / vPrice) * 100);
+                regularPriceElem.textContent = 'Regular Price: ₹' + vPrice.toLocaleString('en-IN');
+                regularPriceElem.classList.remove('hidden');
+                if (discountBadge) {
+                    discountBadge.textContent = `${pct}% Special Offer`;
+                    discountBadge.classList.remove('hidden');
+                }
+            } else {
+                regularPriceElem.classList.add('hidden');
+                if (discountBadge) discountBadge.classList.add('hidden');
+            }
+        }
+
+        // 5. Update Vault Stock Status and CTA Buttons
+        const stockBadge = document.getElementById('detailStockBadge');
+        const buyNowBtn = document.getElementById('buyNowBtn');
+        const addToCartBtn = document.getElementById('addToCartBtn');
+        const stockQty = parseInt(v.stock !== undefined ? v.stock : baseProductStock, 10);
+        const isSoldOut = isNaN(stockQty) || stockQty <= 0;
+
+        if (stockBadge) {
+            if (isProductUnavailable) {
+                stockBadge.className = 'inline-flex items-center gap-1.5 text-rose-700 font-bold bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200';
+                stockBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-600"></span><span>Currently Unavailable</span>';
+            } else {
+                if (isSoldOut) {
+                    stockBadge.className = 'inline-flex items-center gap-1.5 text-rose-600 font-bold';
+                    stockBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-600"></span><span>Sold Out in Vault</span>';
+                } else {
+                    stockBadge.className = 'inline-flex items-center gap-1.5 text-emerald-700 font-bold';
+                    stockBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span><span>' + stockQty + ' Units in Vault</span>';
+                }
+            }
+        }
+
+        if (!isProductUnavailable && buyNowBtn && addToCartBtn) {
+            if (isSoldOut) {
+                buyNowBtn.disabled = true;
+                buyNowBtn.className = 'flex-1 py-4 px-6 bg-zinc-200 text-zinc-500 text-xs font-semibold uppercase tracking-[0.2em] rounded-xl cursor-not-allowed text-center opacity-70 border border-zinc-300 shadow-none select-none';
+                buyNowBtn.textContent = 'Sold Out in Vault';
+                buyNowBtn.title = 'Selected variant is currently sold out in the vault';
+
+                addToCartBtn.disabled = true;
+                addToCartBtn.className = 'flex-1 py-4 px-6 bg-zinc-100 text-zinc-400 border border-zinc-200 text-xs font-semibold uppercase tracking-[0.2em] rounded-xl cursor-not-allowed text-center opacity-70 shadow-none select-none';
+                addToCartBtn.textContent = 'Sold Out';
+                addToCartBtn.title = 'Selected variant is currently sold out in the vault';
+            } else {
+                buyNowBtn.disabled = false;
+                buyNowBtn.className = 'flex-1 py-4 px-6 bg-[#0A4D2E] hover:bg-[#073822] text-white text-xs font-semibold uppercase tracking-[0.2em] rounded-xl transition-all shadow-md cursor-pointer text-center';
+                buyNowBtn.textContent = 'Buy Now';
+                buyNowBtn.title = '';
+
+                addToCartBtn.disabled = false;
+                addToCartBtn.className = 'flex-1 py-4 px-6 bg-white hover:bg-zinc-50 text-zinc-900 border border-zinc-300 text-xs font-semibold uppercase tracking-[0.2em] rounded-xl transition-all shadow-sm cursor-pointer text-center';
+                addToCartBtn.textContent = 'Add to Cart';
+                addToCartBtn.title = '';
+            }
+        }
+
+        // 6. Update Sku / Reference
+        const skuTag = document.getElementById('detailSkuTag');
+        if (skuTag) {
+            skuTag.textContent = 'Ref: ' + (v.sku || baseProductModelNumber);
+        }
+
+        // 7. Update Description
+        const descElem = document.getElementById('detailDescription');
+        if (descElem) {
+            descElem.textContent = v.description || baseProductDescription;
+        }
+
+        // 8. Update Photo Studio Gallery
+        const activeImages = (v.images && v.images.length > 0) ? v.images : defaultProductPrimaryImages;
+        renderThumbnailStrip(activeImages);
+
+        // 9. Update Technical Specs
+        if (v.material && v.material.trim()) {
+            const caseElem = document.getElementById('specCaseTitle');
+            if (caseElem) caseElem.textContent = v.material;
+        }
+        if (v.dial && v.dial.trim()) {
+            const dialElem = document.getElementById('specDialTitle');
+            if (dialElem) dialElem.textContent = v.dial;
+        }
+
+        // 10. Synchronize Wishlist Button for Newly Selected Variant
+        if (typeof updateDetailWishlistUI === 'function') {
+            updateDetailWishlistUI();
+        }
+    }
+
+    // Backwards compatibility alias
+    function selectVariantWithImages(idx) {
+        selectVariant(idx);
+    }
+
+    async function addToCartAction(productId) {
+        if (isProductUnavailable) {
+            if (window.showToast) {
+                window.showToast('This timepiece is currently unavailable and cannot be added to bag.', 'warning');
+            } else {
+                alert('This timepiece is currently unavailable and cannot be added to bag.');
+            }
+            return;
+        }
+
+        const activeVariant = (productVariantsList && productVariantsList.length > 0)
+            ? (productVariantsList.find(v => (v._id && v._id.toString() === activeVariantId) || v.color === activeVariantColor) || productVariantsList[0])
+            : null;
+        const currentStock = activeVariant && activeVariant.stock !== undefined ? Number(activeVariant.stock) : Number(baseProductStock);
+        if (currentStock <= 0) {
+            const msg = 'Selected variant is currently sold out in the vault.';
+            if (window.showToast) window.showToast(msg, 'warning');
+            else alert(msg);
+            return;
+        }
+
+        try {
+            const res = await fetch('/cart/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ productId, variantColor: activeVariantColor, variantId: activeVariantId, quantity: 1 })
+            });
+            const data = await res.json();
+            if (res.status === 401 || data.redirect) {
+                window.location.href = data.redirect || '/login';
+                return;
+            }
+            if (!res.ok || !data.success) {
+                if (window.showToast) {
+                    window.showToast(data.message || 'Unable to add timepiece to bag.', 'warning');
+                } else {
+                    alert(data.message || 'Unable to add timepiece to bag.');
+                }
+                return;
+            }
+            if (window.updateNavbarCounters && data.cartCount !== undefined) {
+                window.updateNavbarCounters(data.cartCount);
+            }
+            if (window.showToast) {
+                window.showToast('Timepiece added to your shopping bag.', 'success');
+            } else {
+                alert('Timepiece added to your shopping bag.');
+            }
+        } catch (e) {
+            if (window.showToast) {
+                window.showToast('Connection issue. Please try again.', 'error');
+            } else {
+                alert('Connection issue. Please try again.');
+            }
+        }
+    }
+
+    async function buyNow(productId) {
+        if (isProductUnavailable) {
+            if (window.showToast) {
+                window.showToast('This timepiece is currently unavailable for order.', 'warning');
+            } else {
+                alert('This timepiece is currently unavailable for order.');
+            }
+            return;
+        }
+
+        const activeVariant = (productVariantsList && productVariantsList.length > 0)
+            ? (productVariantsList.find(v => (v._id && v._id.toString() === activeVariantId) || v.color === activeVariantColor) || productVariantsList[0])
+            : null;
+        const currentStock = activeVariant && activeVariant.stock !== undefined ? Number(activeVariant.stock) : Number(baseProductStock);
+        if (currentStock <= 0) {
+            const msg = 'Selected variant is currently sold out in the vault.';
+            if (window.showToast) window.showToast(msg, 'warning');
+            else alert(msg);
+            return;
+        }
+
+        try {
+            const res = await fetch('/cart/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ productId, variantColor: activeVariantColor, variantId: activeVariantId, quantity: 1 })
+            });
+            const data = await res.json();
+            if (res.status === 401 || data.redirect) {
+                window.location.href = data.redirect || '/login?redirect=' + encodeURIComponent('/checkout');
+                return;
+            }
+            if (!res.ok || !data.success) {
+                if (window.showToast) {
+                    window.showToast(data.message || 'Unable to proceed with order.', 'warning');
+                } else {
+                    alert(data.message || 'Unable to proceed with order.');
+                }
+                return;
+            }
+            window.location.href = '/checkout';
+        } catch (e) {
+            if (window.showToast) {
+                window.showToast('Connection issue. Please try again.', 'error');
+            } else {
+                alert('Connection issue. Please try again.');
+            }
+        }
+    }
+
+    // Auto-select variant if provided in query string e.g. ?variant=Everose+Gold
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const reqVar = urlParams.get('variant');
+        if (reqVar && productVariantsList && productVariantsList.length > 0) {
+            const matchedIdx = productVariantsList.findIndex(v => v.color && v.color.trim().toLowerCase() === reqVar.trim().toLowerCase());
+            if (matchedIdx > -1) {
+                selectVariant(matchedIdx);
+            }
+        }
+    } catch (err) {}
+
+    async function toggleDetailWishlist(productId, btn) {
+        try {
+            const res = await fetch('/wishlist/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ 
+                    productId: productId || '<%= safeProduct._id %>', 
+                    variantColor: activeVariantColor, 
+                    variantId: activeVariantId 
+                })
+            });
+            const data = await res.json();
+            if (res.status === 401 || data.redirect) {
+                window.location.href = data.redirect || '/login';
+                return;
+            }
+            if (data.success) {
+                const targetKey = data.variantKey || `${productId}_${(activeVariantColor || 'Standard').trim().toLowerCase()}`;
+                if (data.added) {
+                    userWishlistKeys.add(targetKey);
+                    if (activeVariantId) userWishlistVariantIds.add(activeVariantId.toString());
+                    userWishlistProductIds.add(productId);
+                    if (window.showToast) window.showToast(data.message || 'Saved to your private collection.', 'success');
+                } else {
+                    userWishlistKeys.delete(targetKey);
+                    if (activeVariantId) userWishlistVariantIds.delete(activeVariantId.toString());
+                    const hasOtherVariants = Array.from(userWishlistKeys).some(k => k.startsWith(productId + '_'));
+                    if (!hasOtherVariants) {
+                        userWishlistProductIds.delete(productId);
+                    }
+                    if (window.showToast) window.showToast(data.message || 'Removed from your private collection.', 'info');
+                }
+                updateDetailWishlistUI();
+
+                if (window.updateNavbarCounters && data.count !== undefined) {
+                    window.updateNavbarCounters(undefined, data.count);
+                }
+            } else {
+                if (window.showToast) {
+                    window.showToast(data.message || 'Unable to update collection.', 'warning');
+                } else {
+                    alert(data.message || 'Unable to update collection.');
+                }
+            }
+        } catch (e) {
+            if (window.showToast) {
+                window.showToast('Connection error.', 'error');
+            } else {
+                alert('Connection error.');
+            }
+        }
+    }
+
+    let userWishlistKeys = new Set();
+    let userWishlistVariantIds = new Set();
+    let userWishlistProductIds = new Set();
+
+    function updateDetailWishlistUI() {
+        const btn = document.getElementById('detailWishlistBtn');
+        if (!btn) return;
+        const svg = btn.querySelector('svg');
+        const currentVariantKey = `<%= safeProduct._id %>_${(activeVariantColor || 'Standard').trim().toLowerCase()}`;
+        const isWishlisted = 
+            (activeVariantId && userWishlistVariantIds.has(activeVariantId.toString())) ||
+            userWishlistKeys.has(currentVariantKey) ||
+            (userWishlistProductIds.has('<%= safeProduct._id %>') && (!productVariantsList || productVariantsList.length <= 1));
+
+        if (isWishlisted) {
+            btn.classList.add('text-rose-600', 'border-rose-300', 'bg-rose-50', 'ring-1', 'ring-rose-300', 'shadow-xs');
+            btn.classList.remove('text-zinc-600', 'bg-white', 'border-zinc-300');
+            if (svg) svg.setAttribute('fill', 'currentColor');
+        } else {
+            btn.classList.remove('text-rose-600', 'border-rose-300', 'bg-rose-50', 'ring-1', 'ring-rose-300', 'shadow-xs');
+            btn.classList.add('text-zinc-600', 'bg-white', 'border-zinc-300');
+            if (svg) svg.setAttribute('fill', 'none');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Auto-select variant from URL query param (?variant=...) or default to variant 0
+        const urlParams = new URLSearchParams(window.location.search);
+        const variantQuery = urlParams.get('variant') || urlParams.get('edition');
+        if (variantQuery && productVariantsList && productVariantsList.length > 0) {
+            const vIdx = productVariantsList.findIndex(v => v.color && v.color.toLowerCase() === variantQuery.toLowerCase());
+            if (vIdx > -1) {
+                selectVariant(vIdx);
+            } else {
+                selectVariant(0);
+            }
+        } else if (productVariantsList && productVariantsList.length > 0) {
+            selectVariant(0);
+        }
+
+        // Initialize Wishlist State
+        try {
+            const res = await fetch('/api/wishlist/ids');
+            const data = await res.json();
+            if (data) {
+                userWishlistProductIds = new Set(data.ids || []);
+                userWishlistKeys = new Set(data.variantKeys || []);
+                userWishlistVariantIds = new Set(data.variantIds || []);
+                updateDetailWishlistUI();
+            }
+        } catch (e) {}
+
+        // Initialize Star Rating Picker for Review Form
+        initStarRatingPicker();
+    });
+
+    // ==========================================
+    // REVIEWS MANAGEMENT (DELTA LUXURY STANDARD)
+    // ==========================================
+    const ratingDescriptors = {
+        1: '1 Star — Disappointed / Flawed',
+        2: '2 Stars — Below Expectations',
+        3: '3 Stars — Good / Standard Manufacture',
+        4: '4 Stars — Very Good / Recommended',
+        5: '5 Stars — Masterpiece & Superlative'
+    };
+
+    function initStarRatingPicker() {
+        const group = document.getElementById('starPickerGroup');
+        const hiddenInput = document.getElementById('reviewRatingInput');
+        const descriptor = document.getElementById('ratingDescriptor');
+        if (!group || !hiddenInput) return;
+
+        const starBtns = group.querySelectorAll('.star-picker-btn');
+
+        function renderStars(activeVal) {
+            starBtns.forEach(btn => {
+                const val = Number(btn.getAttribute('data-star-val'));
+                if (val <= activeVal) {
+                    btn.classList.add('text-amber-500');
+                    btn.classList.remove('text-zinc-300');
+                } else {
+                    btn.classList.remove('text-amber-500');
+                    btn.classList.add('text-zinc-300');
+                }
+            });
+            if (descriptor && ratingDescriptors[activeVal]) {
+                descriptor.textContent = ratingDescriptors[activeVal];
+            }
+        }
+
+        starBtns.forEach(btn => {
+            const starVal = Number(btn.getAttribute('data-star-val'));
+
+            btn.addEventListener('mouseenter', () => {
+                renderStars(starVal);
+            });
+
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                hiddenInput.value = starVal;
+                renderStars(starVal);
+            });
+        });
+
+        group.addEventListener('mouseleave', () => {
+            const currentVal = Number(hiddenInput.value) || 5;
+            renderStars(currentVal);
+        });
+
+        // Initialize with default or current rating
+        renderStars(Number(hiddenInput.value) || 5);
+
+        // Character counter
+        const commentInput = document.getElementById('reviewCommentInput');
+        const charCounter = document.getElementById('reviewCharCounter');
+        if (commentInput && charCounter) {
+            commentInput.addEventListener('input', () => {
+                charCounter.textContent = commentInput.value.length + ' / 1000';
+            });
+            charCounter.textContent = commentInput.value.length + ' / 1000';
+        }
+    }
+
+    function toggleReviewForm(forceOpen) {
+        const container = document.getElementById('reviewFormContainer');
+        if (!container) return;
+        const shouldOpen = forceOpen !== undefined ? forceOpen : container.classList.contains('hidden');
+        if (shouldOpen) {
+            container.classList.remove('hidden');
+            container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            document.getElementById('reviewCommentInput')?.focus();
+        } else {
+            container.classList.add('hidden');
+        }
+    }
+
+    function openEditMyReview() {
+        toggleReviewForm(true);
+        const formTitle = document.getElementById('reviewFormTitle');
+        if (formTitle) formTitle.textContent = 'Edit Your Collector Review';
+        const submitBtn = document.getElementById('reviewSubmitBtn');
+        if (submitBtn) submitBtn.innerHTML = '<span>Update Review</span>';
+    }
+
+    async function submitProductReview(e) {
+        e.preventDefault();
+        const errBox = document.getElementById('reviewFormError');
+        const errText = document.getElementById('reviewFormErrorText');
+        const submitBtn = document.getElementById('reviewSubmitBtn');
+        if (errBox) errBox.classList.add('hidden');
+
+        const ratingVal = Number(document.getElementById('reviewRatingInput')?.value || 5);
+        const titleVal = document.getElementById('reviewTitleInput')?.value.trim() || '';
+        const commentVal = document.getElementById('reviewCommentInput')?.value.trim() || '';
+
+        if (!commentVal || commentVal.length < 4) {
+            if (errBox && errText) {
+                errText.textContent = 'Please write a review comment (minimum 4 characters).';
+                errBox.classList.remove('hidden');
+            }
+            return;
+        }
+
+        const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>Submitting Review...</span>';
+        }
+
+        try {
+            const res = await fetch('/product/<%= safeProduct.slug %>/reviews', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    rating: ratingVal,
+                    title: titleVal,
+                    comment: commentVal
+                })
+            });
+
+            const data = await res.json();
+            if (res.status === 401 || data.redirect) {
+                window.location.href = data.redirect || '/login';
+                return;
+            }
+
+            if (data.success) {
+                if (window.showToast) {
+                    window.showToast(data.message || 'Review submitted successfully.', 'success');
+                }
+                setTimeout(() => {
+                    window.location.hash = 'reviewsSection';
+                    window.location.reload();
+                }, 400);
+            } else {
+                if (errBox && errText) {
+                    errText.textContent = data.message || 'Failed to submit review.';
+                    errBox.classList.remove('hidden');
+                }
+            }
+        } catch (err) {
+            if (errBox && errText) {
+                errText.textContent = 'Network communication error. Please try again.';
+                errBox.classList.remove('hidden');
+            }
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = origBtnHtml;
+            }
+        }
+    }
+
+    async function deleteMyReview(reviewId) {
+        if (!confirm('Are you sure you want to remove your collector review?')) {
+            return;
+        }
+
+        try {
+            const res = await fetch(`/product/<%= safeProduct.slug %>/reviews/${reviewId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                const nextUrl = new URL(window.location.href);
+                nextUrl.searchParams.set('success', data.message || 'Your review has been deleted successfully.');
+                nextUrl.hash = 'reviewsSection';
+                window.location.href = nextUrl.toString();
+            } else {
+                alert(data.message || 'Failed to remove review.');
+            }
+        } catch (e) {
+            alert('Failed to delete review due to connection error.');
+        }
+    }
+</script>

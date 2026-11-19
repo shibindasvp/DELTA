@@ -1,0 +1,263 @@
+<%- include('../partials/header', { title: 'Verify New Email — DELTA Vault' }) %>
+<%- include('../partials/navbar') %>
+
+<div class="bg-[#faf8f7] min-h-screen text-[#1b1c1c] py-12">
+    <main class="max-w-md mx-auto px-6 space-y-8">
+        
+        <div class="bg-white border border-zinc-200/80 rounded-3xl p-8 sm:p-10 shadow-sm text-center relative space-y-6">
+            
+            <!-- Header: Emblem & Title -->
+            <div class="w-14 h-14 rounded-full border border-zinc-200 bg-zinc-50 flex items-center justify-center text-zinc-900 text-2xl font-serif mx-auto">
+                δ
+            </div>
+
+            <div class="space-y-1">
+                <h1 class="text-2xl sm:text-3xl font-serif text-zinc-900 font-normal tracking-tight">
+                    Verify New Email
+                </h1>
+                <p class="text-xs text-zinc-500 font-light">
+                    We dispatched a 6-digit security code to your new address:
+                </p>
+                <p class="text-xs sm:text-sm font-mono font-bold text-zinc-900 bg-zinc-50 px-3 py-1.5 rounded-lg inline-block mt-2 border border-zinc-200">
+                    <%= typeof newEmail !== 'undefined' ? newEmail : '' %>
+                </p>
+            </div>
+
+            <%- include('../partials/flash-message') %>
+
+            <!-- Form for OTP Code -->
+            <form action="/profile/verify-email" method="POST" class="space-y-6" id="emailOtpForm">
+                <%
+                    const prefillEmailOtp = (typeof oldData !== 'undefined' && oldData.otp) ? String(oldData.otp) : ((typeof otp !== 'undefined' && otp) ? String(otp) : '');
+                    const emailOtpDigits = prefillEmailOtp.split('');
+                %>
+                <input type="hidden" name="newEmail" value="<%= typeof newEmail !== 'undefined' ? newEmail : '' %>">
+                <input type="hidden" name="otp" id="fullOtp" value="<%= prefillEmailOtp %>">
+
+                <div>
+                    <div class="flex justify-center gap-2 sm:gap-2.5" id="otpBoxContainer">
+                        <input type="text" maxlength="6" inputmode="numeric" autocomplete="one-time-code" value="<%= emailOtpDigits[0] || '' %>" class="otp-box w-11 h-14 sm:w-12 sm:h-16 bg-white border border-zinc-300 rounded-xl text-center text-xl font-bold text-zinc-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all shadow-xs" autofocus>
+                        <input type="text" maxlength="1" inputmode="numeric" autocomplete="off" value="<%= emailOtpDigits[1] || '' %>" class="otp-box w-11 h-14 sm:w-12 sm:h-16 bg-white border border-zinc-300 rounded-xl text-center text-xl font-bold text-zinc-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all shadow-xs">
+                        <input type="text" maxlength="1" inputmode="numeric" autocomplete="off" value="<%= emailOtpDigits[2] || '' %>" class="otp-box w-11 h-14 sm:w-12 sm:h-16 bg-white border border-zinc-300 rounded-xl text-center text-xl font-bold text-zinc-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all shadow-xs">
+                        <input type="text" maxlength="1" inputmode="numeric" autocomplete="off" value="<%= emailOtpDigits[3] || '' %>" class="otp-box w-11 h-14 sm:w-12 sm:h-16 bg-white border border-zinc-300 rounded-xl text-center text-xl font-bold text-zinc-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all shadow-xs">
+                        <input type="text" maxlength="1" inputmode="numeric" autocomplete="off" value="<%= emailOtpDigits[4] || '' %>" class="otp-box w-11 h-14 sm:w-12 sm:h-16 bg-white border border-zinc-300 rounded-xl text-center text-xl font-bold text-zinc-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all shadow-xs">
+                        <input type="text" maxlength="1" inputmode="numeric" autocomplete="off" value="<%= emailOtpDigits[5] || '' %>" class="otp-box w-11 h-14 sm:w-12 sm:h-16 bg-white border border-zinc-300 rounded-xl text-center text-xl font-bold text-zinc-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all shadow-xs">
+                    </div>
+                    <p id="otpError" class="text-rose-600 text-xs mt-2 hidden font-medium"></p>
+                </div>
+
+                <button
+                    type="submit"
+                    id="verifyEmailSubmitBtn"
+                    class="w-full bg-[#1b1c1c] hover:bg-black text-white py-3.5 px-4 rounded-xl text-xs uppercase tracking-[0.2em] font-semibold transition-all duration-200 shadow-sm cursor-pointer flex items-center justify-center gap-2"
+                >
+                    <span id="verifyEmailBtnText">Confirm & Update Email</span>
+                </button>
+            </form>
+
+            <!-- Resend OTP Form with Persistent Countdown Timer -->
+            <div class="text-xs text-zinc-500 border-t border-zinc-100 pt-4">
+                <span>Didn't receive the verification code?</span>
+                <form action="/profile/resend-email-otp" method="POST" class="inline" id="resendForm">
+                    <input type="hidden" name="newEmail" value="<%= typeof newEmail !== 'undefined' ? newEmail : '' %>">
+                    <button
+                        type="submit"
+                        id="resendBtn"
+                        disabled
+                        class="text-zinc-900 font-semibold underline underline-offset-4 disabled:text-zinc-400 disabled:no-underline disabled:cursor-not-allowed ml-1 transition-colors cursor-pointer"
+                    >
+                        Resend Code <span id="timerSpan" class="font-mono text-zinc-400"></span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Cancel Action -->
+            <div class="pt-2">
+                <a href="/profile" class="text-xs font-mono uppercase tracking-wider text-zinc-400 hover:text-zinc-900 transition-colors">
+                    ← Return to Client Portfolio
+                </a>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    const inputs = Array.from(document.querySelectorAll('.otp-box'));
+    const fullOtpInput = document.getElementById('fullOtp');
+    const form = document.getElementById('emailOtpForm');
+    const otpError = document.getElementById('otpError');
+    const verifyBtn = document.getElementById('verifyEmailSubmitBtn');
+    const verifyBtnText = document.getElementById('verifyEmailBtnText');
+
+    let isSubmitting = false;
+
+    function getCode() {
+        return inputs.map(i => (i.value || '').trim()).join('');
+    }
+
+    function updateHiddenInput() {
+        fullOtpInput.value = getCode();
+    }
+
+    function lockButton() {
+        if (verifyBtn) {
+            verifyBtn.disabled = true;
+            verifyBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            if (verifyBtnText) {
+                verifyBtn.innerHTML = `
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Verifying...</span>
+                `;
+            }
+        }
+    }
+
+    inputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+            const rawVal = e.target.value;
+            const digits = rawVal.replace(/\D/g, '');
+
+            if (digits.length > 1) {
+                const startIdx = digits.length >= 6 ? 0 : index;
+                for (let i = 0; i < 6; i++) {
+                    if (inputs[startIdx + i]) {
+                        inputs[startIdx + i].value = digits[i] || '';
+                    }
+                }
+                const nextFocus = Math.min(startIdx + digits.length, inputs.length - 1);
+                inputs[nextFocus].focus();
+                otpError.classList.add('hidden');
+                updateHiddenInput();
+                return;
+            }
+
+            if (digits.length === 1) {
+                input.value = digits;
+                otpError.classList.add('hidden');
+                if (index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+                updateHiddenInput();
+                return;
+            }
+
+            input.value = '';
+            updateHiddenInput();
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                form.requestSubmit ? form.requestSubmit() : form.submit();
+                return;
+            }
+            if (e.key === 'Backspace') {
+                if (input.value) {
+                    input.value = '';
+                    updateHiddenInput();
+                } else if (index > 0) {
+                    inputs[index - 1].value = '';
+                    inputs[index - 1].focus();
+                    updateHiddenInput();
+                }
+                return;
+            }
+            if (e.key === 'ArrowLeft' && index > 0) {
+                inputs[index - 1].focus();
+                return;
+            }
+            if (e.key === 'ArrowRight' && index < inputs.length - 1) {
+                inputs[index + 1].focus();
+                return;
+            }
+        });
+
+        input.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const pasteData = (e.clipboardData || window.clipboardData)?.getData('text') || '';
+            const digits = pasteData.replace(/\D/g, '');
+            if (digits.length >= 6) {
+                digits.slice(0, 6).split('').forEach((char, i) => {
+                    if (inputs[i]) inputs[i].value = char;
+                });
+                inputs[inputs.length - 1].focus();
+                otpError.classList.add('hidden');
+                updateHiddenInput();
+            } else if (digits.length > 0) {
+                digits.split('').forEach((char, i) => {
+                    if (inputs[index + i]) inputs[index + i].value = char;
+                });
+                const focusTarget = Math.min(index + digits.length, inputs.length - 1);
+                inputs[focusTarget].focus();
+                updateHiddenInput();
+            }
+        });
+    });
+
+    form.addEventListener('submit', (e) => {
+        if (isSubmitting) {
+            e.preventDefault();
+            return false;
+        }
+
+        updateHiddenInput();
+        if (fullOtpInput.value.length !== 6 || !/^\d{6}$/.test(fullOtpInput.value)) {
+            e.preventDefault();
+            otpError.textContent = 'Please enter the complete 6-digit verification code.';
+            otpError.classList.remove('hidden');
+            return false;
+        }
+
+        isSubmitting = true;
+        lockButton();
+    });
+
+    // 60s Persistent Resend Countdown Timer
+    const COOLDOWN_SECONDS = 60;
+    const resendBtn = document.getElementById('resendBtn');
+    const timerSpan = document.getElementById('timerSpan');
+    const targetEmail = "<%= typeof newEmail !== 'undefined' ? newEmail : '' %>".toLowerCase().trim();
+    const storageKey = 'delta_profile_email_otp_target_' + encodeURIComponent(targetEmail);
+    let countdownTimer = null;
+
+    function startTimer(duration = COOLDOWN_SECONDS) {
+        clearInterval(countdownTimer);
+        let targetTimestamp = Date.now() + (duration * 1000);
+        sessionStorage.setItem(storageKey, targetTimestamp);
+
+        function tick() {
+            const currentNow = Date.now();
+            const remainingSecs = Math.max(0, Math.ceil((targetTimestamp - currentNow) / 1000));
+
+            if (remainingSecs > 0) {
+                if (timerSpan) timerSpan.textContent = `(${remainingSecs}s)`;
+                if (resendBtn) resendBtn.disabled = true;
+            } else {
+                if (timerSpan) timerSpan.textContent = '';
+                if (resendBtn) resendBtn.disabled = false;
+                sessionStorage.removeItem(storageKey);
+                clearInterval(countdownTimer);
+            }
+        }
+
+        tick();
+        countdownTimer = setInterval(tick, 1000);
+    }
+
+    (function initTimer() {
+        let savedTarget = parseInt(sessionStorage.getItem(storageKey), 10);
+        const now = Date.now();
+
+        if (savedTarget && !isNaN(savedTarget) && savedTarget > now) {
+            const remaining = Math.ceil((savedTarget - now) / 1000);
+            startTimer(remaining);
+        } else {
+            startTimer(COOLDOWN_SECONDS);
+        }
+    })();
+</script>
+
+<%- include('../partials/footer') %>

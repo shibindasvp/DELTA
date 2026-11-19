@@ -1,0 +1,562 @@
+<%- include('../partials/header', { title: 'Collector Registry — DELTA Horology' }) %>
+
+<div class="flex flex-1 min-h-screen bg-[#F8F9FA]">
+    <%- include('../partials/sidebar', { activePage: 'users' }) %>
+
+    <div class="flex-1 flex flex-col min-w-0">
+        <%- include('../partials/navbar', { pageTitle: 'Collector Registry' }) %>
+
+
+        <main class="flex-grow p-6 sm:p-8 max-w-[1400px] w-full mx-auto space-y-6">
+            
+            <!-- Page Heading & Export Button -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-serif font-normal text-zinc-900 tracking-tight">
+                        Collector Registry
+                    </h1>
+                    <p class="text-xs text-zinc-500 font-light mt-1">
+                        Oversee elite membership tiers and order activity.
+                    </p>
+                </div>
+
+                <div>
+                    <a 
+                        href="/admin/users/export<%= (typeof search !== 'undefined' && search) ? '?search=' + encodeURIComponent(search) : '' %>" 
+                        class="inline-flex items-center gap-2 bg-[#18181b] hover:bg-black text-white px-5 py-3 text-xs uppercase tracking-[0.2em] font-semibold transition-all shadow-sm cursor-pointer rounded-xl"
+                        title="Download CSV Collector Registry"
+                    >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        <span>EXPORT REGISTRY</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 4 Top KPI Stat Cards with Real Dynamic Data -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                
+                <!-- Total Collectors -->
+                <div class="bg-white border border-zinc-200/80 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-[10px] uppercase tracking-[0.15em] text-zinc-500 font-semibold">Total Clients</span>
+                        <span class="text-emerald-700">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div>
+                        <span id="statTotalUsers" class="text-2xl font-serif font-bold text-zinc-900 block font-mono"><%= (typeof stats !== 'undefined' && stats) ? stats.totalUsers : pagination.totalItems %></span>
+                        <span class="text-[10px] text-zinc-400 font-light block mt-1.5">Registered clientele</span>
+                    </div>
+                </div>
+
+                <!-- Active Members -->
+                <div class="bg-white border border-zinc-200/80 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-[10px] uppercase tracking-[0.15em] text-zinc-500 font-semibold">Active Members</span>
+                        <span class="text-emerald-700">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div>
+                        <span id="statActiveUsers" class="text-2xl font-serif font-bold text-zinc-900 block font-mono"><%= (typeof stats !== 'undefined' && stats) ? stats.activeUsers : pagination.totalItems %></span>
+                        <span class="text-[10px] text-emerald-700 font-medium block mt-1.5">Permitted access</span>
+                    </div>
+                </div>
+
+                <!-- Blocked Clients -->
+                <div class="bg-white border border-zinc-200/80 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-[10px] uppercase tracking-[0.15em] text-zinc-500 font-semibold">Blocked Accounts</span>
+                        <span class="text-rose-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div>
+                        <span id="statBlockedUsers" class="text-2xl font-serif font-bold text-zinc-900 block font-mono"><%= (typeof stats !== 'undefined' && stats) ? stats.blockedUsers : 0 %></span>
+                        <span class="text-[10px] text-zinc-400 font-light block mt-1.5">Restricted from store</span>
+                    </div>
+                </div>
+
+                <!-- Verified Clients (Hero Green Card) -->
+                <div class="bg-[#0A4D2E] text-white rounded-xl p-5 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-[10px] uppercase tracking-[0.15em] text-emerald-200/80 font-semibold">Verified Collectors</span>
+                        <span class="text-emerald-300">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div>
+                        <span id="statVerifiedUsers" class="text-2xl font-serif font-bold text-white block font-mono"><%= (typeof stats !== 'undefined' && stats) ? stats.verifiedUsers : pagination.totalItems %></span>
+                        <span class="text-[10px] text-emerald-200/70 font-light block mt-1.5">OTP / Email Verified</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <%- include('../partials/flash-message') %>
+
+            <!-- Search, Filter & Controls Bar -->
+            <div class="bg-white border border-zinc-200/80 rounded-xl p-4 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-3">
+                <form action="/admin/users" method="GET" class="w-full lg:w-auto flex-1 flex flex-col sm:flex-row items-center gap-3">
+                    <!-- Search Field -->
+                    <div class="relative flex-1 w-full">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <input
+                            type="text"
+                            name="search"
+                            value="<%= search %>"
+                            placeholder="Search by client name, email, or mobile..."
+                            class="w-full pl-9 pr-4 py-2 bg-[#F4F4F5] border border-transparent focus:border-zinc-300 focus:bg-white rounded text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none transition-all font-sans"
+                        >
+                    </div>
+
+                    <!-- Filter Controls -->
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <button type="submit" class="bg-[#0A4D2E] hover:bg-[#073620] text-white px-4 py-2 rounded text-xs uppercase tracking-wider font-semibold transition-colors cursor-pointer">
+                            Search
+                        </button>
+                        
+                        <% if (search) { %>
+                            <a href="/admin/users" class="bg-[#F4F4F5] hover:bg-zinc-200 text-zinc-600 px-3 py-2 rounded text-xs transition-colors font-medium">
+                                Reset
+                            </a>
+                        <% } %>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Collector Registry Table -->
+            <div class="bg-white border border-zinc-200/80 rounded-xl overflow-hidden shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-zinc-200/80 bg-zinc-50/50 text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
+                                <th class="py-3.5 px-6">COLLECTOR PROFILE</th>
+                                <th class="py-3.5 px-6">CONTACT</th>
+                                <th class="py-3.5 px-6">PROVIDER / ROLE</th>
+                                <th class="py-3.5 px-6">REGISTERED</th>
+                                <th class="py-3.5 px-6">STATUS</th>
+                                <th class="py-3.5 px-6 text-right">ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-100 text-zinc-700 font-sans">
+                            <% if (users && users.length > 0) { %>
+                                <% users.forEach(u => { %>
+                                    <tr class="hover:bg-zinc-50/60 transition-colors">
+                                        
+                                        <!-- Collector Profile -->
+                                        <td class="py-4 px-6">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-9 h-9 rounded-full bg-[#0A4D2E] text-white overflow-hidden flex-shrink-0 flex items-center justify-center text-xs font-serif font-bold">
+                                                    <% if (u.profileImage) { %>
+                                                        <img src="<%= u.profileImage %>" alt="<%= u.name %>" class="w-full h-full object-cover">
+                                                    <% } else { %>
+                                                        <%= (u.name || 'U').charAt(0).toUpperCase() %>
+                                                    <% } %>
+                                                </div>
+                                                <div>
+                                                    <a href="/admin/users/<%= u._id %>" class="font-semibold text-zinc-900 hover:text-[#0A4D2E] transition-colors block">
+                                                        <%= u.name %>
+                                                    </a>
+                                                    <span class="text-[10px] text-zinc-400 font-sans block"><%= u.email %></span>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        <!-- Contact -->
+                                        <td class="py-4 px-6">
+                                            <p class="font-mono text-[11px] text-zinc-800"><%= u.phone || '—' %></p>
+                                            <p class="text-[9px] uppercase tracking-wider text-zinc-400 font-mono"><%= u.isVerified ? 'VERIFIED' : 'UNVERIFIED' %></p>
+                                        </td>
+
+                                        <!-- Provider / Role -->
+                                        <td class="py-4 px-6">
+                                            <span class="capitalize px-2.5 py-0.5 rounded bg-zinc-100 border border-zinc-200 text-[10px] uppercase tracking-wider font-medium text-zinc-700">
+                                                <%= u.authProvider || 'local' %>
+                                            </span>
+                                            <span class="text-[10px] text-zinc-400 font-mono ml-1.5"><%= u.role %></span>
+                                        </td>
+
+                                        <!-- Registered Date -->
+                                        <td class="py-4 px-6 font-mono text-[11px] text-zinc-500">
+                                            <%= new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                                        </td>
+
+                                        <!-- Status Badge -->
+                                        <td class="py-4 px-6" id="user-status-cell-<%= u._id %>">
+                                            <% if (u.isBlocked) { %>
+                                                <span class="px-2.5 py-1 rounded-full text-[9px] uppercase tracking-wider font-bold bg-rose-100 text-rose-800">
+                                                    BLOCKED
+                                                </span>
+                                            <% } else { %>
+                                                <span class="px-2.5 py-1 rounded-full text-[9px] uppercase tracking-wider font-bold bg-emerald-100 text-emerald-800">
+                                                    ACTIVE
+                                                </span>
+                                            <% } %>
+                                        </td>
+
+                                        <!-- Actions -->
+                                        <td class="py-4 px-6 text-right">
+                                            <div class="inline-flex items-center gap-2">
+                                                <!-- View Profile Details -->
+                                                <a
+                                                    href="/admin/users/<%= u._id %>"
+                                                    class="p-1.5 text-zinc-400 hover:text-zinc-900 rounded hover:bg-zinc-100 transition-colors"
+                                                    title="View Collector Profile"
+                                                >
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                    </svg>
+                                                </a>
+
+                                                                                                <!-- Block / Unblock Trigger -->
+                                                <% if (u.role !== 'admin') { %>
+                                                    <% if (u.isBlocked) { %>
+                                                        <button
+                                                            type="button"
+                                                            id="user-action-btn-<%= u._id %>"
+                                                            data-user-id="<%= u._id %>"
+                                                            data-user-name="<%= u.name %>"
+                                                            data-user-action="unblock"
+                                                            onclick="openStatusModal('<%= u._id %>', this.getAttribute('data-user-name'), 'unblock')"
+                                                            class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg text-[10px] uppercase font-bold tracking-wider transition-colors cursor-pointer flex items-center gap-1"
+                                                            title="Unblock Account"
+                                                        >
+                                                            <span>✓ Unblock</span>
+                                                        </button>
+                                                    <% } else { %>
+                                                        <button
+                                                            type="button"
+                                                            id="user-action-btn-<%= u._id %>"
+                                                            data-user-id="<%= u._id %>"
+                                                            data-user-name="<%= u.name %>"
+                                                            data-user-action="block"
+                                                            onclick="openStatusModal('<%= u._id %>', this.getAttribute('data-user-name'), 'block')"
+                                                            class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 rounded-lg text-[10px] uppercase font-bold tracking-wider transition-colors cursor-pointer flex items-center gap-1"
+                                                            title="Block Account"
+                                                        >
+                                                            <span>✕ Block</span>
+                                                        </button>
+                                                    <% } %>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="py-12 text-center text-zinc-400 text-xs font-light">
+                                        No collectors found matching criteria.
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Bottom Pagination -->
+                <div class="px-6 py-4 border-t border-zinc-100 bg-white flex flex-col md:flex-row items-center justify-between gap-4 text-xs select-none">
+                    
+                    <!-- Left: Showing items count & Rows Per Page selector -->
+                    <div class="flex items-center gap-4 text-zinc-500">
+                        <div>
+                            Showing <strong class="text-zinc-900 font-semibold"><%= pagination.startItem %>–<%= Math.min(pagination.totalItems, pagination.startItem + users.length - 1) %></strong> of <strong class="text-zinc-900 font-semibold"><%= pagination.totalItems %></strong> collectors
+                        </div>
+
+                        <div class="h-3.5 w-px bg-zinc-200 hidden sm:block"></div>
+
+                        <!-- Rows per page selector -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-zinc-500">Per page:</span>
+                            <select
+                                onchange="changeLimit(this.value)"
+                                class="bg-zinc-50 border border-zinc-200 text-zinc-900 text-xs rounded-lg px-2 py-1 focus:outline-none focus:border-zinc-900 cursor-pointer"
+                            >
+                                <option value="5" <%= pagination.pageLimit === 5 ? 'selected' : '' %>>5</option>
+                                <option value="10" <%= pagination.pageLimit === 10 ? 'selected' : '' %>>10</option>
+                                <option value="25" <%= pagination.pageLimit === 25 ? 'selected' : '' %>>25</option>
+                                <option value="50" <%= pagination.pageLimit === 50 ? 'selected' : '' %>>50</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Right: Pagination Buttons -->
+                    <div class="flex items-center gap-1">
+                        <!-- First Page Jump -->
+                        <% if (pagination.currentPage > 1) { %>
+                            <a
+                                href="/admin/users?page=1&limit=<%= pagination.pageLimit %><%= search ? '&search=' + encodeURIComponent(search) : '' %>"
+                                title="First Page"
+                                class="w-8 h-8 rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100 flex items-center justify-center text-xs font-semibold transition-colors shadow-sm"
+                            >
+                                «
+                            </a>
+                        <% } else { %>
+                            <span class="w-8 h-8 rounded-lg border border-zinc-100 bg-zinc-50 text-zinc-300 flex items-center justify-center text-xs cursor-not-allowed">
+                                «
+                            </span>
+                        <% } %>
+
+                        <!-- Prev -->
+                        <% if (pagination.hasPrevPage) { %>
+                            <a
+                                href="/admin/users?page=<%= pagination.prevPage %>&limit=<%= pagination.pageLimit %><%= search ? '&search=' + encodeURIComponent(search) : '' %>"
+                                title="Previous Page"
+                                class="w-8 h-8 rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100 flex items-center justify-center text-xs font-semibold transition-colors shadow-sm"
+                            >
+                                ‹
+                            </a>
+                        <% } else { %>
+                            <span class="w-8 h-8 rounded-lg border border-zinc-100 bg-zinc-50 text-zinc-300 flex items-center justify-center text-xs cursor-not-allowed">
+                                ‹
+                            </span>
+                        <% } %>
+
+                        <!-- Dynamic Page Numbers with Sliding Window & Ellipses -->
+                        <% if (pagination.pageNumbers && pagination.pageNumbers.length > 0) { %>
+                            <% pagination.pageNumbers.forEach(p => { %>
+                                <% if (p === '...') { %>
+                                    <span class="w-7 text-center text-zinc-400 font-mono text-xs">…</span>
+                                <% } else if (p === pagination.currentPage) { %>
+                                    <span class="w-8 h-8 rounded-lg flex items-center justify-center font-bold bg-[#18181b] text-white text-xs font-mono shadow">
+                                        <%= p %>
+                                    </span>
+                                <% } else { %>
+                                    <a
+                                        href="/admin/users?page=<%= p %>&limit=<%= pagination.pageLimit %><%= search ? '&search=' + encodeURIComponent(search) : '' %>"
+                                        class="w-8 h-8 rounded-lg flex items-center justify-center border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100 hover:border-zinc-900 text-xs font-mono font-medium transition-colors shadow-sm"
+                                    >
+                                        <%= p %>
+                                    </a>
+                                <% } %>
+                            <% }) %>
+                        <% } else { %>
+                            <span class="w-8 h-8 rounded-lg flex items-center justify-center font-bold bg-[#18181b] text-white text-xs font-mono shadow">
+                                1
+                            </span>
+                        <% } %>
+
+                        <!-- Next -->
+                        <% if (pagination.hasNextPage) { %>
+                            <a
+                                href="/admin/users?page=<%= pagination.nextPage %>&limit=<%= pagination.pageLimit %><%= search ? '&search=' + encodeURIComponent(search) : '' %>"
+                                title="Next Page"
+                                class="w-8 h-8 rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100 flex items-center justify-center text-xs font-semibold transition-colors shadow-sm"
+                            >
+                                ›
+                            </a>
+                        <% } else { %>
+                            <span class="w-8 h-8 rounded-lg border border-zinc-100 bg-zinc-50 text-zinc-300 flex items-center justify-center text-xs cursor-not-allowed">
+                                ›
+                            </span>
+                        <% } %>
+
+                        <!-- Last Page Jump -->
+                        <% if (pagination.currentPage < pagination.totalPages) { %>
+                            <a
+                                href="/admin/users?page=<%= pagination.totalPages %>&limit=<%= pagination.pageLimit %><%= search ? '&search=' + encodeURIComponent(search) : '' %>"
+                                title="Last Page (<%= pagination.totalPages %>)"
+                                class="w-8 h-8 rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100 flex items-center justify-center text-xs font-semibold transition-colors shadow-sm"
+                            >
+                                »
+                            </a>
+                        <% } else { %>
+                            <span class="w-8 h-8 rounded-lg border border-zinc-100 bg-zinc-50 text-zinc-300 flex items-center justify-center text-xs cursor-not-allowed">
+                                »
+                            </span>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="mt-auto px-8 py-6 text-zinc-400 text-[10px] uppercase font-mono tracking-wider flex flex-col sm:flex-row items-center justify-between border-t border-zinc-200/80 gap-3">
+            <span>© 2024 DELTA HOROLOGY. ALL RIGHTS RESERVED.</span>
+            <div class="flex items-center gap-4">
+                <a href="#" class="hover:text-zinc-600">PRIVACY</a>
+                <a href="#" class="hover:text-zinc-600">TERMS</a>
+                <span class="text-emerald-700 font-semibold">SYSTEM STATUS: OPTIMAL</span>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<!-- Block / Unblock Confirmation Modal -->
+<div id="statusModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white border border-zinc-200 rounded-2xl max-w-md w-full p-6 text-center shadow-xl">
+        <div id="statusModalIcon" class="w-12 h-12 rounded-full flex items-center justify-center text-xl mx-auto mb-4">
+            
+        </div>
+        <h3 id="statusModalTitle" class="text-lg font-serif font-normal text-zinc-900 mb-2">Confirm Action</h3>
+        <p id="statusModalDesc" class="text-xs text-zinc-500 mb-6 font-light">
+            Are you sure you want to proceed with this account status change?
+        </p>
+
+        <form id="statusActionForm" method="POST" class="flex gap-3 justify-center">
+            <button
+                type="button"
+                onclick='closeStatusModal()'
+                class="px-5 py-2.5 border border-zinc-300 rounded-lg text-xs uppercase tracking-wider text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer font-medium"
+            >
+                Cancel
+            </button>
+            <button
+                type="submit"
+                id="statusConfirmBtn"
+                class="px-6 py-2.5 rounded-lg text-xs uppercase tracking-wider font-semibold transition-colors shadow cursor-pointer text-white"
+            >
+                Confirm
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let activeTargetUserId = null;
+    let activeTargetAction = null;
+    let activeTargetUserName = null;
+
+    function changeLimit(newLimit) {
+        const search = '<%= encodeURIComponent(search || "") %>';
+        const url = '/admin/users?page=1&limit=' + newLimit + (search ? '&search=' + search : '');
+        window.location.href = url;
+    }
+
+    function openStatusModal(userId, userName, action) {
+        activeTargetUserId = userId;
+        activeTargetAction = action;
+        activeTargetUserName = userName || 'this collector';
+
+        const modal = document.getElementById('statusModal');
+        const title = document.getElementById('statusModalTitle');
+        const desc = document.getElementById('statusModalDesc');
+        const form = document.getElementById('statusActionForm');
+        const confirmBtn = document.getElementById('statusConfirmBtn');
+        const icon = document.getElementById('statusModalIcon');
+
+        if (action === 'block') {
+            title.textContent = 'Block Collector Account';
+            desc.textContent = `Are you sure you want to block ${activeTargetUserName}? This collector will be immediately restricted from accessing their portfolio.`;
+            form.action = `/admin/users/${userId}/block`;
+            confirmBtn.className = 'px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs uppercase tracking-wider font-semibold transition-colors shadow cursor-pointer';
+            confirmBtn.textContent = 'Confirm Block';
+            icon.className = 'w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-xl mx-auto mb-4 font-bold';
+            icon.textContent = '✕';
+        } else {
+            title.textContent = 'Unblock Collector Account';
+            desc.textContent = `Are you sure you want to unblock ${activeTargetUserName}? This collector will regain full access to their registry.`;
+            form.action = `/admin/users/${userId}/unblock`;
+            confirmBtn.className = 'px-6 py-2.5 bg-[#0A4D2E] hover:bg-[#073620] text-white rounded-lg text-xs uppercase tracking-wider font-semibold transition-colors shadow cursor-pointer';
+            confirmBtn.textContent = 'Confirm Unblock';
+            icon.className = 'w-12 h-12 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xl mx-auto mb-4 font-bold';
+            icon.textContent = '✓';
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeStatusModal() {
+        document.getElementById('statusModal').classList.add('hidden');
+    }
+
+    // Modal click backdrop close
+    document.addEventListener('click', (e) => {
+        const modal = document.getElementById('statusModal');
+        if (modal && e.target === modal) {
+            closeStatusModal();
+        }
+    });
+
+    // Intercept Modal Form Submit with AJAX
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('statusActionForm');
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const confirmBtn = document.getElementById('statusConfirmBtn');
+                if (confirmBtn) {
+                    confirmBtn.disabled = true;
+                    confirmBtn.textContent = 'Processing...';
+                }
+
+                try {
+                    const res = await fetch(form.action, {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+                    });
+                    const data = await res.json();
+
+                    if (!res.ok || !data.success) {
+                        showToast(data.message || 'Status update failed.', 'error');
+                        closeStatusModal();
+                        return;
+                    }
+
+                    // Update table status cell
+                    const statusCell = document.getElementById('user-status-cell-' + activeTargetUserId);
+                    const actionBtn = document.getElementById('user-action-btn-' + activeTargetUserId);
+
+                    if (statusCell) {
+                        if (data.isBlocked) {
+                            statusCell.innerHTML = `<span class="px-2.5 py-1 rounded-full text-[9px] uppercase tracking-wider font-bold bg-rose-100 text-rose-800">BLOCKED</span>`;
+                        } else {
+                            statusCell.innerHTML = `<span class="px-2.5 py-1 rounded-full text-[9px] uppercase tracking-wider font-bold bg-emerald-100 text-emerald-800">ACTIVE</span>`;
+                        }
+                    }
+
+                    if (actionBtn) {
+                        const nextAction = data.isBlocked ? 'unblock' : 'block';
+                        actionBtn.setAttribute('data-user-action', nextAction);
+                        actionBtn.setAttribute('onclick', `openStatusModal('${activeTargetUserId}', this.getAttribute('data-user-name'), '${nextAction}')`);
+                        actionBtn.setAttribute('title', data.isBlocked ? 'Unblock Account' : 'Block Account');
+                        if (data.isBlocked) {
+                            actionBtn.className = 'px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg text-[10px] uppercase font-bold tracking-wider transition-colors cursor-pointer flex items-center gap-1';
+                            actionBtn.innerHTML = '<span>✓ Unblock</span>';
+                        } else {
+                            actionBtn.className = 'px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 rounded-lg text-[10px] uppercase font-bold tracking-wider transition-colors cursor-pointer flex items-center gap-1';
+                            actionBtn.innerHTML = '<span>✕ Block</span>';
+                        }
+                    }
+
+                    // Update Top Stats
+                    if (data.stats) {
+                        const totalEl = document.getElementById('statTotalUsers');
+                        const activeEl = document.getElementById('statActiveUsers');
+                        const blockedEl = document.getElementById('statBlockedUsers');
+                        const verifiedEl = document.getElementById('statVerifiedUsers');
+
+                        if (totalEl) totalEl.textContent = data.stats.totalUsers;
+                        if (activeEl) activeEl.textContent = data.stats.activeUsers;
+                        if (blockedEl) blockedEl.textContent = data.stats.blockedUsers;
+                        if (verifiedEl) verifiedEl.textContent = data.stats.verifiedUsers;
+                    }
+
+                    closeStatusModal();
+                    showToast(data.message, data.isBlocked ? 'warning' : 'success');
+                } catch (err) {
+                    showToast('Connection error updating user status.', 'error');
+                    closeStatusModal();
+                } finally {
+                    if (confirmBtn) confirmBtn.disabled = false;
+                }
+            });
+        }
+    });
+</script>
+
+<%- include('../partials/footer') %>

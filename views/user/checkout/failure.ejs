@@ -1,0 +1,1279 @@
+<%- include('../partials/header', { title: 'Payment Incomplete — ' + (order ? order.orderNumber : 'DELTA') }) %>
+<%- include('../partials/navbar') %>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<div class="bg-[#faf8f7] min-h-screen text-[#1b1c1c] py-12 sm:py-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 space-y-10">
+        
+        <!-- ========================================================= -->
+        <!-- LUXURY HOROLOGICAL SEAL & PAYMENT FAILURE STATEMENT -->
+        <!-- ========================================================= -->
+        <div class="text-center space-y-6 max-w-2xl mx-auto">
+            
+            <!-- Bespoke Horological Interruption / Paused Mechanism Illustration -->
+            <div class="relative w-32 h-32 mx-auto flex items-center justify-center">
+                <!-- Outer Soft Pulsing Aura -->
+                <div class="absolute inset-0 rounded-full bg-rose-100/70 animate-pulse opacity-40"></div>
+                
+                <!-- Horological Chronometer Outer Gear Ring (SVG) -->
+                <svg class="absolute inset-0 w-32 h-32" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="56" fill="none" stroke="#e11d48" stroke-width="1.5" stroke-dasharray="3 5" opacity="0.45"/>
+                    <circle cx="60" cy="60" r="49" fill="none" stroke="#c5a059" stroke-width="1" opacity="0.3"/>
+                    
+                    <!-- 12-Hour Bezel Indices -->
+                    <% for(let i = 0; i < 12; i++) { %>
+                        <% const angle = i * 30 * (Math.PI / 180); %>
+                        <% const x1 = 60 + 51 * Math.sin(angle); %>
+                        <% const y1 = 60 - 51 * Math.cos(angle); %>
+                        <% const x2 = 60 + 56 * Math.sin(angle); %>
+                        <% const y2 = 60 - 56 * Math.cos(angle); %>
+                        <line x1="<%= x1 %>" y1="<%= y1 %>" x2="<%= x2 %>" y2="<%= y2 %>" stroke="<%= i % 3 === 0 ? '#e11d48' : '#c5a059' %>" stroke-width="<%= i % 3 === 0 ? '2' : '1' %>" stroke-linecap="round"/>
+                    <% } %>
+                </svg>
+
+                <!-- Inner Vault Decline Medallion -->
+                <div class="w-22 h-22 rounded-full bg-gradient-to-br from-rose-600 via-rose-700 to-zinc-900 text-white flex flex-col items-center justify-center shadow-xl shadow-rose-900/25 border-4 border-white relative z-10">
+                    <!-- Rose Security Decline Icon -->
+                    <svg class="w-9 h-9 text-rose-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Confirmation Statement -->
+            <div class="space-y-3">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-rose-50 border border-rose-200">
+                    <span class="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
+                    <span class="text-[10px] uppercase font-mono tracking-[0.25em] text-rose-800 font-bold">
+                        PAYMENT INCOMPLETE • ALLOCATION HELD
+                    </span>
+                </div>
+
+                <h1 class="text-3xl sm:text-5xl font-serif text-zinc-900 font-normal tracking-tight">
+                    Payment Authorization Failed
+                </h1>
+
+                <p class="text-xs sm:text-sm text-zinc-500 font-light leading-relaxed max-w-xl mx-auto">
+                    We could not complete the payment settlement for your timepiece order. Your reserved piece is temporarily held in vault custody. Please retry settlement using your preferred gateway or another method.
+                </p>
+            </div>
+
+            <!-- Order Reference Dossier Tag -->
+            <% if (order) { %>
+                <div class="inline-flex items-center gap-3 px-5 py-2.5 bg-white border border-zinc-200/80 rounded-2xl shadow-xs">
+                    <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold">Order Dossier:</span>
+                    <span class="font-mono font-bold text-zinc-900 text-sm tracking-wide"><%= order.orderNumber %></span>
+                </div>
+            <% } %>
+
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- PAYMENT FAILURE REASON & TRANSACTION DETAILS CARD -->
+        <!-- ========================================================= -->
+        <div class="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-8 space-y-6 shadow-sm">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 pb-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-rose-50 text-rose-700 border border-rose-200/80 flex items-center justify-center text-lg flex-shrink-0 font-bold">
+                        ✕
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-mono tracking-[0.25em] text-rose-600 font-bold block">
+                            GATEWAY TRANSACTION REPORT
+                        </span>
+                        <h2 class="text-xl font-serif text-zinc-900 font-normal">
+                            Authorization Decline Notice
+                        </h2>
+                    </div>
+                </div>
+
+                <span class="self-start sm:self-auto px-3.5 py-1 bg-rose-50 border border-rose-200 text-rose-700 rounded-full font-mono text-[10px] uppercase font-bold">
+                    Action Required
+                </span>
+            </div>
+
+            <!-- Failure Explanation Banner -->
+            <div class="p-4 rounded-2xl bg-rose-50/70 border border-rose-200 text-xs text-rose-900 space-y-1">
+                <span class="text-[10px] uppercase font-mono tracking-wider font-semibold text-rose-600 block">Decline Statement / Provider Reason</span>
+                <p class="font-mono text-xs font-semibold leading-relaxed">
+                    "<%= reason || (order && order.paymentFailureReason) || 'The transaction authorization was declined by your banking institution or the payment session was dismissed.' %>"
+                </p>
+            </div>
+
+            <!-- Transaction Metadata Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs font-mono">
+                
+                <!-- Item 1: Reference No -->
+                <div class="p-4 rounded-2xl bg-[#faf8f7] border border-zinc-200/60 space-y-1">
+                    <span class="text-[10px] uppercase text-zinc-400 block tracking-wider">Order Reference</span>
+                    <p class="font-bold text-zinc-900 truncate"><%= order ? order.orderNumber : 'Cart Session' %></p>
+                </div>
+
+                <!-- Item 2: Timestamp -->
+                <div class="p-4 rounded-2xl bg-[#faf8f7] border border-zinc-200/60 space-y-1">
+                    <span class="text-[10px] uppercase text-zinc-400 block tracking-wider">Attempted At</span>
+                    <p class="font-medium text-zinc-800">
+                        <%= (order ? new Date(order.declinedAt || order.updatedAt || order.createdAt || Date.now()) : new Date()).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                    </p>
+                </div>
+
+                <!-- Item 3: Payment Method -->
+                <div class="p-4 rounded-2xl bg-[#faf8f7] border border-zinc-200/60 space-y-1">
+                    <span class="text-[10px] uppercase text-zinc-400 block tracking-wider">Attempted Gateway</span>
+                    <p class="font-bold text-zinc-900"><%= order ? order.paymentMethod : 'Razorpay Secure Gateway' %></p>
+                </div>
+
+                <!-- Item 4: Amount Due -->
+                <div class="p-4 rounded-2xl bg-[#faf8f7] border border-zinc-200/60 space-y-1">
+                    <span class="text-[10px] uppercase text-zinc-400 block tracking-wider">Total Due</span>
+                    <p class="font-bold text-rose-700 text-sm">
+                        <% if (order && order.grandTotal) { %>
+                            ₹<%= Number(order.grandTotal).toLocaleString('en-IN') %>
+                        <% } else { %>
+                            Pending Settlement
+                        <% } %>
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- Common Causes Advice Box -->
+            <div class="p-4 rounded-2xl bg-zinc-50 border border-zinc-200/80 space-y-2 text-xs text-zinc-600">
+                <span class="text-[10px] uppercase font-mono tracking-wider font-semibold text-zinc-500 block">Recommended Troubleshooting Steps</span>
+                <ul class="list-disc list-inside space-y-1 font-light text-[11px] text-zinc-600">
+                    <li>Verify that online/international transactions and e-commerce limits are enabled on your card.</li>
+                    <li>Ensure you entered the correct 3D Secure OTP or authorized the push notification from your bank before the timer elapsed.</li>
+                    <li>If paying via UPI, ensure the transaction amount does not exceed your bank's single-transfer UPI threshold.</li>
+                    <li>You may retry using <strong class="font-semibold text-zinc-700">Razorpay Secure Gateway</strong> or switch to complimentary <strong class="font-semibold text-zinc-700">Cash on Delivery</strong>.</li>
+                </ul>
+            </div>
+
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- ACTION BUTTONS: RETRY AND REDIRECT BUTTONS -->
+        <!-- ========================================================= -->
+        <div class="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-8 space-y-6 shadow-sm">
+            <% 
+                const isCooldownActive = typeof cooldown !== 'undefined' && cooldown && cooldown.inCooldown;
+                const initialSeconds = isCooldownActive ? cooldown.remainingSeconds : 0;
+            %>
+
+            <!-- Cooldown Notice Strip (Visible when in 5-minute decline cooldown) -->
+            <div id="declineCooldownBanner" class="<%= isCooldownActive ? 'flex' : 'hidden' %> p-4 rounded-2xl bg-amber-50 border border-amber-200 items-start gap-3.5 text-xs text-amber-900 transition-all">
+                <div class="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 text-amber-800 font-bold font-mono">
+                    ⏱
+                </div>
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="font-bold uppercase tracking-wider text-[10px] font-mono bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded">
+                            5-MINUTE RE-BUY COOLDOWN ACTIVE
+                        </span>
+                        <span class="font-mono font-bold text-amber-900 text-sm" id="cooldownTimerDisplay">
+                            <%= Math.floor(initialSeconds / 60) %>:<%= (initialSeconds % 60).toString().padStart(2, '0') %>
+                        </span>
+                    </div>
+                    <p class="text-[11px] text-amber-800 font-light leading-relaxed">
+                        In accordance with vault reservation policy, following a payment decline this timepiece can be re-purchased or settled only after a 5-minute security interval.
+                    </p>
+                </div>
+            </div>
+
+            <div class="border-b border-zinc-100 pb-3">
+                <span class="text-[10px] uppercase font-mono tracking-[0.25em] text-[#c5a059] font-bold block">
+                    TRANSACTION RESOLUTION ACTIONS
+                </span>
+                <h3 class="text-lg font-serif text-zinc-900">
+                    Next Steps: Settle or Navigate
+                </h3>
+            </div>
+
+            <!-- Primary Action CTAs -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <!-- BUTTON 1: RETRY PAYMENT (Prominent CTA) -->
+                <% if (order) { %>
+                    <button 
+                        type="button" 
+                        id="failureRetryBtn"
+                        onclick="handleFailureRetryClick()"
+                        class="w-full py-4 px-5 bg-[#0A4D2E] hover:bg-[#073620] text-white rounded-xl text-xs uppercase font-mono font-bold tracking-wider transition-all shadow-md flex items-center justify-center gap-2 col-span-1 sm:col-span-2 lg:col-span-1 cursor-pointer"
+                    >
+                        <svg class="w-4 h-4 text-[#c5a059]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        <span id="failureRetryBtnText">Retry Payment</span>
+                    </button>
+                <% } else { %>
+                    <a 
+                        href="/checkout"
+                        class="w-full py-4 px-5 bg-[#0A4D2E] hover:bg-[#073620] text-white rounded-xl text-xs uppercase font-mono font-bold tracking-wider transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer col-span-1 sm:col-span-2 lg:col-span-1"
+                    >
+                        <svg class="w-4 h-4 text-[#c5a059]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        <span>Retry Checkout</span>
+                    </a>
+                <% } %>
+
+                <!-- BUTTON 2: ORDER DETAILS REDIRECT -->
+                <% if (order) { %>
+                    <a 
+                        href="/order/details/<%= order._id %>"
+                        class="w-full py-4 px-4 bg-zinc-900 hover:bg-black text-white rounded-xl text-xs uppercase font-mono font-bold tracking-wider transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer text-center"
+                    >
+                        <svg class="w-4 h-4 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span>Order Details</span>
+                    </a>
+                <% } else { %>
+                    <a 
+                        href="/profile/orders"
+                        class="w-full py-4 px-4 bg-zinc-900 hover:bg-black text-white rounded-xl text-xs uppercase font-mono font-bold tracking-wider transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer text-center"
+                    >
+                        <span>My Orders</span>
+                    </a>
+                <% } %>
+
+                <!-- BUTTON 3: RETURN TO SHOPPING BAG / CHECKOUT REDIRECT -->
+                <a 
+                    href="/checkout"
+                    class="w-full py-4 px-4 bg-white hover:bg-zinc-50 border border-zinc-300 text-zinc-800 rounded-xl text-xs uppercase font-mono font-bold tracking-wider transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer text-center"
+                >
+                    <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                    <span>Back to Checkout</span>
+                </a>
+
+                <!-- BUTTON 4: CONTINUE SHOPPING REDIRECT -->
+                <a 
+                    href="/shop"
+                    class="w-full py-4 px-4 bg-white hover:bg-zinc-50 border border-zinc-300 text-zinc-800 rounded-xl text-xs uppercase font-mono font-bold tracking-wider transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer text-center"
+                >
+                    <span>Browse Catalog</span>
+                    <span class="text-[#c5a059]">→</span>
+                </a>
+
+            </div>
+
+            <!-- Concierge Support Contact Note -->
+            <div class="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-zinc-500 border-t border-zinc-100">
+                <div class="flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-zinc-100 text-zinc-600 flex items-center justify-center text-[10px] font-bold">i</span>
+                    <span>Need assistance with high-value bank wire or personalized concierge checkout?</span>
+                </div>
+                <a href="/contact" class="font-mono text-[#0A4D2E] font-bold uppercase tracking-wider hover:underline text-[11px]">
+                    Contact Private Concierge →
+                </a>
+            </div>
+
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- RESERVED TIMEPIECES PREVIEW (IF ORDER PRESENT) -->
+        <!-- ========================================================= -->
+        <% if (order && order.items && order.items.length > 0) { %>
+            <div class="bg-white rounded-3xl border border-zinc-200/80 p-6 sm:p-8 space-y-6 shadow-sm">
+                <div class="flex items-center justify-between border-b border-zinc-100 pb-4">
+                    <div>
+                        <span class="text-[10px] uppercase font-mono tracking-[0.25em] text-[#c5a059] font-bold block mb-1">
+                            RESERVATION SUMMARY
+                        </span>
+                        <h3 class="text-xl font-serif text-zinc-900 font-normal">
+                            Held Timepiece Allocations (<%= order.items.length %> <%= order.items.length === 1 ? 'item' : 'items' %>)
+                        </h3>
+                    </div>
+                    <span class="text-xs font-mono text-zinc-400">Order: <%= order.orderNumber %></span>
+                </div>
+
+                <div class="divide-y divide-zinc-100">
+                    <% order.items.forEach(item => { %>
+                        <div class="py-4 flex items-center justify-between gap-6">
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-16 rounded-2xl bg-[#f2eeeb] overflow-hidden p-2 flex items-center justify-center flex-shrink-0 border border-zinc-200/60 shadow-2xs">
+                                    <% if (item.variant && item.variant.image) { %>
+                                        <img src="<%= item.variant.image %>" alt="<%= item.productName %>" class="w-full h-full object-cover rounded-xl">
+                                    <% } else { %>
+                                        <span class="text-zinc-300 text-xl">⏱</span>
+                                    <% } %>
+                                </div>
+
+                                <div class="space-y-1">
+                                    <p class="text-[9px] uppercase font-mono tracking-wider text-zinc-400 font-semibold">
+                                        <%= item.brandName %>
+                                    </p>
+                                    <h4 class="font-serif text-base text-zinc-900 font-normal">
+                                        <%= item.productName %>
+                                    </h4>
+                                    <div class="flex items-center gap-2 text-xs text-zinc-500">
+                                        <span class="font-medium text-zinc-700"><%= item.variant ? item.variant.color : 'Standard' %></span>
+                                        <span>•</span>
+                                        <span class="font-mono text-zinc-400">Qty: <%= item.quantity %></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-right">
+                                <p class="font-mono text-base font-semibold text-zinc-900">
+                                    ₹<%= Number(item.itemTotal).toLocaleString('en-IN') %>
+                                </p>
+                                <span class="text-[10px] text-zinc-400 font-mono">₹<%= Number(item.price).toLocaleString('en-IN') %>/unit</span>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+
+                <!-- Final Valuation Due -->
+                <div class="pt-4 border-t border-zinc-200 flex justify-between items-baseline text-base">
+                    <span class="text-xs uppercase font-mono font-bold text-zinc-900">TOTAL DUE TO CONFIRM ORDER</span>
+                    <span class="text-2xl font-bold font-mono text-[#0A4D2E]">₹<%= Number(order.grandTotal).toLocaleString('en-IN') %></span>
+                </div>
+            </div>
+        <% } %>
+
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- INTERACTIVE RETRY PAYMENT MODAL -->
+<!-- ========================================================= -->
+<% if (order) { %>
+<div id="retryPaymentModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-8 space-y-6 shadow-2xl relative">
+        <div class="flex items-center justify-between border-b border-zinc-100 pb-4">
+            <div>
+                <span class="text-[10px] uppercase font-mono tracking-widest text-[#c5a059] font-bold block">SECURE SETTLEMENT</span>
+                <h3 class="text-xl font-serif text-zinc-900">Retry Order Payment</h3>
+            </div>
+            <button type="button" onclick="closeRetryModal()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-500 flex items-center justify-center transition-colors cursor-pointer">✕</button>
+        </div>
+
+        <div class="bg-[#faf8f7] border border-zinc-200/80 rounded-2xl p-4 flex items-center justify-between text-xs">
+            <div>
+                <span class="text-[10px] uppercase font-mono text-zinc-400 block">Order Dossier</span>
+                <p class="font-mono font-bold text-zinc-900 text-sm"><%= order.orderNumber %></p>
+            </div>
+            <div class="text-right">
+                <span class="text-[10px] uppercase font-mono text-zinc-400 block">Total Due</span>
+                <p class="font-mono font-bold text-[#0A4D2E] text-base">₹<%= Number(order.grandTotal).toLocaleString('en-IN') %></p>
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            <label class="block font-mono uppercase text-[10px] font-semibold text-zinc-500">Choose Gateway for Retry</label>
+
+            <!-- Option 1: Razorpay -->
+            <label id="retryCardRazorpay" onclick="selectRetryGw('Razorpay')" class="p-4 rounded-2xl border-2 border-[#0A4D2E] bg-emerald-50/20 flex items-center justify-between cursor-pointer transition-all hover:border-[#0A4D2E]">
+                <div class="flex items-center gap-3">
+                    <input type="radio" name="retryGw" id="retryGwRzp" value="Razorpay" checked class="text-[#0A4D2E]">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-serif font-bold text-sm text-zinc-900">Razorpay Secure Gateway</h4>
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-[#0A4D2E] text-white">Recommended</span>
+                        </div>
+                        <p class="text-[11px] text-zinc-500 font-light">Cards, UPI (GPay, PhonePe, Paytm), NetBanking</p>
+                    </div>
+                </div>
+                <span class="font-mono text-[10px] font-bold text-[#0A4D2E]">₹ INR</span>
+            </label>
+
+            <% 
+                const collectorWalletBal = typeof walletBalance !== 'undefined' ? Number(walletBalance) : 0;
+                const canPayWallet = Boolean(order && collectorWalletBal >= order.grandTotal);
+                const canPayCod = Boolean(order && order.grandTotal <= 1000000);
+            %>
+
+            <!-- Option 2: DELTA Vault Wallet -->
+            <label id="retryCardWallet" onclick="<%= canPayWallet ? "selectRetryGw('Wallet')" : '' %>" class="p-4 rounded-2xl border <%= canPayWallet ? 'border-zinc-200 bg-white cursor-pointer hover:border-[#0A4D2E]' : 'border-zinc-200 bg-zinc-50 opacity-60 cursor-not-allowed' %> flex items-center justify-between transition-all">
+                <div class="flex items-center gap-3">
+                    <input type="radio" name="retryGw" id="retryGwWallet" value="Wallet" <%= canPayWallet ? '' : 'disabled' %> class="text-[#0A4D2E]">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-serif font-bold text-sm text-zinc-900">DELTA Vault Wallet</h4>
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold <%= canPayWallet ? 'bg-emerald-100 text-[#0A4D2E]' : 'bg-zinc-200 text-zinc-600' %>">
+                                Bal: ₹<%= collectorWalletBal.toLocaleString('en-IN') %>
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-zinc-500 font-light">
+                            <% if (canPayWallet) { %>
+                                Instant one-click settlement from your verified vault liquidity reserve.
+                            <% } else { %>
+                                Insufficient reserve (Shortfall: ₹<%= Math.max(0, (order ? order.grandTotal : 0) - collectorWalletBal).toLocaleString('en-IN') %>). <a href="/wallet" target="_blank" class="text-[#0A4D2E] underline font-bold hover:text-black">Top-up Wallet ↗</a>
+                            <% } %>
+                        </p>
+                    </div>
+                </div>
+                <span class="font-mono text-[10px] font-bold text-[#0A4D2E]">Instant</span>
+            </label>
+
+            <!-- Option 3: Cash on Delivery (COD) -->
+            <label id="retryCardCod" onclick="<%= canPayCod ? "selectRetryGw('Cash on Delivery')" : '' %>" class="p-4 rounded-2xl border <%= canPayCod ? 'border-zinc-200 bg-white cursor-pointer hover:border-[#0A4D2E]' : 'border-zinc-200 bg-zinc-50 opacity-60 cursor-not-allowed' %> flex items-center justify-between transition-all">
+                <div class="flex items-center gap-3">
+                    <input type="radio" name="retryGw" id="retryGwCod" value="Cash on Delivery" <%= canPayCod ? '' : 'disabled' %> class="text-[#0A4D2E]">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-serif font-bold text-sm text-zinc-900">Cash on Delivery (COD)</h4>
+                            <% if (canPayCod) { %>
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-amber-100 text-amber-800">Complimentary Courier</span>
+                            <% } else { %>
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-rose-100 text-rose-700">Limit: ₹10,00,000</span>
+                            <% } %>
+                        </div>
+                        <p class="text-[11px] text-zinc-500 font-light">
+                            <% if (canPayCod) { %>
+                                Pay upon white-glove insured delivery at your verified address.
+                            <% } else { %>
+                                Not available for orders exceeding ₹10,00,000 max threshold.
+                            <% } %>
+                        </p>
+                    </div>
+                </div>
+                <span class="font-mono text-[10px] font-bold text-zinc-600">On Delivery</span>
+            </label>
+        </div>
+
+        <div id="retryModalErr" class="text-rose-600 text-xs hidden pt-1 font-mono"></div>
+
+        <div class="pt-4 flex items-center justify-end gap-3 border-t border-zinc-100">
+            <button type="button" onclick="closeRetryModal()" class="px-5 py-3 border border-zinc-200 rounded-xl text-zinc-700 hover:bg-zinc-50 uppercase tracking-wider font-semibold text-xs cursor-pointer">Cancel</button>
+            <button type="button" id="confirmRetryBtn" onclick="executeRetryPayment()" class="px-7 py-3 bg-[#0A4D2E] hover:bg-[#073620] text-white rounded-xl uppercase tracking-wider font-semibold text-xs shadow-md transition-all cursor-pointer flex items-center gap-2">
+                <span>Proceed to Settlement</span>
+                <span class="text-[#c5a059]">→</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- RAZORPAY SANDBOX SIMULATION MODAL -->
+<div id="rzpSimModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl relative border border-zinc-200 overflow-hidden my-auto animate-in fade-in zoom-in duration-150">
+        <!-- Top Razorpay Trust Bar -->
+        <div class="bg-[#0b1424] text-white px-5 py-3.5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm font-mono shadow-xs">
+                    R
+                </div>
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-xs tracking-wider uppercase font-sans">Razorpay Trusted Checkout</span>
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">SANDBOX GATEWAY</span>
+                    </div>
+                    <p class="text-[10px] text-zinc-400 font-mono">Order #<%= order ? order.orderNumber : '' %> • DELTA Vault Allocation</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeRzpSimModal()" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer text-sm">✕</button>
+        </div>
+
+        <!-- Order Summary Strip -->
+        <div class="bg-zinc-50 border-b border-zinc-200/80 px-5 py-3 flex items-center justify-between text-xs">
+            <div>
+                <span class="text-[10px] uppercase font-mono tracking-wider text-zinc-400 block">Gateway Order Ref</span>
+                <span id="simRzpOrderId" class="font-mono font-bold text-zinc-800 text-[11px] truncate max-w-[200px] block">...</span>
+            </div>
+            <div class="text-right">
+                <span class="text-[10px] uppercase font-mono tracking-wider text-zinc-400 block">Amount to Settle</span>
+                <span id="simRzpAmount" class="font-mono font-bold text-[#0A4D2E] text-base">₹<%= Number(order ? order.grandTotal : 0).toLocaleString('en-IN') %></span>
+            </div>
+        </div>
+
+        <!-- Method Navigation Tabs -->
+        <div class="p-5 space-y-4">
+            <div>
+                <label class="block text-[10px] font-mono uppercase tracking-widest text-zinc-400 font-semibold mb-2">Select Payment Instrument</label>
+                <div class="grid grid-cols-4 gap-1 p-1 bg-zinc-100 rounded-2xl text-xs font-medium">
+                    <button type="button" onclick="switchFailureRzpTab('upi')" id="rzpFailTabBtn_upi" class="py-2 px-1 text-center rounded-xl transition-all cursor-pointer bg-white text-zinc-900 shadow-xs font-semibold flex flex-col items-center gap-1">
+                        <svg class="w-4 h-4 text-[#0A4D2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        <span class="text-[11px]">UPI / QR</span>
+                    </button>
+                    <button type="button" onclick="switchFailureRzpTab('card')" id="rzpFailTabBtn_card" class="py-2 px-1 text-center rounded-xl transition-all cursor-pointer text-zinc-500 hover:text-zinc-900 flex flex-col items-center gap-1">
+                        <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                        <span class="text-[11px]">Cards</span>
+                    </button>
+                    <button type="button" onclick="switchFailureRzpTab('netbanking')" id="rzpFailTabBtn_netbanking" class="py-2 px-1 text-center rounded-xl transition-all cursor-pointer text-zinc-500 hover:text-zinc-900 flex flex-col items-center gap-1">
+                        <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        <span class="text-[11px]">NetBanking</span>
+                    </button>
+                    <button type="button" onclick="switchFailureRzpTab('wallet')" id="rzpFailTabBtn_wallet" class="py-2 px-1 text-center rounded-xl transition-all cursor-pointer text-zinc-500 hover:text-zinc-900 flex flex-col items-center gap-1">
+                        <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        <span class="text-[11px]">Wallets</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 1: UPI / QR -->
+            <div id="rzpFailPanel_upi" class="space-y-3.5">
+                <div class="p-3.5 bg-gradient-to-br from-emerald-50/50 to-zinc-50 rounded-2xl border border-emerald-100 flex items-center gap-3.5">
+                    <div class="w-16 h-16 bg-white p-1 rounded-xl border border-zinc-200 shrink-0 shadow-2xs flex items-center justify-center">
+                        <svg class="w-14 h-14 text-zinc-900" viewBox="0 0 100 100" fill="currentColor">
+                            <rect x="10" y="10" width="30" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="8"/>
+                            <rect x="20" y="20" width="10" height="10"/>
+                            <rect x="60" y="10" width="30" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="8"/>
+                            <rect x="70" y="20" width="10" height="10"/>
+                            <rect x="10" y="60" width="30" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="8"/>
+                            <rect x="20" y="70" width="10" height="10"/>
+                            <rect x="55" y="55" width="12" height="12"/>
+                            <rect x="75" y="55" width="15" height="8"/>
+                            <rect x="55" y="75" width="18" height="15"/>
+                            <rect x="80" y="75" width="10" height="15"/>
+                        </svg>
+                    </div>
+                    <div class="space-y-1 text-xs">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-bold text-zinc-900 font-sans">Scan & Retry via any UPI App</span>
+                            <span class="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-emerald-100 text-[#0A4D2E] font-bold">INSTANT</span>
+                        </div>
+                        <p class="text-[11px] text-zinc-500 font-light leading-relaxed">
+                            Google Pay, PhonePe, Paytm, or BHIM. Zero payment surcharge.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">Select UPI App</span>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button type="button" onclick="selectFailureRzpUpiApp('Google Pay', 'collector@okhdfcbank')" id="rzpFailUpiApp_gpay" class="p-2 rounded-xl border-2 border-[#0A4D2E] bg-emerald-50/40 flex flex-col items-center justify-center gap-1 text-[11px] font-bold text-zinc-900 transition-all cursor-pointer">
+                            <span class="w-6 h-6 rounded-full bg-white shadow-2xs flex items-center justify-center font-bold text-blue-600 text-xs">G</span>
+                            <span>GPay</span>
+                        </button>
+                        <button type="button" onclick="selectFailureRzpUpiApp('PhonePe', 'collector@ybl')" id="rzpFailUpiApp_phonepe" class="p-2 rounded-xl border border-zinc-200 bg-white flex flex-col items-center justify-center gap-1 text-[11px] font-semibold text-zinc-600 transition-all cursor-pointer hover:border-purple-600">
+                            <span class="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-xs">पे</span>
+                            <span>PhonePe</span>
+                        </button>
+                        <button type="button" onclick="selectFailureRzpUpiApp('Paytm', 'collector@paytm')" id="rzpFailUpiApp_paytm" class="p-2 rounded-xl border border-zinc-200 bg-white flex flex-col items-center justify-center gap-1 text-[11px] font-semibold text-zinc-600 transition-all cursor-pointer hover:border-sky-500">
+                            <span class="w-6 h-6 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold text-xs">P</span>
+                            <span>Paytm</span>
+                        </button>
+                        <button type="button" onclick="selectFailureRzpUpiApp('BHIM', 'collector@upi')" id="rzpFailUpiApp_bhim" class="p-2 rounded-xl border border-zinc-200 bg-white flex flex-col items-center justify-center gap-1 text-[11px] font-semibold text-zinc-600 transition-all cursor-pointer hover:border-amber-600">
+                            <span class="w-6 h-6 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-xs">B</span>
+                            <span>BHIM</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5 pt-1">
+                    <label class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">Or Enter UPI ID</label>
+                    <input 
+                        type="text" 
+                        id="rzpFailUpiVpaInput" 
+                        value="collector@okhdfcbank"
+                        placeholder="e.g. yourname@okhdfcbank"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs font-mono font-medium text-zinc-900 focus:outline-none focus:border-[#0A4D2E]"
+                    >
+                </div>
+            </div>
+
+            <!-- Tab 2: Credit / Debit Cards -->
+            <div id="rzpFailPanel_card" class="space-y-3.5 hidden">
+                <div class="p-4 bg-gradient-to-br from-[#0A4D2E] via-[#06331e] to-black rounded-2xl text-white shadow-md relative overflow-hidden space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-7 h-5 rounded bg-amber-400/80 inline-block shadow-2xs"></span>
+                            <span class="text-[10px] font-mono tracking-widest text-emerald-200 uppercase font-semibold">DELTA RETRY CARD</span>
+                        </div>
+                        <span class="text-[11px] font-mono font-bold tracking-wider text-zinc-300">VISA / MASTERCARD</span>
+                    </div>
+                    <div class="font-mono text-sm tracking-widest text-white/90 font-bold pt-1">
+                        4532 •••• •••• 8892
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] font-mono text-zinc-300 pt-1">
+                        <div>
+                            <span class="text-[8px] uppercase text-zinc-400 block tracking-wider">Card Holder</span>
+                            <span class="font-semibold text-white"><%= (order && (order.collectorName || (order.shippingAddress && order.shippingAddress.fullName))) ? (order.collectorName || order.shippingAddress.fullName) : 'COLLECTOR' %></span>
+                        </div>
+                        <div>
+                            <span class="text-[8px] uppercase text-zinc-400 block tracking-wider">Expires</span>
+                            <span class="font-semibold text-white">12/28</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2.5 text-xs">
+                    <div>
+                        <label class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block mb-1">Card Number</label>
+                        <input 
+                            type="text" 
+                            value="4532 8910 2345 8892" 
+                            maxlength="19"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 font-mono text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E]"
+                        >
+                    </div>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block mb-1">Expiry (MM/YY)</label>
+                            <input 
+                                type="text" 
+                                value="12/28" 
+                                maxlength="5"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 font-mono text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E]"
+                            >
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block mb-1">CVV</label>
+                            <input 
+                                type="password" 
+                                value="892" 
+                                maxlength="4"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 font-mono text-xs text-zinc-900 focus:outline-none focus:border-[#0A4D2E]"
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: NetBanking -->
+            <div id="rzpFailPanel_netbanking" class="space-y-3.5 hidden">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">Select Popular Bank</span>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" onclick="selectFailureRzpBank('HDFC Bank')" id="rzpFailBank_HDFC" class="p-2.5 rounded-xl border-2 border-[#0A4D2E] bg-emerald-50/40 text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">01</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">HDFC</span>
+                    </button>
+                    <button type="button" onclick="selectFailureRzpBank('ICICI Bank')" id="rzpFailBank_ICICI" class="p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">02</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">ICICI</span>
+                    </button>
+                    <button type="button" onclick="selectFailureRzpBank('State Bank of India')" id="rzpFailBank_SBI" class="p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">03</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">SBI</span>
+                    </button>
+                    <button type="button" onclick="selectFailureRzpBank('Axis Bank')" id="rzpFailBank_Axis" class="p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">04</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">Axis</span>
+                    </button>
+                    <button type="button" onclick="selectFailureRzpBank('Kotak Mahindra Bank')" id="rzpFailBank_Kotak" class="p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">05</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">Kotak</span>
+                    </button>
+                    <button type="button" onclick="selectFailureRzpBank('Punjab National Bank')" id="rzpFailBank_PNB" class="p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]">
+                        <span class="text-[10px] font-mono font-bold text-zinc-400 block">06</span>
+                        <span class="font-bold text-xs text-zinc-900 block mt-0.5">PNB</span>
+                    </button>
+                </div>
+
+                <div class="space-y-1.5 pt-1">
+                    <label class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">Or Select Any Other Bank</label>
+                    <select onchange="selectFailureRzpOtherBank(this.value)" class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs font-sans text-zinc-800 bg-white focus:outline-none focus:border-[#0A4D2E]">
+                        <option value="">-- Choose from 40+ Indian Scheduled Banks --</option>
+                        <option value="Bank of Baroda">Bank of Baroda</option>
+                        <option value="Canara Bank">Canara Bank</option>
+                        <option value="Union Bank of India">Union Bank of India</option>
+                        <option value="IndusInd Bank">IndusInd Bank</option>
+                        <option value="Yes Bank">Yes Bank</option>
+                        <option value="Federal Bank">Federal Bank</option>
+                        <option value="IDBI Bank">IDBI Bank</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Tab 4: Wallets -->
+            <div id="rzpFailPanel_wallet" class="space-y-3 hidden">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">Select Digital Wallet</span>
+                <div class="space-y-2">
+                    <label onclick="selectFailureRzpWallet('Amazon Pay')" class="p-3 rounded-xl border-2 border-[#0A4D2E] bg-emerald-50/30 flex items-center justify-between cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <input type="radio" name="rzpFailWalletRadio" checked class="text-[#0A4D2E]">
+                            <span class="text-xs font-bold text-zinc-900">Amazon Pay</span>
+                        </div>
+                        <span class="text-[10px] font-mono text-emerald-800 font-semibold">Ready</span>
+                    </label>
+                    <label onclick="selectFailureRzpWallet('PhonePe Wallet')" class="p-3 rounded-xl border border-zinc-200 bg-white flex items-center justify-between cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <input type="radio" name="rzpFailWalletRadio" class="text-[#0A4D2E]">
+                            <span class="text-xs font-bold text-zinc-900">PhonePe Wallet</span>
+                        </div>
+                        <span class="text-[10px] font-mono text-zinc-500">Ready</span>
+                    </label>
+                    <label onclick="selectFailureRzpWallet('Paytm Wallet')" class="p-3 rounded-xl border border-zinc-200 bg-white flex items-center justify-between cursor-pointer">
+                        <div class="flex items-center gap-2.5">
+                            <input type="radio" name="rzpFailWalletRadio" class="text-[#0A4D2E]">
+                            <span class="text-xs font-bold text-zinc-900">Paytm Wallet</span>
+                        </div>
+                        <span class="text-[10px] font-mono text-zinc-500">Ready</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-2 pt-2 border-t border-zinc-100">
+                <button 
+                    type="button" 
+                    onclick="openFailRzpConfirmPayModal()" 
+                    class="w-full py-3.5 px-4 bg-[#0A4D2E] hover:bg-[#083e25] text-white rounded-xl text-xs uppercase font-mono tracking-wider font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                    <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    <span id="rzpFailPayBtnLabel">Authorize & Pay via UPI</span>
+                </button>
+                <button 
+                    type="button" 
+                    onclick="openFailRzpConfirmDeclineModal()" 
+                    class="w-full py-2.5 px-4 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs uppercase font-mono tracking-wider font-semibold transition-colors cursor-pointer text-center"
+                >
+                    ✕ Simulate Bank Decline
+                </button>
+            </div>
+
+            <!-- Trust Footer -->
+            <div class="pt-1 flex items-center justify-center gap-3 text-[10px] text-zinc-400 font-mono">
+                <span>🛡️ PCI-DSS Level 1</span>
+                <span>•</span>
+                <span>256-bit SSL</span>
+                <span>•</span>
+                <span>RBI Tokenized</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- RAZORPAY FAILURE RETRY CONFIRM PAY MODAL -->
+<!-- ========================================================= -->
+<div id="rzpFailConfirmPayModal" class="fixed inset-0 z-[60] bg-black/75 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-5 shadow-2xl relative border border-emerald-100 text-center animate-in fade-in zoom-in duration-150">
+        <!-- Horological Seal -->
+        <div class="w-16 h-16 rounded-full bg-emerald-50 text-[#0A4D2E] mx-auto flex items-center justify-center border-2 border-emerald-200 shadow-xs">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+        </div>
+
+        <div class="space-y-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-emerald-50 text-[#0A4D2E] border border-emerald-200">
+                CONFIRM RETRY AUTHORIZATION
+            </span>
+            <h3 class="text-xl font-serif font-bold text-zinc-900">Authorize Payment?</h3>
+            <p class="text-xs text-zinc-500 font-light leading-relaxed">
+                You are about to authorize settlement for order #<%= order ? order.orderNumber : '' %>.
+            </p>
+        </div>
+
+        <!-- Valuation Breakdown -->
+        <div class="p-3.5 bg-zinc-50 rounded-2xl border border-zinc-200/80 text-xs space-y-2 text-left font-mono">
+            <div class="flex items-center justify-between text-zinc-500 text-[11px]">
+                <span>Settlement Instrument:</span>
+                <span id="rzpFailConfirmPayMethod" class="font-bold text-zinc-800">UPI</span>
+            </div>
+            <div class="flex items-center justify-between text-zinc-500 text-[11px]">
+                <span>Order Reference:</span>
+                <span id="rzpFailConfirmPayOrderRef" class="font-bold text-zinc-800 truncate max-w-[150px]"><%= order ? order.orderNumber : '' %></span>
+            </div>
+            <div class="flex items-center justify-between pt-2 border-t border-zinc-200 text-sm">
+                <span class="text-zinc-600 font-sans font-semibold">Total Debit:</span>
+                <span id="rzpFailConfirmPayAmount" class="font-bold text-[#0A4D2E] text-base">₹<%= Number(order ? order.grandTotal : 0).toLocaleString('en-IN') %></span>
+            </div>
+        </div>
+
+        <!-- Confirm Actions -->
+        <div class="space-y-2 pt-1">
+            <button 
+                type="button" 
+                onclick="executeConfirmedFailRazorpayPay()" 
+                class="w-full py-3.5 px-4 bg-[#0A4D2E] hover:bg-[#073620] text-white rounded-xl text-xs uppercase font-mono tracking-wider font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+                <span>Yes, Authorize & Pay</span>
+                <span>✓</span>
+            </button>
+            <button 
+                type="button" 
+                onclick="closeFailRzpConfirmPayModal()" 
+                class="w-full py-3 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl text-xs uppercase font-mono tracking-wider font-semibold transition-colors cursor-pointer"
+            >
+                Cancel / Return
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- RAZORPAY FAILURE RETRY CONFIRM DECLINE MODAL -->
+<!-- ========================================================= -->
+<div id="rzpFailConfirmDeclineModal" class="fixed inset-0 z-[60] bg-black/75 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-5 shadow-2xl relative border border-rose-200 text-center animate-in fade-in zoom-in duration-150">
+        <!-- Rose Decline Medallion -->
+        <div class="w-16 h-16 rounded-full bg-rose-50 text-rose-700 mx-auto flex items-center justify-center border-2 border-rose-200 shadow-xs">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+        </div>
+
+        <div class="space-y-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-mono uppercase font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                SIMULATE BANK DECLINE
+            </span>
+            <h3 class="text-xl font-serif font-bold text-zinc-900">Decline Payment?</h3>
+            <p class="text-xs text-zinc-500 font-light leading-relaxed">
+                This will simulate an issuing bank refusal. In accordance with security policy, you can re-buy this timepiece only after 5 minutes.
+            </p>
+        </div>
+
+        <!-- Order Snapshot -->
+        <div class="p-3.5 bg-rose-50/50 rounded-2xl border border-rose-200/60 text-xs space-y-2 text-left font-mono">
+            <div class="flex items-center justify-between text-zinc-500 text-[11px]">
+                <span>Simulation Type:</span>
+                <span class="font-bold text-rose-700">Bank Decline / 3DS Refusal</span>
+            </div>
+            <div class="flex items-center justify-between text-zinc-500 text-[11px]">
+                <span>Order Reference:</span>
+                <span class="font-bold text-zinc-800 truncate max-w-[150px]"><%= order ? order.orderNumber : '' %></span>
+            </div>
+            <div class="flex items-center justify-between pt-2 border-t border-rose-200 text-sm">
+                <span class="text-zinc-600 font-sans font-semibold">Unpaid Amount:</span>
+                <span id="rzpFailConfirmDeclineAmount" class="font-bold text-rose-700 text-base">₹<%= Number(order ? order.grandTotal : 0).toLocaleString('en-IN') %></span>
+            </div>
+        </div>
+
+        <!-- Decline Actions -->
+        <div class="space-y-2 pt-1">
+            <button 
+                type="button" 
+                onclick="executeConfirmedFailRazorpayDecline()" 
+                class="w-full py-3.5 px-4 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs uppercase font-mono tracking-wider font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+                <span>Yes, Decline Settlement</span>
+                <span>✕</span>
+            </button>
+            <button 
+                type="button" 
+                onclick="closeFailRzpConfirmDeclineModal()" 
+                class="w-full py-3 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl text-xs uppercase font-mono tracking-wider font-semibold transition-colors cursor-pointer"
+            >
+                Cancel / Return
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let activeRetryData = null;
+    let cooldownRemainingSeconds = <%= typeof cooldown !== 'undefined' && cooldown && cooldown.inCooldown ? cooldown.remainingSeconds : 0 %>;
+    let cooldownTimerInterval = null;
+
+    function startCooldownTimer(seconds) {
+        cooldownRemainingSeconds = seconds;
+        if (cooldownTimerInterval) clearInterval(cooldownTimerInterval);
+
+        const banner = document.getElementById('declineCooldownBanner');
+        const timerDisplay = document.getElementById('cooldownTimerDisplay');
+
+        if (seconds <= 0) {
+            if (banner) banner.classList.add('hidden');
+            return;
+        }
+
+        if (banner) {
+            banner.classList.remove('hidden');
+            banner.classList.add('flex');
+        }
+
+        const updateUI = () => {
+            const mins = Math.floor(cooldownRemainingSeconds / 60);
+            const secs = (cooldownRemainingSeconds % 60).toString().padStart(2, '0');
+            const formatted = `${mins}:${secs}`;
+            if (timerDisplay) timerDisplay.textContent = formatted;
+
+            if (cooldownRemainingSeconds <= 0) {
+                clearInterval(cooldownTimerInterval);
+                if (banner) banner.classList.add('hidden');
+                if (window.showToast) window.showToast('5-minute catalog security interval ended.', 'info');
+            }
+            cooldownRemainingSeconds--;
+        };
+
+        updateUI();
+        cooldownTimerInterval = setInterval(updateUI, 1000);
+    }
+
+    function handleFailureRetryClick() {
+        openRetryModal();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (cooldownRemainingSeconds > 0) {
+            startCooldownTimer(cooldownRemainingSeconds);
+        }
+    });
+
+    function openRetryModal() {
+        const errEl = document.getElementById('retryModalErr');
+        if (errEl) errEl.classList.add('hidden');
+        selectRetryGw('Razorpay');
+        const m = document.getElementById('retryPaymentModal');
+        if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    }
+
+    function closeRetryModal() {
+        const m = document.getElementById('retryPaymentModal');
+        if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    }
+
+    function selectRetryGw(gw) {
+        const rzpRadio = document.getElementById('retryGwRzp');
+        const walletRadio = document.getElementById('retryGwWallet');
+        const codRadio = document.getElementById('retryGwCod');
+
+        if (rzpRadio) rzpRadio.checked = (gw === 'Razorpay');
+        if (walletRadio) walletRadio.checked = (gw === 'Wallet');
+        if (codRadio) codRadio.checked = (gw === 'Cash on Delivery');
+
+        const cardRzp = document.getElementById('retryCardRazorpay');
+        const cardWallet = document.getElementById('retryCardWallet');
+        const cardCod = document.getElementById('retryCardCod');
+
+        [cardRzp, cardWallet, cardCod].forEach(c => {
+            if (c) {
+                c.classList.remove('border-[#0A4D2E]', 'bg-emerald-50/20');
+                c.classList.add('border-zinc-200', 'bg-white');
+            }
+        });
+
+        let target = cardRzp;
+        if (gw === 'Wallet') target = cardWallet;
+        else if (gw === 'Cash on Delivery') target = cardCod;
+
+        if (target) {
+            target.classList.add('border-[#0A4D2E]', 'bg-emerald-50/20');
+            target.classList.remove('border-zinc-200', 'bg-white');
+        }
+    }
+
+    async function executeRetryPayment() {
+        const rzpRadio = document.getElementById('retryGwRzp');
+        const walletRadio = document.getElementById('retryGwWallet');
+        const codRadio = document.getElementById('retryGwCod');
+
+        let paymentMethod = 'Razorpay';
+        if (walletRadio && walletRadio.checked) paymentMethod = 'Wallet';
+        else if (codRadio && codRadio.checked) paymentMethod = 'Cash on Delivery';
+
+        const btn = document.getElementById('confirmRetryBtn');
+        const errEl = document.getElementById('retryModalErr');
+
+        if (errEl) errEl.classList.add('hidden');
+        if (btn) btn.disabled = true;
+
+        if (paymentMethod === 'Wallet' && window.DeltaPaymentAnimation) {
+            window.DeltaPaymentAnimation.start({
+                title: 'Authorizing Vault Reserve Settlement',
+                subtitle: 'Debiting verified reserve...',
+                amount: <%= Number(order ? order.grandTotal : 0) %>,
+                method: 'DELTA Vault Reserve'
+            });
+        } else if (paymentMethod === 'Cash on Delivery' && window.DeltaPaymentAnimation) {
+            window.DeltaPaymentAnimation.start({
+                title: 'Converting to Cash on Delivery',
+                subtitle: 'Allocating complimentary white-glove courier settlement...',
+                amount: <%= Number(order ? order.grandTotal : 0) %>,
+                method: 'Cash on Delivery'
+            });
+        }
+
+        try {
+            const res = await fetch('/orders/<%= order ? order._id : "" %>/retry-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ paymentMethod })
+            });
+            const data = await res.json();
+            if (!data.success) {
+                if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+                if (errEl) {
+                    errEl.textContent = data.message || 'Payment retry initialization failed.';
+                    errEl.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (data.gateway === 'Wallet' || data.gateway === 'Cash on Delivery' || data.completed) {
+                if (window.DeltaPaymentAnimation) {
+                    window.DeltaPaymentAnimation.success({
+                        title: paymentMethod === 'Wallet' ? 'Vault Settlement Confirmed' : 'Order Switched to Cash on Delivery',
+                        subtitle: 'Allocation secured in DELTA Vault.',
+                        redirectUrl: data.redirect || '/order/success/<%= order ? order._id : "" %>',
+                        delayMs: 1200
+                    });
+                } else {
+                    window.location.href = data.redirect || '/order/success/<%= order ? order._id : "" %>';
+                }
+                return;
+            }
+
+            activeRetryData = data;
+            closeRetryModal();
+
+            const isRealRazorpay = typeof window.Razorpay === 'function' &&
+                !data.isSimulated &&
+                data.keyId &&
+                !data.keyId.includes('deltaVault') &&
+                !data.keyId.includes('dummy') &&
+                data.razorpayOrderId &&
+                !data.razorpayOrderId.startsWith('order_delta_');
+
+            if (isRealRazorpay) {
+                const options = {
+                    key: data.keyId,
+                    amount: data.amount,
+                    currency: data.currency || 'INR',
+                        name: 'DELTA Haute Horlogerie',
+                        description: 'Retry Settlement — Order ' + data.orderNumber,
+                        order_id: data.razorpayOrderId,
+                        prefill: {
+                            name: data.user?.name || '',
+                            email: data.user?.email || '',
+                            contact: data.user?.phone || ''
+                        },
+                        theme: { color: '#0A4D2E' },
+                        handler: async function (response) {
+                            await sendRetryVerification({
+                                paymentMethod: 'Razorpay',
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature
+                            });
+                        },
+                        modal: {
+                            ondismiss: function () {
+                                if (window.showToast) window.showToast('Payment window was dismissed.', 'info');
+                            }
+                        }
+                    };
+                    try {
+                        const rzp = new window.Razorpay(options);
+                        rzp.on('payment.failed', function (resp) {
+                            const desc = resp.error?.description || resp.error?.reason || 'Payment was declined.';
+                            if (window.showToast) window.showToast(desc, 'error');
+                        });
+                        rzp.open();
+                    } catch (err) {
+                        console.warn("[Razorpay] Live SDK failed to open, switching to simulation fallback:", err);
+                        openRzpSimModal(data);
+                    }
+                } else {
+                    openRzpSimModal(data);
+                }
+        } catch (err) {
+            if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+            if (errEl) {
+                errEl.textContent = 'Connection error initiating payment retry.';
+                errEl.classList.remove('hidden');
+            }
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    let currentFailureRzpTab = 'upi';
+    let currentFailureRzpSubMethod = 'UPI';
+
+    function switchFailureRzpTab(tab) {
+        currentFailureRzpTab = tab;
+        ['upi', 'card', 'netbanking', 'wallet'].forEach(t => {
+            const btn = document.getElementById(`rzpFailTabBtn_${t}`);
+            const panel = document.getElementById(`rzpFailPanel_${t}`);
+            if (btn) {
+                if (t === tab) {
+                    btn.className = "py-2 px-1 text-center rounded-xl transition-all cursor-pointer bg-white text-zinc-900 shadow-xs font-semibold flex flex-col items-center gap-1";
+                    const svg = btn.querySelector('svg');
+                    if (svg) svg.classList.add('text-[#0A4D2E]');
+                } else {
+                    btn.className = "py-2 px-1 text-center rounded-xl transition-all cursor-pointer text-zinc-500 hover:text-zinc-900 flex flex-col items-center gap-1";
+                    const svg = btn.querySelector('svg');
+                    if (svg) svg.classList.remove('text-[#0A4D2E]');
+                }
+            }
+            if (panel) {
+                if (t === tab) panel.classList.remove('hidden');
+                else panel.classList.add('hidden');
+            }
+        });
+        updateFailureRzpPayButtonText();
+    }
+
+    function selectFailureRzpUpiApp(app, vpa) {
+        currentFailureRzpSubMethod = app;
+        const vpaInput = document.getElementById('rzpFailUpiVpaInput');
+        if (vpaInput) vpaInput.value = vpa;
+        ['gpay', 'phonepe', 'paytm', 'bhim'].forEach(a => {
+            const btn = document.getElementById(`rzpFailUpiApp_${a}`);
+            if (btn) {
+                btn.className = "p-2 rounded-xl border border-zinc-200 bg-white flex flex-col items-center justify-center gap-1 text-[11px] font-semibold text-zinc-600 transition-all cursor-pointer";
+            }
+        });
+        const activeKey = app === 'Google Pay' ? 'gpay' : app === 'PhonePe' ? 'phonepe' : app === 'Paytm' ? 'paytm' : 'bhim';
+        const activeBtn = document.getElementById(`rzpFailUpiApp_${activeKey}`);
+        if (activeBtn) {
+            activeBtn.className = "p-2 rounded-xl border-2 border-[#0A4D2E] bg-emerald-50/40 flex flex-col items-center justify-center gap-1 text-[11px] font-bold text-zinc-900 transition-all cursor-pointer";
+        }
+        updateFailureRzpPayButtonText();
+    }
+
+    function selectFailureRzpBank(bank) {
+        currentFailureRzpSubMethod = bank;
+        ['HDFC', 'ICICI', 'SBI', 'Axis', 'Kotak', 'PNB'].forEach(b => {
+            const btn = document.getElementById(`rzpFailBank_${b}`);
+            if (btn) btn.className = "p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]";
+        });
+        const key = bank.includes('HDFC') ? 'HDFC' : bank.includes('ICICI') ? 'ICICI' : bank.includes('State') ? 'SBI' : bank.includes('Axis') ? 'Axis' : bank.includes('Kotak') ? 'Kotak' : 'PNB';
+        const activeBtn = document.getElementById(`rzpFailBank_${key}`);
+        if (activeBtn) activeBtn.className = "p-2.5 rounded-xl border-2 border-[#0A4D2E] bg-emerald-50/40 text-left transition-all cursor-pointer";
+        updateFailureRzpPayButtonText();
+    }
+
+    function selectFailureRzpOtherBank(bank) {
+        if (!bank) return;
+        currentFailureRzpSubMethod = bank;
+        ['HDFC', 'ICICI', 'SBI', 'Axis', 'Kotak', 'PNB'].forEach(b => {
+            const btn = document.getElementById(`rzpFailBank_${b}`);
+            if (btn) btn.className = "p-2.5 rounded-xl border border-zinc-200 bg-white text-left transition-all cursor-pointer hover:border-[#0A4D2E]";
+        });
+        updateFailureRzpPayButtonText();
+    }
+
+    function selectFailureRzpWallet(wallet) {
+        currentFailureRzpSubMethod = wallet;
+        updateFailureRzpPayButtonText();
+    }
+
+    function updateFailureRzpPayButtonText() {
+        const btn = document.getElementById('rzpFailPayBtnLabel');
+        if (!btn) return;
+        const totalAmount = (activeRetryData && activeRetryData.grandTotal) 
+            ? activeRetryData.grandTotal 
+            : (<%= order ? order.grandTotal : 0 %>);
+        const amountStr = '₹' + Number(totalAmount).toLocaleString('en-IN');
+        let methodLabel = 'UPI';
+        if (currentFailureRzpTab === 'upi') methodLabel = currentFailureRzpSubMethod || 'UPI';
+        else if (currentFailureRzpTab === 'card') methodLabel = 'Card';
+        else if (currentFailureRzpTab === 'netbanking') methodLabel = currentFailureRzpSubMethod || 'NetBanking';
+        else if (currentFailureRzpTab === 'wallet') methodLabel = currentFailureRzpSubMethod || 'Wallet';
+        btn.textContent = `Authorize & Pay ${amountStr} via ${methodLabel}`;
+    }
+
+    function openRzpSimModal(data) {
+        const idEl = document.getElementById('simRzpOrderId');
+        const amtEl = document.getElementById('simRzpAmount');
+        if (idEl) idEl.textContent = data.razorpayOrderId;
+        if (amtEl && data.grandTotal) amtEl.textContent = '₹' + Number(data.grandTotal).toLocaleString('en-IN');
+        switchFailureRzpTab('upi');
+        const m = document.getElementById('rzpSimModal');
+        if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    }
+    function closeRzpSimModal() {
+        closeFailRzpConfirmPayModal();
+        closeFailRzpConfirmDeclineModal();
+        const m = document.getElementById('rzpSimModal');
+        if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    }
+
+    function openFailRzpConfirmPayModal() {
+        const m = document.getElementById('rzpFailConfirmPayModal');
+        const methodEl = document.getElementById('rzpFailConfirmPayMethod');
+        const orderRefEl = document.getElementById('rzpFailConfirmPayOrderRef');
+        const amountEl = document.getElementById('rzpFailConfirmPayAmount');
+
+        let methodLabel = 'UPI';
+        if (currentFailureRzpTab === 'upi') methodLabel = currentFailureRzpSubMethod || 'UPI';
+        else if (currentFailureRzpTab === 'card') methodLabel = 'Credit / Debit Card';
+        else if (currentFailureRzpTab === 'netbanking') methodLabel = currentFailureRzpSubMethod || 'NetBanking';
+        else if (currentFailureRzpTab === 'wallet') methodLabel = currentFailureRzpSubMethod || 'Digital Wallet';
+
+        if (methodEl) methodEl.textContent = methodLabel;
+        if (orderRefEl && activeRetryData) orderRefEl.textContent = activeRetryData.orderNumber || activeRetryData.razorpayOrderId;
+        const totalAmount = (activeRetryData && activeRetryData.grandTotal) ? activeRetryData.grandTotal : (<%= order ? order.grandTotal : 0 %>);
+        if (amountEl) amountEl.textContent = '₹' + Number(totalAmount).toLocaleString('en-IN');
+
+        if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    }
+
+    function closeFailRzpConfirmPayModal() {
+        const m = document.getElementById('rzpFailConfirmPayModal');
+        if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    }
+
+    async function executeConfirmedFailRazorpayPay() {
+        closeFailRzpConfirmPayModal();
+        await simulateRzpSuccess();
+    }
+
+    function openFailRzpConfirmDeclineModal() {
+        const m = document.getElementById('rzpFailConfirmDeclineModal');
+        const orderRefEl = document.getElementById('rzpFailConfirmDeclineOrderRef');
+        const amountEl = document.getElementById('rzpFailConfirmDeclineAmount');
+        if (orderRefEl && activeRetryData) orderRefEl.textContent = activeRetryData.orderNumber || activeRetryData.razorpayOrderId;
+        const totalAmount = (activeRetryData && activeRetryData.grandTotal) ? activeRetryData.grandTotal : (<%= order ? order.grandTotal : 0 %>);
+        if (amountEl) amountEl.textContent = '₹' + Number(totalAmount).toLocaleString('en-IN');
+        if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    }
+
+    function closeFailRzpConfirmDeclineModal() {
+        const m = document.getElementById('rzpFailConfirmDeclineModal');
+        if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    }
+
+    async function executeConfirmedFailRazorpayDecline() {
+        closeFailRzpConfirmDeclineModal();
+        try {
+            await fetch('/orders/<%= order ? order._id : "" %>/record-decline', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ reason: 'Transaction authorization was declined by user/bank' })
+            });
+        } catch (e) {}
+        simulateRzpDecline();
+        startCooldownTimer(300);
+    }
+    function simulateRzpDecline() {
+        closeRzpSimModal();
+        if (window.showToast) window.showToast('Simulated payment authorization declined by issuing bank.', 'error');
+    }
+    async function simulateRzpSuccess() {
+        if (!activeRetryData) return;
+        closeRzpSimModal();
+        await sendRetryVerification({
+            paymentMethod: 'Razorpay',
+            razorpay_order_id: activeRetryData.razorpayOrderId,
+            razorpay_payment_id: activeRetryData.testPaymentId,
+            razorpay_signature: activeRetryData.testSignature
+        });
+    }
+
+    async function sendRetryVerification(payload) {
+        if (window.DeltaPaymentAnimation) {
+            window.DeltaPaymentAnimation.start({
+                title: 'Authorizing Retry Settlement',
+                subtitle: 'Authenticating 256-bit cryptographic payload with bank...',
+                amount: <%= Number(order ? order.grandTotal : 0) %>,
+                method: payload.paymentMethod || 'Razorpay'
+            });
+        }
+        try {
+            const res = await fetch('/orders/<%= order ? order._id : "" %>/verify-retry-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                const redirectTarget = data.redirect || '/order/success/<%= order ? order._id : "" %>';
+                if (window.DeltaPaymentAnimation) {
+                    window.DeltaPaymentAnimation.success({
+                        title: 'Retry Settlement Confirmed',
+                        subtitle: 'Timepiece recovered & allocation secured.',
+                        redirectUrl: redirectTarget,
+                        delayMs: 1200
+                    });
+                } else {
+                    window.location.href = redirectTarget;
+                }
+            } else {
+                if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+                const errMsg = data.message || 'Payment verification failed.';
+                if (window.showToast) window.showToast(errMsg, 'error');
+                else alert(errMsg);
+            }
+        } catch (err) {
+            if (window.DeltaPaymentAnimation) window.DeltaPaymentAnimation.hide();
+            const connErrMsg = 'Connection error verifying retry payment.';
+            if (window.showToast) window.showToast(connErrMsg, 'error');
+            else alert(connErrMsg);
+        }
+    }
+</script>
+<% } %>
+
+<%- include('../partials/payment-animation') %>
+
+<%- include('../partials/footer') %>

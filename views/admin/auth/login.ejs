@@ -1,0 +1,238 @@
+<%- include('../partials/header', { title: 'Administrative Access — DELTA Horology Secure Gateway' }) %>
+
+<div class="min-h-screen grid grid-cols-1 lg:grid-cols-12 bg-white antialiased font-sans">
+    
+    <!-- Left Hero Column: Deep Emerald Green with Greek Delta Watermark -->
+    <div class="lg:col-span-6 bg-[#004D2C] relative flex flex-col justify-between p-8 sm:p-12 lg:p-16 overflow-hidden min-h-[40vh] lg:min-h-screen text-white">
+        <!-- Giant Greek Delta Watermark -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+            <span class="text-[32rem] sm:text-[40rem] font-serif text-white/5 leading-none transform translate-y-8 -translate-x-6">
+                δ
+            </span>
+        </div>
+
+        <!-- Top Left Brand Text -->
+        <div class="relative z-10">
+            <a href="/" class="text-xl font-serif text-white tracking-[0.2em] font-normal hover:opacity-80 transition-opacity">
+                Delta
+            </a>
+        </div>
+
+        <!-- Middle / Bottom Headline -->
+        <div class="relative z-10 max-w-lg mt-auto mb-8 lg:mb-12">
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-serif font-normal text-white tracking-tight leading-tight mb-4">
+                Registry Secure
+            </h1>
+            <p class="text-xs sm:text-sm text-emerald-100/80 font-light leading-relaxed tracking-wide">
+                Access the administrative portal for the Delta Horology Secure Ledger Protocol. Authorized personnel only.
+            </p>
+        </div>
+
+        <!-- Bottom Footer Tag -->
+        <div class="relative z-10 text-[9px] uppercase tracking-[0.3em] text-emerald-200/50 font-medium font-mono">
+            SECURE REGISTRY ACCESS
+        </div>
+    </div>
+
+    <!-- Right Form Column: Minimalist Luxury White Authentication -->
+    <div class="lg:col-span-6 flex flex-col justify-between p-8 sm:p-12 lg:p-16 bg-white relative">
+        <div class="max-w-md w-full mx-auto my-auto py-8">
+            
+            <!-- Center Circular Emblem -->
+            <div class="flex justify-center mb-6">
+                <div class="w-16 h-16 rounded-full border border-zinc-200 bg-white flex items-center justify-center shadow-sm">
+                    <span class="text-2xl font-serif text-[#004D2C] font-normal">δ</span>
+                </div>
+            </div>
+
+            <!-- Title & Subtitle -->
+            <div class="text-center mb-10">
+                <h2 class="text-2xl sm:text-3xl font-serif font-normal text-zinc-900 tracking-tight">
+                    Administrative Access
+                </h2>
+                <p class="text-xs text-zinc-400 font-light tracking-wide mt-1.5">
+                    Delta Horology Secure Gateway
+                </p>
+            </div>
+
+            <% if (typeof success !== 'undefined' && success) { %>
+                <div class="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded text-xs flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span><%= success %></span>
+                </div>
+            <% } %>
+
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="mb-6 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded text-xs flex items-center gap-2">
+                    <svg class="w-4 h-4 text-rose-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span><%= error %></span>
+                </div>
+            <% } %>
+
+            <!-- Admin Login Form -->
+            <form action="/admin/login" method="POST" class="space-y-6" id="adminLoginForm" novalidate>
+                
+                <!-- Administrator ID / Email -->
+                <div>
+                    <label class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-500 mb-2">
+                        ADMINISTRATOR ID
+                    </label>
+                    <div class="relative flex items-center border-b border-zinc-300 focus-within:border-zinc-900 transition-colors pb-2">
+                        <div class="text-zinc-400 mr-3">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path>
+                            </svg>
+                        </div>
+                        <input
+                            type="email"
+                            name="email"
+                            id="email"
+                            required
+                            autocomplete="username email"
+                            value="<%= (typeof oldData !== 'undefined' && oldData && oldData.email) ? oldData.email : ((typeof oldEmail !== 'undefined' && oldEmail) ? oldEmail : 'admin@delta.com') %>"
+                            placeholder="Enter Credentials"
+                            class="w-full bg-transparent text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none font-sans"
+                        >
+                    </div>
+                    <p id="emailError" class="text-rose-600 text-xs mt-1 hidden font-light"></p>
+                </div>
+
+                <!-- Security Key / Password -->
+                <div>
+                    <label class="block text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-500 mb-2">
+                        SECURITY KEY
+                    </label>
+                    <div class="relative flex items-center border-b border-zinc-300 focus-within:border-zinc-900 transition-colors pb-2">
+                        <div class="text-zinc-400 mr-3">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                            </svg>
+                        </div>
+                        <input
+                            type="password"
+                            name="password"
+                            id="password"
+                            required
+                            autocomplete="current-password"
+                            value="<%= (typeof oldData !== 'undefined' && oldData && oldData.password) ? oldData.password : (typeof password !== 'undefined' ? password : '') %>"
+                            placeholder="••••••••••••"
+                            class="w-full bg-transparent text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none font-sans tracking-widest"
+                        >
+                        <button type="button" onclick="togglePasswordVisibility()" class="text-zinc-400 hover:text-zinc-600 focus:outline-none cursor-pointer">
+                            <svg id="eyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <p id="passwordError" class="text-rose-600 text-xs mt-1 hidden font-light"></p>
+                </div>
+
+                <!-- Two-Factor Authentication Toggle -->
+                <div class="flex items-center justify-between pt-2">
+                    <span class="text-xs text-zinc-600 font-medium">Two-Factor Authentication</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="twoFactor" value="true" class="sr-only peer">
+                        <div class="w-10 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#004D2C]"></div>
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-4">
+                    <button
+                        type="submit"
+                        class="w-full bg-[#18181b] hover:bg-black text-white py-3.5 px-4 text-xs uppercase tracking-[0.25em] font-semibold transition-all duration-200 cursor-pointer shadow-sm hover:shadow"
+                    >
+                        AUTHORIZE ACCESS
+                    </button>
+                </div>
+
+                <!-- Forgot Password -->
+                <div class="text-center pt-2">
+                    <a href="/admin/forgot-password" class="text-xs text-zinc-500 hover:text-zinc-900 transition-colors font-medium">
+                        Forgot Password
+                    </a>
+                </div>
+
+                <!-- Security Encrypted Badge -->
+                <div class="pt-4 flex items-center justify-center gap-2 text-[10px] uppercase tracking-[0.2em] text-[#004D2C] font-semibold">
+                    <svg class="w-3.5 h-3.5 text-[#004D2C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                    <span>END-TO-END ENCRYPTED SESSION</span>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-right text-[9px] uppercase tracking-[0.25em] text-zinc-400 font-mono">
+            SECURE LEDGER PROTOCOL V.4.0
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function togglePasswordVisibility() {
+        const passwordInput = document.getElementById('password');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+        } else {
+            passwordInput.type = 'password';
+        }
+    }
+
+    const form = document.getElementById('adminLoginForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const emailError = document.getElementById('emailError');
+    const passwordError = document.getElementById('passwordError');
+    const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+
+    if (emailInput && emailError) {
+        emailInput.addEventListener('input', () => {
+            if (emailInput.value.trim() && emailRegex.test(emailInput.value.trim())) {
+                emailError.classList.add('hidden');
+                emailError.textContent = '';
+            }
+        });
+    }
+
+    if (passwordInput && passwordError) {
+        passwordInput.addEventListener('input', () => {
+            if (passwordInput.value.length > 0) {
+                passwordError.classList.add('hidden');
+                passwordError.textContent = '';
+            }
+        });
+    }
+
+    form.addEventListener('submit', (e) => {
+        let hasError = false;
+        emailError.classList.add('hidden');
+        passwordError.classList.add('hidden');
+
+        if (!emailInput.value.trim() || !emailRegex.test(emailInput.value.trim())) {
+            emailError.textContent = 'Please enter a valid administrator credentials.';
+            emailError.classList.remove('hidden');
+            hasError = true;
+        }
+
+        if (!passwordInput.value) {
+            passwordError.textContent = 'Security key is required.';
+            passwordError.classList.remove('hidden');
+            hasError = true;
+        }
+
+        if (hasError) {
+            e.preventDefault();
+        }
+    });
+</script>
+
+<%- include('../partials/footer') %>
+

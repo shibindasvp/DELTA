@@ -1,0 +1,484 @@
+<%- include('../partials/header', { title: 'Orders — DELTA Administration' }) %>
+
+<div class="flex flex-1 min-h-screen bg-[#F8F9FA]">
+    <%- include('../partials/sidebar', { activePage: 'orders' }) %>
+
+    <div class="flex-1 flex flex-col min-w-0">
+        <%- include('../partials/navbar', { pageTitle: 'Orders' }) %>
+
+        <main class="flex-grow p-6 sm:p-8 max-w-[1400px] w-full mx-auto space-y-6">
+            
+            <!-- Page Heading -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-serif font-normal text-zinc-900 tracking-tight">
+                        Orders
+                    </h1>
+                    <p class="text-xs text-zinc-500 font-light mt-1">
+                        Manage luxury orders, track courier fulfillment, inspect client dossiers, and update fulfillment states.
+                    </p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="/admin/orders" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors shadow-xs">
+                        <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        Refresh
+                    </a>
+                </div>
+            </div>
+
+            <!-- KPI Stat Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="bg-white border border-zinc-200/80 rounded-xl p-4 shadow-xs">
+                    <span class="text-[10px] uppercase tracking-[0.15em] text-zinc-500 font-semibold block mb-1">Total Orders</span>
+                    <span id="statTotalOrders" class="text-2xl font-serif font-bold text-zinc-900 block font-mono"><%= (typeof stats !== 'undefined' && stats) ? stats.totalOrders : 0 %></span>
+                    <span class="text-[10px] text-zinc-400 font-light block mt-0.5">All time records</span>
+                </div>
+                <div class="bg-white border border-zinc-200/80 rounded-xl p-4 shadow-xs">
+                    <span class="text-[10px] uppercase tracking-[0.15em] text-amber-700 font-semibold block mb-1">Pending Dispatch</span>
+                    <span id="statPendingOrders" class="text-2xl font-serif font-bold text-amber-700 block font-mono"><%= (typeof stats !== 'undefined' && stats) ? stats.pendingOrders : 0 %></span>
+                    <span class="text-[10px] text-zinc-400 font-light block mt-0.5">Awaiting fulfillment</span>
+                </div>
+                <div class="bg-white border border-zinc-200/80 rounded-xl p-4 shadow-xs">
+                    <span class="text-[10px] uppercase tracking-[0.15em] text-blue-700 font-semibold block mb-1">In Transit / Shipped</span>
+                    <span id="statShippedOrders" class="text-2xl font-serif font-bold text-blue-700 block font-mono"><%= (typeof stats !== 'undefined' && stats) ? stats.shippedOrders : 0 %></span>
+                    <span class="text-[10px] text-zinc-400 font-light block mt-0.5">Insured transit</span>
+                </div>
+                <div class="bg-white border border-zinc-200/80 rounded-xl p-4 shadow-xs">
+                    <span class="text-[10px] uppercase tracking-[0.15em] text-indigo-700 font-semibold block mb-1">Out for Delivery</span>
+                    <span id="statOutForDeliveryOrders" class="text-2xl font-serif font-bold text-indigo-700 block font-mono"><%= (typeof stats !== 'undefined' && stats) ? stats.outForDeliveryOrders : 0 %></span>
+                    <span class="text-[10px] text-zinc-400 font-light block mt-0.5">Final courier leg</span>
+                </div>
+                <div class="bg-[#0A4D2E] text-white rounded-xl p-4 shadow-xs">
+                    <span class="text-[10px] uppercase tracking-[0.15em] text-emerald-200/80 font-semibold block mb-1">Delivered</span>
+                    <span id="statDeliveredOrders" class="text-2xl font-serif font-bold text-white block font-mono"><%= (typeof stats !== 'undefined' && stats) ? stats.deliveredOrders : 0 %></span>
+                    <span class="text-[10px] text-emerald-200/70 font-light block mt-0.5">Safely deposited</span>
+                </div>
+            </div>
+
+            <!-- Search, Sort & Filter Bar -->
+            <div class="bg-white border border-zinc-200/80 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+                <form action="/admin/orders" method="GET" class="space-y-3" id="adminOrderFilterForm">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
+                        
+                        <!-- Search Box (Span 3) -->
+                        <div class="lg:col-span-3 relative">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                            <input 
+                                type="text" 
+                                name="search" 
+                                value="<%= typeof search !== 'undefined' ? search : '' %>" 
+                                placeholder="Search Order ID, Collector, Email, Phone..." 
+                                class="w-full pl-10 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-900 focus:bg-white transition-colors"
+                            >
+                        </div>
+
+                        <!-- Status Filter (Span 3) -->
+                        <div class="lg:col-span-3">
+                            <select 
+                                name="status" 
+                                onchange="document.getElementById('adminOrderFilterForm').submit()"
+                                class="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-800 focus:outline-none focus:border-zinc-900 focus:bg-white transition-colors cursor-pointer"
+                            >
+                                <option value="" <%= (!status || status === 'all') ? 'selected' : '' %>>All Fulfillment Statuses</option>
+                                <option value="Pending" <%= status === 'Pending' ? 'selected' : '' %>>Pending</option>
+                                <option value="Processing" <%= status === 'Processing' ? 'selected' : '' %>>Processing</option>
+                                <option value="Shipped" <%= status === 'Shipped' ? 'selected' : '' %>>Shipped (In Transit)</option>
+                                <option value="Out for Delivery" <%= status === 'Out for Delivery' ? 'selected' : '' %>>Out for Delivery</option>
+                                <option value="Delivered" <%= status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+                                <option value="Cancelled" <%= status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+                                <option value="Return Requested" <%= status === 'Return Requested' ? 'selected' : '' %>>Return Requested</option>
+                                <option value="Returned" <%= status === 'Returned' ? 'selected' : '' %>>Returned</option>
+                            </select>
+                        </div>
+
+                        <!-- Payment Method Filter (Span 2) -->
+                        <div class="lg:col-span-2">
+                            <select 
+                                name="paymentMethod" 
+                                onchange="document.getElementById('adminOrderFilterForm').submit()"
+                                class="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-800 focus:outline-none focus:border-zinc-900 focus:bg-white transition-colors cursor-pointer"
+                            >
+                                <option value="" <%= (!paymentMethod || paymentMethod === 'all') ? 'selected' : '' %>>All Payments</option>
+                                <option value="Cash on Delivery" <%= paymentMethod === 'Cash on Delivery' ? 'selected' : '' %>>Cash on Delivery</option>
+                                <option value="Razorpay" <%= paymentMethod === 'Razorpay' ? 'selected' : '' %>>Razorpay</option>
+                                <option value="PayPal" <%= paymentMethod === 'PayPal' ? 'selected' : '' %>>PayPal</option>
+                                <option value="Wallet" <%= paymentMethod === 'Wallet' ? 'selected' : '' %>>DELTA Vault Wallet</option>
+                            </select>
+                        </div>
+
+                        <!-- Sort Order (Span 2) -->
+                        <div class="lg:col-span-2">
+                            <select 
+                                name="sort" 
+                                onchange="document.getElementById('adminOrderFilterForm').submit()"
+                                class="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-800 focus:outline-none focus:border-zinc-900 focus:bg-white transition-colors cursor-pointer"
+                            >
+                                <option value="newest" <%= (!sort || sort === 'newest') ? 'selected' : '' %>>Newest First</option>
+                                <option value="oldest" <%= sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+                                <option value="amount_desc" <%= sort === 'amount_desc' ? 'selected' : '' %>>Amount (High → Low)</option>
+                                <option value="amount_asc" <%= sort === 'amount_asc' ? 'selected' : '' %>>Amount (Low → High)</option>
+                            </select>
+                        </div>
+
+                        <!-- Action Buttons (Span 2) -->
+                        <div class="lg:col-span-2 flex items-center gap-2">
+                            <button 
+                                type="submit" 
+                                class="flex-1 px-4 py-2 bg-zinc-900 hover:bg-black text-white rounded-xl text-xs font-medium transition-colors shadow-xs"
+                            >
+                                Filter
+                            </button>
+                            <% if (search || (status && status !== 'all') || (paymentMethod && paymentMethod !== 'all') || (sort && sort !== 'newest')) { %>
+                                <a 
+                                    href="/admin/orders" 
+                                    class="px-3 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl text-xs font-medium transition-colors text-center"
+                                    title="Reset All Filters"
+                                >
+                                    Clear
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Active Filter Badges -->
+                    <% if (search || (status && status !== 'all') || (paymentMethod && paymentMethod !== 'all') || (sort && sort !== 'newest')) { %>
+                        <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-100">
+                            <span class="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold">Active Filters:</span>
+                            <% if (search) { %>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-zinc-100 text-zinc-800 rounded-md text-[11px]">
+                                    Query: "<%= search %>"
+                                    <a href="/admin/orders?status=<%= status || '' %>&paymentMethod=<%= paymentMethod || '' %>&sort=<%= sort || '' %>" class="text-zinc-400 hover:text-zinc-600 font-bold">&times;</a>
+                                </span>
+                            <% } %>
+                            <% if (status && status !== 'all') { %>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-800 rounded-md text-[11px]">
+                                    Status: <%= status %>
+                                    <a href="/admin/orders?search=<%= search || '' %>&paymentMethod=<%= paymentMethod || '' %>&sort=<%= sort || '' %>" class="text-emerald-500 hover:text-emerald-700 font-bold">&times;</a>
+                                </span>
+                            <% } %>
+                            <% if (paymentMethod && paymentMethod !== 'all') { %>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-800 rounded-md text-[11px]">
+                                    Payment: <%= paymentMethod === 'Wallet' ? 'DELTA Vault Wallet' : paymentMethod %>
+                                    <a href="/admin/orders?search=<%= search || '' %>&status=<%= status || '' %>&sort=<%= sort || '' %>" class="text-amber-500 hover:text-amber-700 font-bold">&times;</a>
+                                </span>
+                            <% } %>
+                            <% if (sort && sort !== 'newest') { %>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-zinc-100 text-zinc-800 rounded-md text-[11px]">
+                                    Sort: <%= sort === 'oldest' ? 'Oldest First' : (sort === 'amount_desc' ? 'Amount (High to Low)' : 'Amount (Low to High)') %>
+                                    <a href="/admin/orders?search=<%= search || '' %>&status=<%= status || '' %>&paymentMethod=<%= paymentMethod || '' %>" class="text-zinc-400 hover:text-zinc-600 font-bold">&times;</a>
+                                </span>
+                            <% } %>
+                            <a href="/admin/orders" class="text-[11px] text-rose-600 hover:underline ml-1">Clear all</a>
+                        </div>
+                    <% } %>
+                </form>
+            </div>
+
+            <!-- Orders Table Container -->
+            <div class="bg-white border border-zinc-200/80 rounded-2xl shadow-xs overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs font-sans">
+                        <thead>
+                            <tr class="border-b border-zinc-200/80 bg-[#FAFAFA] text-[10px] uppercase tracking-[0.15em] text-zinc-500 font-semibold">
+                                <th class="py-4 px-5">Order Ref</th>
+                                <th class="py-4 px-5">Order Date & Time</th>
+                                <th class="py-4 px-5">Collector / Client</th>
+                                <th class="py-4 px-5">Timepieces</th>
+                                <th class="py-4 px-5">Total Valuation</th>
+                                <th class="py-4 px-5">Fulfillment Status</th>
+                                <th class="py-4 px-5 text-right">Dossier</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-100">
+                            <% if (typeof orders !== 'undefined' && orders && orders.length > 0) { %>
+                                <% orders.forEach(ord => { %>
+                                    <tr id="order-row-<%= ord._id %>" class="hover:bg-zinc-50/80 transition-colors">
+                                        
+                                        <!-- i. Order Ref -->
+                                        <td class="py-4 px-5 font-mono">
+                                            <a href="/admin/orders/<%= ord._id %>" class="font-bold text-zinc-900 hover:text-[#0A4D2E] hover:underline flex items-center gap-1.5">
+                                                <span><%= ord.orderNumber %></span>
+                                            </a>
+                                            <% if (ord.paymentMethod === 'Wallet') { %>
+                                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-emerald-50 text-[#0A4D2E] border border-emerald-200 mt-1">
+                                                    <span>Vault Wallet</span>
+                                                </span>
+                                            <% } else if (ord.paymentMethod === 'Razorpay') { %>
+                                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-blue-50 text-blue-700 border border-blue-200 mt-1">
+                                                    <span>Razorpay</span>
+                                                </span>
+                                            <% } else if (ord.paymentMethod === 'PayPal') { %>
+                                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 mt-1">
+                                                    <span>PayPal</span>
+                                                </span>
+                                            <% } else { %>
+                                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-zinc-100 text-zinc-600 border border-zinc-200 mt-1">
+                                                    <span>Cash on Delivery</span>
+                                                </span>
+                                            <% } %>
+                                        </td>
+
+                                        <!-- ii. Date & Time -->
+                                        <td class="py-4 px-5 text-zinc-600 whitespace-nowrap">
+                                            <div class="font-medium text-zinc-900">
+                                                <%= new Date(ord.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+                                            </div>
+                                            <div class="text-[10px] text-zinc-400">
+                                                <%= new Date(ord.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) %>
+                                            </div>
+                                        </td>
+
+                                        <!-- iii. User Details -->
+                                        <td class="py-4 px-5">
+                                            <p class="font-bold text-zinc-900"><%= ord.collectorName %></p>
+                                            <p class="text-[11px] text-zinc-400 font-light truncate max-w-[180px]"><%= ord.collectorEmail %></p>
+                                            <% if (ord.shippingAddress && (ord.shippingAddress.mobile || ord.shippingAddress.city)) { %>
+                                                <p class="text-[10px] text-zinc-500 mt-0.5">
+                                                    <%= ord.shippingAddress.mobile ? ord.shippingAddress.mobile + ' • ' : '' %><%= ord.shippingAddress.city || '' %>
+                                                </p>
+                                            <% } %>
+                                        </td>
+
+                                        <!-- iv. Timepieces Summary (Compact) -->
+                                        <td class="py-4 px-5">
+                                            <% if (ord.items && ord.items.length > 0) { %>
+                                                <% 
+                                                    const primaryItem = ord.items[0]; 
+                                                    const totalUnits = ord.items.reduce((sum, it) => sum + (it.quantity || 1), 0);
+                                                    const remainingCount = ord.items.length - 1;
+                                                    const tooltipText = ord.items.map(it => (it.quantity || 1) + 'x ' + (it.brandName ? it.brandName + ' ' : '') + it.productName + (it.status ? ' (' + it.status + ')' : '')).join(', ');
+                                                %>
+                                                <div class="max-w-[220px]" title="<%= tooltipText %>">
+                                                    <a href="/admin/orders/<%= ord._id %>" class="font-medium text-zinc-900 hover:text-[#0A4D2E] hover:underline block truncate text-xs">
+                                                        <span class="font-bold text-zinc-900"><%= primaryItem.quantity %>x</span>
+                                                        <span><%= primaryItem.brandName ? primaryItem.brandName + ' ' : '' %><%= primaryItem.productName %></span>
+                                                    </a>
+                                                    <% if (remainingCount > 0) { %>
+                                                        <div class="flex items-center gap-1.5 mt-1">
+                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 text-zinc-700 border border-zinc-200/80">
+                                                                +<%= remainingCount %> more timepiece<%= remainingCount > 1 ? 's' : '' %>
+                                                            </span>
+                                                            <span class="text-[10px] text-zinc-400 font-mono">(<%= totalUnits %> units total)</span>
+                                                        </div>
+                                                    <% } else { %>
+                                                        <span class="text-[10px] text-zinc-400 font-mono block mt-0.5">
+                                                            <%= totalUnits === 1 ? '1 unit total' : totalUnits + ' units total' %>
+                                                        </span>
+                                                    <% } %>
+                                                </div>
+                                            <% } else { %>
+                                                <span class="text-zinc-400 text-xs italic">No timepieces</span>
+                                            <% } %>
+                                        </td>
+
+                                        <!-- v. Total Amount -->
+                                        <td class="py-4 px-5 font-mono">
+                                            <span class="font-bold text-[#0A4D2E] text-sm block">
+                                                ₹<%= Number(ord.grandTotal).toLocaleString('en-IN') %>
+                                            </span>
+                                            <span class="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded font-medium <%= ord.paymentStatus === 'Completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' %>">
+                                                <%= ord.paymentStatus || 'Pending' %>
+                                            </span>
+                                        </td>
+
+                                        <!-- vi. Fulfillment Status -->
+                                        <td class="py-4 px-5 whitespace-nowrap">
+                                            <span id="order-status-badge-<%= ord._id %>" class="px-2.5 py-1 rounded-full text-[9px] uppercase tracking-wider font-bold inline-block
+                                                <%= ord.orderStatus === 'Delivered' ? 'bg-emerald-100 text-emerald-800' : 
+                                                   (ord.orderStatus === 'Out for Delivery' ? 'bg-indigo-100 text-indigo-800' : 
+                                                   (ord.orderStatus === 'Shipped' ? 'bg-blue-100 text-blue-800' : 
+                                                   (ord.orderStatus === 'Processing' ? 'bg-amber-100 text-amber-800' : 
+                                                   (ord.orderStatus === 'Cancelled' ? 'bg-rose-100 text-rose-800' : 
+                                                   (ord.orderStatus === 'Return Requested' || ord.orderStatus === 'Returned' ? 'bg-purple-100 text-purple-800' : 'bg-zinc-100 text-zinc-800'))))) %>">
+                                                <%= ord.orderStatus %>
+                                            </span>
+                                        </td>
+
+                                        <!-- vii. View Dossier / Details Button -->
+                                        <td class="py-4 px-5 text-right whitespace-nowrap">
+                                            <div class="flex items-center justify-end gap-2">
+                                                <!-- PDF Invoice Download -->
+                                                <a 
+                                                    href="/admin/orders/<%= ord._id %>/invoice" 
+                                                    target="_blank"
+                                                    class="p-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl text-xs transition-colors shadow-2xs"
+                                                    title="Download PDF Invoice"
+                                                >
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                                </a>
+
+                                                <!-- View Detail Button -->
+                                                <a 
+                                                    href="/admin/orders/<%= ord._id %>" 
+                                                    class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-zinc-900 hover:bg-black text-white rounded-xl text-xs font-semibold tracking-wider uppercase transition-all shadow-2xs hover:shadow-xs"
+                                                    title="View Detailed Order Dossier"
+                                                >
+                                                    <span>Details</span>
+                                                    <span>→</span>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="py-16 text-center">
+                                        <div class="max-w-xs mx-auto space-y-2">
+                                            <div class="w-12 h-12 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto">
+                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                                            </div>
+                                            <p class="text-sm font-serif font-medium text-zinc-900">No order records found</p>
+                                            <p class="text-xs text-zinc-500 font-light">Try adjusting your search criteria or resetting active filters.</p>
+                                            <div class="pt-2">
+                                                <a href="/admin/orders" class="inline-block px-3 py-1.5 bg-zinc-900 text-white rounded-lg text-xs font-medium hover:bg-black transition-colors">
+                                                    Reset All Filters
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Footer -->
+                <% if (typeof pagination !== 'undefined' && pagination && pagination.totalPages > 1) { %>
+                    <div class="px-6 py-4 border-t border-zinc-100 bg-[#FAFAFA] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
+                        <div>
+                            Showing <span class="font-semibold text-zinc-800"><%= (pagination.currentPage - 1) * pagination.pageLimit + 1 %></span> to <span class="font-semibold text-zinc-800"><%= Math.min(pagination.currentPage * pagination.pageLimit, pagination.totalItems) %></span> of <span class="font-semibold text-zinc-800"><%= pagination.totalItems %></span> orders
+                        </div>
+                        <div class="flex items-center gap-1">
+                            
+                            <!-- Prev Button -->
+                            <% if (pagination.hasPrevPage) { %>
+                                <a 
+                                    href="/admin/orders?page=<%= pagination.prevPage %>&search=<%= encodeURIComponent(search || '') %>&status=<%= encodeURIComponent(status || '') %>&paymentMethod=<%= encodeURIComponent(paymentMethod || '') %>&sort=<%= encodeURIComponent(sort || '') %>" 
+                                    class="px-3 py-1.5 bg-white border border-zinc-200 rounded-lg text-zinc-700 hover:bg-zinc-50 font-medium transition-colors"
+                                >
+                                    &larr; Prev
+                                </a>
+                            <% } else { %>
+                                <span class="px-3 py-1.5 bg-zinc-100 border border-zinc-200 rounded-lg text-zinc-400 cursor-not-allowed">
+                                    &larr; Prev
+                                </span>
+                            <% } %>
+
+                            <!-- Page Numbers -->
+                            <% if (pagination.pageNumbers && pagination.pageNumbers.length > 0) { %>
+                                <% pagination.pageNumbers.forEach(pNum => { %>
+                                    <% if (pNum === pagination.currentPage) { %>
+                                        <span class="w-8 h-8 flex items-center justify-center bg-zinc-900 text-white font-bold rounded-lg text-xs">
+                                            <%= pNum %>
+                                        </span>
+                                    <% } else { %>
+                                        <a 
+                                            href="/admin/orders?page=<%= pNum %>&search=<%= encodeURIComponent(search || '') %>&status=<%= encodeURIComponent(status || '') %>&paymentMethod=<%= encodeURIComponent(paymentMethod || '') %>&sort=<%= encodeURIComponent(sort || '') %>" 
+                                            class="w-8 h-8 flex items-center justify-center bg-white border border-zinc-200 rounded-lg text-zinc-700 hover:bg-zinc-50 font-medium transition-colors text-xs"
+                                        >
+                                            <%= pNum %>
+                                        </a>
+                                    <% } %>
+                                <% }) %>
+                            <% } %>
+
+                            <!-- Next Button -->
+                            <% if (pagination.hasNextPage) { %>
+                                <a 
+                                    href="/admin/orders?page=<%= pagination.nextPage %>&search=<%= encodeURIComponent(search || '') %>&status=<%= encodeURIComponent(status || '') %>&paymentMethod=<%= encodeURIComponent(paymentMethod || '') %>&sort=<%= encodeURIComponent(sort || '') %>" 
+                                    class="px-3 py-1.5 bg-white border border-zinc-200 rounded-lg text-zinc-700 hover:bg-zinc-50 font-medium transition-colors"
+                                >
+                                    Next &rarr;
+                                </a>
+                            <% } else { %>
+                                <span class="px-3 py-1.5 bg-zinc-100 border border-zinc-200 rounded-lg text-zinc-400 cursor-not-allowed">
+                                    Next &rarr;
+                                </span>
+                            <% } %>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+
+<script>
+    function getStatusBadgeClass(status) {
+        switch (status) {
+            case 'Delivered':
+                return 'bg-emerald-100 text-emerald-800';
+            case 'Out for Delivery':
+                return 'bg-indigo-100 text-indigo-800';
+            case 'Shipped':
+                return 'bg-blue-100 text-blue-800';
+            case 'Processing':
+                return 'bg-amber-100 text-amber-800';
+            case 'Cancelled':
+                return 'bg-rose-100 text-rose-800';
+            case 'Return Requested':
+            case 'Returned':
+                return 'bg-purple-100 text-purple-800';
+            default:
+                return 'bg-zinc-100 text-zinc-800';
+        }
+    }
+
+    async function ajaxUpdateOrderStatus(orderId, status) {
+        try {
+            const res = await fetch('/admin/orders/' + orderId + '/status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                if (typeof showToast === 'function') {
+                    showToast(data.message || 'Status update failed.', 'error');
+                } else {
+                    alert(data.message || 'Status update failed.');
+                }
+                return;
+            }
+
+            const badge = document.getElementById('order-status-badge-' + orderId);
+            if (badge) {
+                badge.textContent = status;
+                badge.className = 'px-2.5 py-1 rounded-full text-[9px] uppercase tracking-wider font-bold inline-block ' + getStatusBadgeClass(status);
+            }
+
+            if (data.stats) {
+                const totalEl = document.getElementById('statTotalOrders');
+                const pendEl = document.getElementById('statPendingOrders');
+                const shipEl = document.getElementById('statShippedOrders');
+                const outEl = document.getElementById('statOutForDeliveryOrders');
+                const delEl = document.getElementById('statDeliveredOrders');
+
+                if (totalEl) totalEl.textContent = data.stats.totalOrders;
+                if (pendEl) pendEl.textContent = data.stats.pendingOrders;
+                if (shipEl) shipEl.textContent = data.stats.shippedOrders;
+                if (outEl) outEl.textContent = data.stats.outForDeliveryOrders;
+                if (delEl) delEl.textContent = data.stats.deliveredOrders;
+            }
+
+            if (typeof showToast === 'function') {
+                showToast(data.message, 'success');
+            }
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        } catch (e) {
+            if (typeof showToast === 'function') {
+                showToast('Connection error updating order status.', 'error');
+            } else {
+                alert('Connection error updating order status.');
+            }
+        }
+    }
+</script>

@@ -1,0 +1,402 @@
+<%- include('../partials/header', { title: 'Dashboard — DELTA Horology' }) %>
+
+<div class="flex flex-1 min-h-screen bg-[#F8F9FA]">
+    <%- include('../partials/sidebar', { activePage: 'dashboard' }) %>
+
+    <div class="flex-1 flex flex-col min-w-0">
+        <%- include('../partials/navbar', { pageTitle: 'Dashboard' }) %>
+
+        <main class="flex-grow p-6 sm:p-8 max-w-[1400px] w-full mx-auto space-y-6">
+            
+            <!-- Welcome Header -->
+            <div class="mb-2">
+                <h1 class="text-2xl sm:text-3xl font-serif font-normal text-zinc-900 tracking-tight">
+                    Welcome back, Admin
+                </h1>
+                <p class="text-xs text-zinc-500 font-light mt-1">
+                    Live system overview and database analytics.
+                </p>
+            </div>
+
+            <!-- 1. Hero Revenue Card (Deep Forest Green) -->
+            <div class="bg-[#0A4D2E] rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden shadow-sm">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+                    <div class="space-y-4">
+                        <div>
+                            <span class="text-[9px] uppercase tracking-[0.25em] text-emerald-200/80 font-semibold block mb-1">
+                                REVENUE OVERVIEW
+                            </span>
+                            <p class="text-xs text-emerald-100/70 font-light max-w-xl">
+                                Real-time performance tracking across customer orders and payment transactions.
+                            </p>
+                        </div>
+
+                        <div class="flex flex-wrap items-baseline gap-8 sm:gap-14 pt-2">
+                            <div>
+                                <span class="text-[9px] uppercase tracking-[0.2em] text-emerald-200/70 block mb-1">TOTAL REVENUE</span>
+                                <span class="text-2xl sm:text-4xl font-serif font-normal tracking-tight text-white font-mono">
+                                    ₹<%= (stats.totalRevenue || 0).toLocaleString('en-IN') %>.00
+                                </span>
+                            </div>
+                            <div>
+                                <span class="text-[9px] uppercase tracking-[0.2em] text-emerald-200/70 block mb-1">ORDERS TODAY</span>
+                                <span class="text-2xl sm:text-4xl font-serif font-normal tracking-tight text-white font-mono">
+                                    <%= stats.ordersToday || 0 %>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3">
+                        <a href="/admin/reports" class="inline-flex items-center gap-2 bg-white text-[#0A4D2E] hover:bg-zinc-100 px-5 py-3 rounded-lg text-xs uppercase tracking-wider font-semibold transition-all shadow-sm">
+                            <svg class="w-3.5 h-3.5 text-[#0A4D2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            <span>VIEW SALES REPORTS</span>
+                        </a>
+                        <a href="/admin/users" class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-3 rounded-lg text-xs uppercase tracking-wider font-semibold transition-all border border-white/20">
+                            <span>CLIENTS (<%= stats.totalUsers || 0 %>)</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Row of 4 KPI Metric Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                
+                <!-- Total Orders -->
+                <div class="bg-white border border-zinc-200/70 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-[#0A4D2E] flex items-center justify-center">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-[9px] uppercase tracking-wider font-semibold text-zinc-400">ORDERS</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-medium block">TOTAL ORDERS</span>
+                        <span class="text-2xl font-serif font-bold text-zinc-900 mt-1 block"><%= stats.totalOrders || 0 %></span>
+                    </div>
+                </div>
+
+                <!-- Client Base -->
+                <div class="bg-white border border-zinc-200/70 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-[9px] uppercase tracking-wider font-semibold text-emerald-600">LIVE</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-medium block">CLIENT BASE</span>
+                        <span class="text-2xl font-serif font-bold text-zinc-900 mt-1 block"><%= stats.totalUsers || 0 %></span>
+                    </div>
+                </div>
+
+                <!-- Product Count -->
+                <div class="bg-white border border-zinc-200/70 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-[9px] uppercase tracking-wider font-semibold text-zinc-400">CATALOG</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-medium block">PRODUCT COUNT</span>
+                        <span class="text-2xl font-serif font-bold text-zinc-900 mt-1 block"><%= stats.totalProducts || 0 %></span>
+                    </div>
+                </div>
+
+                <!-- Active Clients -->
+                <div class="bg-white border border-zinc-200/70 rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-[9px] uppercase tracking-wider font-semibold text-emerald-600">PERMITTED</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-medium block">ACTIVE CLIENTS</span>
+                        <span class="text-2xl font-serif font-bold text-zinc-900 mt-1 block"><%= stats.activeUsers || 0 %></span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 3. Middle Row: Sales Analytics & Maisons -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Left 8 Columns: Sales Analytics -->
+                <div class="lg:col-span-8 bg-white border border-zinc-200/70 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-base font-serif font-semibold text-zinc-900">Sales Analytics</h2>
+                            <p class="text-xs text-zinc-400 font-light mt-0.5">Revenue performance over the last <%= stats.timeframe === '7d' ? '7 days' : '30 days' %></p>
+                        </div>
+                        <div class="flex items-center gap-1 bg-[#F4F4F5] p-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider font-mono">
+                            <a href="/admin/dashboard?timeframe=7d" class="px-3 py-1 rounded transition-colors <%= stats.timeframe === '7d' ? 'bg-white text-zinc-900 shadow-sm font-bold' : 'text-zinc-500 hover:text-zinc-900' %>">7 DAYS</a>
+                            <a href="/admin/dashboard?timeframe=30d" class="px-3 py-1 rounded transition-colors <%= stats.timeframe === '30d' ? 'bg-white text-zinc-900 shadow-sm font-bold' : 'text-zinc-500 hover:text-zinc-900' %>">30 DAYS</a>
+                        </div>
+                    </div>
+
+                    <% if (stats.chartPath) { %>
+                        <!-- Dynamic SVG Chart -->
+                        <div class="relative w-full h-56 pt-2">
+                            <svg class="w-full h-full overflow-visible" viewBox="0 0 500 180" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="chartGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" stop-color="#0A4D2E" stop-opacity="0.30"/>
+                                        <stop offset="100%" stop-color="#0A4D2E" stop-opacity="0.0"/>
+                                    </linearGradient>
+                                </defs>
+                                <line x1="0" y1="40" x2="500" y2="40" stroke="#f1f1f1" stroke-width="1"/>
+                                <line x1="0" y1="90" x2="500" y2="90" stroke="#f1f1f1" stroke-width="1"/>
+                                <line x1="0" y1="140" x2="500" y2="140" stroke="#f1f1f1" stroke-width="1"/>
+                                <path d="<%= stats.areaPath %>" fill="url(#chartGrad)" />
+                                <path d="<%= stats.chartPath %>" fill="none" stroke="#0A4D2E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                    <% } else { %>
+                        <!-- Clean Empty State for 0 Orders -->
+                        <div class="py-12 px-4 text-center flex flex-col items-center justify-center border border-dashed border-zinc-200 rounded-xl my-2">
+                            <div class="w-10 h-10 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center mb-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                            </div>
+                            <p class="text-xs font-semibold text-zinc-700">No Sales Transactions Recorded in this Window</p>
+                            <p class="text-[11px] text-zinc-400 max-w-sm mt-1 font-light">Analytics curves will dynamically plot revenue trends once purchases are authorized by clients.</p>
+                        </div>
+                    <% } %>
+
+                    <!-- Bottom Timeline Weeks / Dates -->
+                    <div class="flex justify-between text-[10px] uppercase font-mono tracking-wider text-zinc-400 border-t border-zinc-100 pt-3 mt-2">
+                        <% if (stats.salesTimeline && stats.salesTimeline.length > 0) { %>
+                            <span><%= stats.salesTimeline[0].label %></span>
+                            <span><%= stats.salesTimeline[Math.floor(stats.salesTimeline.length / 2)].label %></span>
+                            <span><%= stats.salesTimeline[stats.salesTimeline.length - 1].label %></span>
+                        <% } else { %>
+                            <span>WEEK 1</span>
+                            <span>WEEK 2</span>
+                            <span>WEEK 3</span>
+                            <span>WEEK 4</span>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Right 4 Columns: Maisons & Brands Overview -->
+                <div class="lg:col-span-4 bg-white border border-zinc-200/70 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-base font-serif font-semibold text-zinc-900">Maisons & Brands</h2>
+                        <p class="text-xs text-zinc-400 font-light mt-0.5">Swiss watch manufactures in catalog</p>
+                    </div>
+
+                    <div class="py-6 flex items-center justify-center relative">
+                        <div class="text-center">
+                            <span class="text-3xl font-serif font-bold text-[#0A4D2E]"><%= stats.totalBrands || 0 %></span>
+                            <span class="text-[9px] uppercase tracking-widest text-zinc-400 font-semibold block mt-1">ACTIVE MAISONS</span>
+                        </div>
+                    </div>
+
+                    <!-- Brand Breakdown Legend -->
+                    <div class="space-y-2 text-xs border-t border-zinc-100 pt-4 text-zinc-600">
+                        <div class="flex items-center justify-between">
+                            <span>Active Maisons:</span>
+                            <span class="font-semibold text-emerald-800"><%= stats.activeBrands || 0 %></span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span>Vault Timepieces:</span>
+                            <span class="font-semibold text-zinc-900"><%= stats.totalProducts || 0 %></span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span>Available Stock:</span>
+                            <span class="font-semibold text-zinc-900"><%= stats.activeProducts || 0 %> listed</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 4. Bottom Row: Recent Registered Clients Table & Stock Alerts -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Left 8 Columns: Recent Client Registrations -->
+                <div class="lg:col-span-8 bg-white border border-zinc-200/70 rounded-2xl p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-5">
+                        <div>
+                            <h2 class="text-base font-serif font-semibold text-zinc-900">Recent Clientele</h2>
+                            <p class="text-xs text-zinc-400 font-light mt-0.5">Latest registrations in MongoDB</p>
+                        </div>
+                        <a href="/admin/users" class="text-xs uppercase tracking-wider font-semibold text-[#0A4D2E] hover:underline">
+                            View All (<%= stats.totalUsers %>)
+                        </a>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold border-b border-zinc-100 pb-3">
+                                    <th class="py-2.5">CLIENT</th>
+                                    <th class="py-2.5">EMAIL</th>
+                                    <th class="py-2.5">PROVIDER</th>
+                                    <th class="py-2.5">STATUS</th>
+                                    <th class="py-2.5 text-right">JOINED</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-zinc-100 text-zinc-700 font-sans">
+                                <% if (stats.recentUsers && stats.recentUsers.length > 0) { %>
+                                    <% stats.recentUsers.forEach(u => { %>
+                                        <tr class="hover:bg-zinc-50/60 transition-colors">
+                                            <td class="py-3.5">
+                                                <div class="flex items-center gap-2.5">
+                                                    <div class="w-7 h-7 rounded-full bg-[#0A4D2E] text-white flex items-center justify-center text-[11px] font-serif font-bold">
+                                                        <%= (u.name || 'U').charAt(0).toUpperCase() %>
+                                                    </div>
+                                                    <a href="/admin/users/<%= u._id %>" class="font-medium text-zinc-900 hover:text-[#0A4D2E]">
+                                                        <%= u.name %>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                            <td class="py-3.5 font-mono text-[11px] text-zinc-600"><%= u.email %></td>
+                                            <td class="py-3.5 font-mono uppercase text-[10px]"><%= u.authProvider || 'LOCAL' %></td>
+                                            <td class="py-3.5">
+                                                <% if (u.isBlocked) { %>
+                                                    <span class="px-2.5 py-0.5 rounded text-[9px] uppercase tracking-wider font-bold bg-rose-100 text-rose-800">
+                                                        BLOCKED
+                                                    </span>
+                                                <% } else { %>
+                                                    <span class="px-2.5 py-0.5 rounded text-[9px] uppercase tracking-wider font-bold bg-emerald-100 text-emerald-800">
+                                                        ACTIVE
+                                                    </span>
+                                                <% } %>
+                                            </td>
+                                            <td class="py-3.5 text-right font-mono text-zinc-400 text-[11px]">
+                                                <%= new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="5" class="py-8 text-center text-zinc-400 font-light">
+                                            No clients registered yet.
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Right 4 Columns: Top Sellers & Catalog Alerts -->
+                <div class="lg:col-span-4 space-y-6">
+                    
+                    <!-- Top Selling Timepieces -->
+                    <% if (stats.topTimepieces && stats.topTimepieces.length > 0) { %>
+                        <div class="bg-white border border-zinc-200/70 rounded-2xl p-6 shadow-sm space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-base font-serif font-semibold text-zinc-900">Top Selling Timepieces</h2>
+                                <span class="text-[9px] uppercase font-mono font-bold text-[#c5a059] bg-amber-50 px-2 py-0.5 rounded">BESTSELLERS</span>
+                            </div>
+
+                            <div class="space-y-3">
+                                <% stats.topTimepieces.forEach((item, idx) => { %>
+                                    <div class="flex items-center justify-between py-2 border-b border-zinc-100 last:border-0">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <span class="w-6 h-6 rounded-full bg-emerald-50 text-[#0A4D2E] text-xs font-mono font-bold flex items-center justify-center flex-shrink-0">
+                                                <%= idx + 1 %>
+                                            </span>
+                                            <div class="min-w-0">
+                                                <p class="text-xs font-semibold text-zinc-900 truncate" title="<%= item._id %>"><%= item._id %></p>
+                                                <p class="text-[10px] text-zinc-400 font-mono"><%= item.brandName %> • <%= item.unitsSold %> sold</p>
+                                            </div>
+                                        </div>
+                                        <span class="font-mono text-xs font-bold text-[#0A4D2E] flex-shrink-0 ml-2">
+                                            ₹<%= Number(item.totalRevenue || 0).toLocaleString('en-IN') %>
+                                        </span>
+                                    </div>
+                                <% }) %>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <!-- Products in Catalog -->
+                    <div class="bg-white border border-zinc-200/70 rounded-2xl p-6 shadow-sm space-y-4">
+                        <h2 class="text-base font-serif font-semibold text-zinc-900">Featured Catalog</h2>
+                        
+                        <% if (stats.topProducts && stats.topProducts.length > 0) { %>
+                            <div class="space-y-3">
+                                <% stats.topProducts.forEach(p => { %>
+                                    <div class="flex items-center justify-between py-2 border-b border-zinc-100 last:border-0">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded bg-zinc-100 overflow-hidden flex-shrink-0">
+                                                <% if (p.images && p.images[0]) { %>
+                                                    <img src="<%= p.images[0] %>" class="w-full h-full object-cover" alt="<%= p.name %>">
+                                                <% } else { %>
+                                                    <div class="w-full h-full flex items-center justify-center text-xs text-zinc-400">⌚</div>
+                                                <% } %>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs font-semibold text-zinc-900"><%= p.name %></p>
+                                                <p class="text-[10px] text-zinc-400 font-mono">₹<%= (p.price || 0).toLocaleString('en-IN') %></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            </div>
+                        <% } else { %>
+                            <div class="py-6 text-center border border-dashed border-zinc-200 rounded-xl">
+                                <span class="text-xl mb-1 block">⌚</span>
+                                <p class="text-xs font-medium text-zinc-700">No Products Added Yet</p>
+                                <p class="text-[10px] text-zinc-400 mt-1">Catalog is currently empty (0 items)</p>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Stock Alerts -->
+                    <div class="bg-white border border-zinc-200/70 rounded-2xl p-6 shadow-sm space-y-4">
+                        <div class="flex items-center gap-2 text-emerald-800 text-xs font-semibold uppercase tracking-wider">
+                            <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            <span>Stock Status</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-zinc-50 border border-zinc-200/60 p-3 rounded-lg text-center">
+                                <span class="text-xl font-bold font-mono text-zinc-900 block"><%= stats.lowStockCount || 0 %></span>
+                                <span class="text-[9px] uppercase tracking-wider text-zinc-400 font-medium">LOW STOCK</span>
+                            </div>
+                            <div class="bg-zinc-50 border border-zinc-200/60 p-3 rounded-lg text-center">
+                                <span class="text-xl font-bold font-mono text-zinc-900 block"><%= stats.outOfStockCount || 0 %></span>
+                                <span class="text-[9px] uppercase tracking-wider text-zinc-400 font-medium">OUT OF STOCK</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+
+        <!-- Bottom Page Footer -->
+        <footer class="mt-auto px-8 py-6 text-zinc-400 text-[10px] uppercase font-mono tracking-wider flex flex-col sm:flex-row items-center justify-between border-t border-zinc-200/80 gap-3">
+            <span>© 2024 DELTA HOROLOGY. ALL RIGHTS RESERVED.</span>
+            <div class="flex items-center gap-4">
+                <a href="#" class="hover:text-zinc-600">PRIVACY</a>
+                <a href="#" class="hover:text-zinc-600">TERMS</a>
+                <span class="text-emerald-700 font-semibold">SYSTEM STATUS: OPTIMAL</span>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+

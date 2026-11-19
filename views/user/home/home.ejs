@@ -1,0 +1,892 @@
+<%- include('../partials/header', { 
+    title: 'DELTA | Luxury Watches & Exceptional Timepieces',
+    description: 'Discover exceptional luxury watches from the world’s most distinguished watch brands at Delta.'
+}) %>
+<%- include('../partials/navbar') %>
+
+<style>
+    /* Luxury Restrained Typography & Palette */
+    :root {
+        --delta-gold: #c5a059;
+        --delta-black: #0b0c0e;
+        --delta-charcoal: #141619;
+        --delta-gray: #f8f8f9;
+        --delta-border: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Scroll Reveal Transition */
+    .delta-reveal {
+        opacity: 0;
+        transform: translateY(28px);
+        transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+        will-change: opacity, transform;
+    }
+
+    .delta-reveal.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .delay-1 { transition-delay: 100ms; }
+    .delay-2 { transition-delay: 200ms; }
+    .delay-3 { transition-delay: 300ms; }
+    .delay-4 { transition-delay: 400ms; }
+    .delay-5 { transition-delay: 500ms; }
+
+    /* Subtle Luxury Hover Zoom */
+    .delta-zoom-img {
+        transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s ease;
+    }
+    .group:hover .delta-zoom-img {
+        transform: scale(1.06);
+    }
+
+    /* Shimmer Button Sweep */
+    @keyframes deltaShimmer {
+        0% { transform: translateX(-150%) skewX(-20deg); }
+        100% { transform: translateX(250%) skewX(-20deg); }
+    }
+
+    .btn-delta-shimmer {
+        position: relative;
+        overflow: hidden;
+    }
+    .btn-delta-shimmer::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+        transform: translateX(-150%) skewX(-20deg);
+    }
+    .btn-delta-shimmer:hover::after {
+        animation: deltaShimmer 1.3s ease-in-out infinite;
+    }
+
+    /* ==========================================
+       ROLEX-STYLE CAROUSEL CSS
+       ========================================== */
+    .rolex-carousel-track {
+        display: flex;
+        gap: 1.5rem;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .rolex-carousel-track::-webkit-scrollbar {
+        display: none;
+    }
+
+    .rolex-carousel-slide {
+        flex: 0 0 84%;
+        scroll-snap-align: start;
+    }
+    @media (min-width: 640px) {
+        .rolex-carousel-slide {
+            flex: 0 0 46%;
+        }
+    }
+    @media (min-width: 1024px) {
+        .rolex-carousel-slide {
+            flex: 0 0 31.5%;
+        }
+    }
+
+    .carousel-bar-segment {
+        transition: width 0.3s ease;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    /* ==========================================
+       MODERN THE GREAT MAISONS ANIMATIONS
+       ========================================== */
+    .maison-card-wrapper {
+        perspective: 1200px;
+        transform-style: preserve-3d;
+        will-change: transform;
+    }
+
+    .maison-card-inner {
+        position: relative;
+        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        transform-style: preserve-3d;
+    }
+
+    .maison-glare {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+        background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.05) 45%, transparent 70%);
+        mix-blend-mode: overlay;
+        z-index: 15;
+    }
+
+    .maison-card-wrapper:hover .maison-glare {
+        opacity: 1;
+    }
+
+    .maison-accent-line {
+        width: 0;
+        height: 1.5px;
+        background: linear-gradient(90deg, #c5a059, #dfba73);
+        margin: 6px auto 0;
+        transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .maison-card-wrapper:hover .maison-accent-line {
+        width: 36px;
+    }
+
+    .maison-arrow-icon {
+        display: inline-block;
+        transform: translateX(-6px);
+        opacity: 0;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    }
+
+    .maison-card-wrapper:hover .maison-arrow-icon {
+        transform: translateX(2px);
+        opacity: 1;
+    }
+
+    @keyframes maisonFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+    }
+
+    .maison-floating-ambient {
+        animation: maisonFloat 6s ease-in-out infinite;
+    }
+
+</style>
+
+<main class="flex-grow font-sans text-[#1b1c1c] bg-white antialiased selection:bg-[#0b0c0e] selection:text-white overflow-x-hidden">
+
+    <!-- ==========================================
+         4. HERO SECTION WITH LIVE ROLEX VIDEO BACKGROUND
+         ========================================== -->
+    <section class="relative min-h-[92vh] sm:min-h-[96vh] flex items-center justify-center bg-[#090b0e] overflow-hidden">
+        
+        <!-- Live Autoplay Video Background -->
+        <div class="absolute inset-0 z-0 pointer-events-none">
+            <video 
+                autoplay 
+                loop 
+                muted 
+                playsinline 
+                webkit-playsinline
+                preload="auto"
+                poster="https://media.rolex.com/image/upload/q_auto:eco/f_auto/c_limit,w_2440/v1773157318/rolexcom/094398bf1f99/watches/hub/videos/cover/rolex-watches-new-watches-2026-cover-autoplay-posterframe"
+                class="w-full h-full object-cover scale-105 filter brightness-[0.72] contrast-[1.08]"
+            >
+                <source src="https://media.rolex.com/video/upload/c_limit,w_1920/f_auto:video/q_auto:eco/v1/rolexcom/094398bf1f99/watches/hub/videos/cover/rolex-watches-new-watches-2026-cover-autoplay.mp4" type="video/mp4">
+            </video>
+            <!-- Rolex Signature Dark Vignette & Gradient Overlay -->
+            <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/35 to-[#090b0e]"></div>
+        </div>
+
+        <div class="relative max-w-4xl mx-auto px-6 text-center py-24 z-10 flex flex-col items-center">
+            <!-- Brand Tag -->
+            <div class="inline-flex items-center gap-3 mb-6">
+                <span class="w-6 h-[1px] bg-[#c5a059]"></span>
+                <span class="text-[10px] sm:text-[11px] uppercase tracking-[0.35em] text-[#c5a059] font-medium">
+                    The Art of Time
+                </span>
+                <span class="w-6 h-[1px] bg-[#c5a059]"></span>
+            </div>
+
+            <!-- Headline -->
+            <h1 class="text-4xl sm:text-6xl md:text-7xl font-serif text-white font-normal italic tracking-tight leading-[1.1] mb-6">
+                The World's Finest Horology,<br>Curated.
+            </h1>
+
+            <!-- Subtitle -->
+            <p class="text-zinc-300 text-xs sm:text-sm md:text-base max-w-xl mx-auto font-light leading-relaxed tracking-wide mb-10">
+                DELTA bridges the gap between historical Swiss artistry and modern luxury collectors.
+            </p>
+
+            <!-- Dual CTAs -->
+            <div class="flex flex-col sm:flex-row items-center gap-4">
+                <a href="#rolex-carousel" class="btn-delta-shimmer px-9 py-4 bg-white text-black hover:bg-zinc-100 rounded-full text-xs uppercase tracking-[0.25em] font-bold transition-all shadow-[0_10px_35px_rgba(255,255,255,0.15)] hover:scale-105 active:scale-95">
+                    Explore Collection
+                </a>
+                <a href="#story" class="px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/25 text-white rounded-full text-xs uppercase tracking-[0.2em] font-medium transition-all hover:scale-105 active:scale-95">
+                    Discover Delta
+                </a>
+            </div>
+        </div>
+
+        <!-- Subtle Bottom Transition Fade -->
+        <div class="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-[#FAF9F6] to-transparent z-10"></div>
+    </section>
+
+    <!-- ==========================================
+         ROLEX-STYLE ICONIC MODELS ROLLER SECTION
+         ========================================== -->
+    <section id="featured" class="py-24 bg-[#090A0C] text-white overflow-hidden relative border-t border-b border-white/10">
+        <!-- Subtle Radial Ambient Glow -->
+        <div class="absolute top-1/2 left-1/4 -translate-y-1/2 w-96 h-96 bg-[#006039]/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-[#c5a059]/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-6 sm:px-10 relative z-10">
+            <!-- Header with Title & Rolex Arrow Controls -->
+            <div class="delta-reveal flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+                <div>
+                    <span class="text-[10px] uppercase tracking-[0.3em] text-[#00A862] font-bold block mb-2">
+                        Featured Timepieces
+                    </span>
+                    <h2 class="text-3xl sm:text-5xl font-serif text-white font-normal tracking-tight">
+                        Iconic Models
+                    </h2>
+                    <p class="text-zinc-400 text-xs sm:text-sm font-light mt-2 max-w-xl leading-relaxed">
+                        Explore the quintessential timepieces and innovations of haute horlogerie.
+                    </p>
+                </div>
+
+                <!-- Rolex Translucent Dark Floating Navigation Arrows -->
+                <div class="flex items-center gap-3 self-start md:self-end">
+                    <button 
+                        type="button"
+                        id="rollerPrevBtn"
+                        onclick="scrollRoller(-1)"
+                        class="w-12 h-12 rounded-full border border-white/20 bg-white/10 hover:bg-[#006039] text-white flex items-center justify-center transition-all duration-300 backdrop-blur-md hover:scale-105 active:scale-95 cursor-pointer shadow-lg"
+                        aria-label="Previous Slide"
+                    >
+                        <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor" class="w-3.5 h-3.5">
+                            <path d="M11.4,1.9L5.6,7.5l5.8,5.6L9.5,15L1.6,7.5L9.5,0L11.4,1.9z"></path>
+                        </svg>
+                    </button>
+                    <button 
+                        type="button"
+                        id="rollerNextBtn"
+                        onclick="scrollRoller(1)"
+                        class="w-12 h-12 rounded-full border border-white/20 bg-white/10 hover:bg-[#006039] text-white flex items-center justify-center transition-all duration-300 backdrop-blur-md hover:scale-105 active:scale-95 cursor-pointer shadow-lg"
+                        aria-label="Next Slide"
+                    >
+                        <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor" class="w-3.5 h-3.5">
+                            <path d="M3.5,13.1l5.8-5.6L3.5,1.9l2-1.9l7.9,7.5L5.5,15L3.5,13.1z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Rolex Roller Frame & List -->
+            <div class="css-13o9b28-HeroMediaOverlay-RollerFrame relative">
+                <ul id="rolexRollerList" class="rolex-roller-track flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory py-4 no-scrollbar">
+                    <% if (featuredWatches && featuredWatches.length > 0) { %>
+                        <% featuredWatches.forEach(function(watch, idx) { 
+                            const watchImg = (watch.images && watch.images.length > 0 && watch.images[0]) 
+                                ? watch.images[0] 
+                                : ((watch.variants && watch.variants.length > 0 && watch.variants[0].images && watch.variants[0].images.length > 0) 
+                                    ? watch.variants[0].images[0] 
+                                    : 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=1200&auto=format&fit=crop');
+                            const brandName = (watch.brand && watch.brand.name) ? watch.brand.name : (watch.brandName || 'Haute Horlogerie');
+                            const priceVal = (watch.discountPrice && watch.discountPrice > 0 && watch.discountPrice < watch.price) ? watch.discountPrice : watch.price;
+                            const priceFormatted = priceVal ? ('₹' + Number(priceVal).toLocaleString('en-IN')) : '';
+                            const originalPriceFormatted = (watch.discountPrice && watch.discountPrice > 0 && watch.discountPrice < watch.price) ? ('₹' + Number(watch.price).toLocaleString('en-IN')) : '';
+                            const subtitle = watch.modelNumber ? ('Ref. ' + watch.modelNumber) : (watch.specs?.movement || (watch.variants && watch.variants[0]?.material) || 'Exceptional Craftsmanship');
+                            const productUrl = watch.slug ? ('/product/' + watch.slug) : ('/product/' + watch._id);
+                        %>
+                            <li class="rolex-roller-item flex-shrink-0 w-[82vw] sm:w-[360px] md:w-[380px] lg:w-[410px] snap-start">
+                                <article class="group relative rounded-2xl overflow-hidden aspect-[780/1300] bg-zinc-900 border border-white/10 shadow-2xl transition-all duration-500 hover:border-emerald-500/50 hover:shadow-emerald-950/40">
+                                    <a href="<%= productUrl %>" class="block w-full h-full">
+                                        <figure class="relative w-full h-full m-0 p-0 overflow-hidden flex flex-col justify-end">
+                                            <img 
+                                                src="<%= watchImg %>" 
+                                                alt="<%= watch.name %>" 
+                                                class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
+                                                loading="<%= idx === 0 ? 'eager' : 'lazy' %>"
+                                            >
+                                            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent"></div>
+                                            
+                                            <figcaption class="relative z-10 p-6 sm:p-8 space-y-1.5 text-left">
+                                                <span class="text-[11px] uppercase tracking-[0.25em] text-[#00A862] font-semibold block drop-shadow-sm truncate">
+                                                    <%= brandName %>
+                                                </span>
+                                                <h3 class="text-2xl sm:text-3xl font-serif font-normal text-white tracking-tight leading-snug drop-shadow-md line-clamp-2">
+                                                    <%= watch.name %>
+                                                </h3>
+                                                <div class="text-xs text-zinc-300 font-light opacity-90 pt-1 flex items-center justify-between">
+                                                    <span class="truncate max-w-[190px]"><%= subtitle %></span>
+                                                    <div class="flex items-center gap-1.5 shrink-0">
+                                                        <% if (originalPriceFormatted) { %>
+                                                            <span class="line-through text-zinc-400 text-[10px]"><%= originalPriceFormatted %></span>
+                                                        <% } %>
+                                                        <% if (priceFormatted) { %>
+                                                            <span class="font-medium text-white"><%= priceFormatted %></span>
+                                                        <% } %>
+                                                        <span class="text-[#00A862] text-sm group-hover:translate-x-1 transition-transform ml-1">→</span>
+                                                    </div>
+                                                </div>
+                                            </figcaption>
+                                        </figure>
+                                    </a>
+                                </article>
+                            </li>
+                        <% }); %>
+                    <% } else { %>
+                        <!-- Fallback Curated Showcase linking to /shop -->
+                        <li class="rolex-roller-item flex-shrink-0 w-[82vw] sm:w-[360px] md:w-[380px] lg:w-[410px] snap-start">
+                            <article class="group relative rounded-2xl overflow-hidden aspect-[780/1300] bg-zinc-900 border border-white/10 shadow-2xl transition-all duration-500 hover:border-emerald-500/50 hover:shadow-emerald-950/40">
+                                <a href="/shop" class="block w-full h-full">
+                                    <figure class="relative w-full h-full m-0 p-0 overflow-hidden flex flex-col justify-end">
+                                        <img 
+                                            src="https://media.rolex.com/image/upload/q_auto:eco/f_auto/c_limit,w_1920/v1775045595/rolexcom/094398bf1f99/watches/oyster-perpetual-36/roller-loop/03/rolex-new-watches-2026-the-oyster-perpetual-36-roller-loop-m126000-0016-beauty-shot-laying-pop-in"
+                                            alt="Oyster Perpetual 36" 
+                                            class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
+                                            loading="eager"
+                                        >
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent"></div>
+                                        
+                                        <figcaption class="relative z-10 p-6 sm:p-8 space-y-1 text-left">
+                                            <span class="text-[11px] uppercase tracking-[0.25em] text-[#00A862] font-semibold block drop-shadow-sm">
+                                                Rolex
+                                            </span>
+                                            <h3 class="text-2xl sm:text-3xl font-serif font-normal text-white tracking-tight leading-snug drop-shadow-md">
+                                                Oyster Perpetual 36
+                                            </h3>
+                                            <p class="text-xs text-zinc-300 font-light opacity-90 pt-1 flex items-center justify-between">
+                                                <span>An explosion of colours</span>
+                                                <span class="text-[#00A862] text-sm group-hover:translate-x-1 transition-transform">→</span>
+                                            </p>
+                                        </figcaption>
+                                    </figure>
+                                </a>
+                            </article>
+                        </li>
+
+                        <li class="rolex-roller-item flex-shrink-0 w-[82vw] sm:w-[360px] md:w-[380px] lg:w-[410px] snap-start">
+                            <article class="group relative rounded-2xl overflow-hidden aspect-[780/1300] bg-zinc-900 border border-white/10 shadow-2xl transition-all duration-500 hover:border-emerald-500/50 hover:shadow-emerald-950/40">
+                                <a href="/shop" class="block w-full h-full">
+                                    <figure class="relative w-full h-full m-0 p-0 overflow-hidden flex flex-col justify-end">
+                                        <img 
+                                            src="https://patek-res.cloudinary.com/dfsmedia/0906caea301d42b3b8bd23bd656d1711/175352-51883" 
+                                            alt="Nautilus" 
+                                            class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
+                                            loading="lazy"
+                                        >
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent"></div>
+                                        
+                                        <figcaption class="relative z-10 p-6 sm:p-8 space-y-1 text-left">
+                                            <span class="text-[11px] uppercase tracking-[0.25em] text-[#00A862] font-semibold block drop-shadow-sm">
+                                                Patek Philippe
+                                            </span>
+                                            <h3 class="text-2xl sm:text-3xl font-serif font-normal text-white tracking-tight leading-snug drop-shadow-md">
+                                                Nautilus
+                                            </h3>
+                                            <p class="text-xs text-zinc-300 font-light opacity-90 pt-1 flex items-center justify-between">
+                                                <span>Sporting Elegance</span>
+                                                <span class="text-[#00A862] text-sm group-hover:translate-x-1 transition-transform">→</span>
+                                            </p>
+                                        </figcaption>
+                                    </figure>
+                                </a>
+                            </article>
+                        </li>
+
+                        <li class="rolex-roller-item flex-shrink-0 w-[82vw] sm:w-[360px] md:w-[380px] lg:w-[410px] snap-start">
+                            <article class="group relative rounded-2xl overflow-hidden aspect-[780/1300] bg-zinc-900 border border-white/10 shadow-2xl transition-all duration-500 hover:border-emerald-500/50 hover:shadow-emerald-950/40">
+                                <a href="/shop" class="block w-full h-full">
+                                    <figure class="relative w-full h-full m-0 p-0 overflow-hidden flex flex-col justify-end">
+                                        <img 
+                                            src="https://dynamicmedia.audemarspiguet.com/is/image/audemarspiguet/watch-1156?size=568,0&dpr=off&fmt=avif-alpha&dpr=off" 
+                                            alt="Code 11.59" 
+                                            class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
+                                            loading="lazy"
+                                        >
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent"></div>
+                                        
+                                        <figcaption class="relative z-10 p-6 sm:p-8 space-y-1 text-left">
+                                            <span class="text-[11px] uppercase tracking-[0.25em] text-[#00A862] font-semibold block drop-shadow-sm">
+                                                Audemars Piguet
+                                            </span>
+                                            <h3 class="text-2xl sm:text-3xl font-serif font-normal text-white tracking-tight leading-snug drop-shadow-md">
+                                                Code 11.59
+                                            </h3>
+                                            <p class="text-xs text-zinc-300 font-light opacity-90 pt-1 flex items-center justify-between">
+                                                <span>Grande Sonnerie</span>
+                                                <span class="text-[#00A862] text-sm group-hover:translate-x-1 transition-transform">→</span>
+                                            </p>
+                                        </figcaption>
+                                    </figure>
+                                </a>
+                            </article>
+                        </li>
+
+                        <li class="rolex-roller-item flex-shrink-0 w-[82vw] sm:w-[360px] md:w-[380px] lg:w-[410px] snap-start">
+                            <article class="group relative rounded-2xl overflow-hidden aspect-[780/1300] bg-zinc-900 border border-white/10 shadow-2xl transition-all duration-500 hover:border-emerald-500/50 hover:shadow-emerald-950/40">
+                                <a href="/shop" class="block w-full h-full">
+                                    <figure class="relative w-full h-full m-0 p-0 overflow-hidden flex flex-col justify-end">
+                                        <img 
+                                            src="https://www.vacheron-constantin.com/dam/rcq/vac/Od/-i/b7/Gr/Sf/m-/0f/rF/Fw/kb/YA/Od-ib7GrSfm-0frFFwkbYA.png.transform.vacdetail.png" 
+                                            alt="Buste d'Akhénaton" 
+                                            class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
+                                            loading="lazy"
+                                        >
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent"></div>
+                                        
+                                        <figcaption class="relative z-10 p-6 sm:p-8 space-y-1 text-left">
+                                            <span class="text-[11px] uppercase tracking-[0.25em] text-[#00A862] font-semibold block drop-shadow-sm">
+                                                Vacheron Constantin
+                                            </span>
+                                            <h3 class="text-2xl sm:text-3xl font-serif font-normal text-white tracking-tight leading-snug drop-shadow-md">
+                                                Buste d'Akhénaton
+                                            </h3>
+                                            <p class="text-xs text-zinc-300 font-light opacity-90 pt-1 flex items-center justify-between">
+                                                <span>Métiers d'Art</span>
+                                                <span class="text-[#00A862] text-sm group-hover:translate-x-1 transition-transform">→</span>
+                                            </p>
+                                        </figcaption>
+                                    </figure>
+                                </a>
+                            </article>
+                        </li>
+
+                        <li class="rolex-roller-item flex-shrink-0 w-[82vw] sm:w-[360px] md:w-[380px] lg:w-[410px] snap-start">
+                            <article class="group relative rounded-2xl overflow-hidden aspect-[780/1300] bg-zinc-900 border border-white/10 shadow-2xl transition-all duration-500 hover:border-emerald-500/50 hover:shadow-emerald-950/40">
+                                <a href="/shop" class="block w-full h-full">
+                                    <figure class="relative w-full h-full m-0 p-0 overflow-hidden flex flex-col justify-end">
+                                        <img 
+                                            src="https://www.omegawatches.com/media/catalog/product/o/m/omega-seamaster-aqua-terra-150m-co-axial-master-chronometer-41-mm-22050412110001-17478c.png?w=1100" 
+                                            alt="Seamaster Aqua Terra" 
+                                            class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
+                                            loading="lazy"
+                                        >
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent"></div>
+                                        
+                                        <figcaption class="relative z-10 p-6 sm:p-8 space-y-1 text-left">
+                                            <span class="text-[11px] uppercase tracking-[0.25em] text-[#00A862] font-semibold block drop-shadow-sm">
+                                                OMEGA
+                                            </span>
+                                            <h3 class="text-2xl sm:text-3xl font-serif font-normal text-white tracking-tight leading-snug drop-shadow-md">
+                                                Seamaster Aqua Terra
+                                            </h3>
+                                            <p class="text-xs text-zinc-300 font-light opacity-90 pt-1 flex items-center justify-between">
+                                                <span>Moonshine Gold</span>
+                                                <span class="text-[#00A862] text-sm group-hover:translate-x-1 transition-transform">→</span>
+                                            </p>
+                                        </figcaption>
+                                    </figure>
+                                </a>
+                            </article>
+                        </li>
+                    <% } %>
+                </ul>
+            </div>
+
+            <!-- Bottom Indicator & Status -->
+            <div class="mt-8 flex items-center justify-between text-xs text-zinc-500 font-mono">
+                <div class="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+                    <div id="rollerProgressBar" class="h-full bg-[#00A862] transition-all duration-300 w-1/5 rounded-full"></div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="rollerCurrentSlide" class="text-white font-semibold">01</span>
+                    <span>/</span>
+                    <span id="rollerTotalSlides"><%= (featuredWatches && featuredWatches.length > 0) ? (featuredWatches.length < 10 ? '0' + featuredWatches.length : featuredWatches.length) : '05' %></span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         5. THE CURATED PORTFOLIO — THE GREAT MAISONS
+         ========================================== -->
+    <section id="brands" class="py-24 sm:py-32 bg-white text-[#1c1c1c] overflow-hidden relative">
+        <!-- Subtle Ambient Background Light -->
+        <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-[#c5a059]/5 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-[1400px] mx-auto px-6 sm:px-10 relative z-10">
+            
+            <!-- Header matching the reference design -->
+            <div class="delta-reveal text-center max-w-2xl mx-auto mb-16 sm:mb-24">
+                <span class="text-[10px] sm:text-[11px] uppercase tracking-[0.35em] text-zinc-400 font-semibold block mb-3">
+                    THE CURATED PORTFOLIO
+                </span>
+                <h2 class="text-4xl sm:text-5xl lg:text-6xl font-serif font-normal italic text-[#141619] tracking-tight mb-4">
+                    The Great Maisons
+                </h2>
+                <p class="text-zinc-500 text-xs sm:text-sm font-light leading-relaxed">
+                    Step into the specialized boutiques of our world-renowned partners.
+                </p>
+                <div class="w-12 h-[1px] bg-[#c5a059]/50 mx-auto mt-5"></div>
+            </div>
+
+            <% 
+                const getMaisonLink = (keyword, defaultSlug) => {
+                    if (typeof brands !== 'undefined' && Array.isArray(brands)) {
+                        const target = brands.find(b => {
+                            const s = (b.slug || '').toLowerCase();
+                            const n = (b.name || '').toLowerCase();
+                            const k = keyword.toLowerCase();
+                            return s === k || s.includes(k) || n.includes(k);
+                        });
+                        if (target && target.slug) {
+                            return `/shop?brand=${encodeURIComponent(target.slug)}`;
+                        }
+                    }
+                    return `/shop?brand=${encodeURIComponent(defaultSlug)}`;
+                };
+
+                const rolexUrl = getMaisonLink('rolex', 'rolex');
+                const patekUrl = getMaisonLink('patek', 'patek-philippe');
+                const apUrl = getMaisonLink('audemars', 'audemars-piguet');
+                const vcUrl = getMaisonLink('vacheron', 'vacheron-constantin');
+                const omegaUrl = getMaisonLink('omega', 'omega');
+            %>
+
+            <!-- Staggered 5-Brand Row with Modern 3D Tilt & Light Sheen Animations -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 sm:gap-8 lg:gap-6 items-end">
+                
+                <!-- 1. Rolex Boutique (Slightly Lower Offset) -->
+                <div class="delta-reveal delay-1 maison-card-wrapper flex flex-col items-center text-center cursor-pointer lg:translate-y-8" data-tilt>
+                    <a href="<%= rolexUrl %>" class="block w-full group">
+                        <!-- Image Container with Glare Effect -->
+                        <div class="maison-card-inner aspect-[4/5] w-full bg-[#f4f2ee] rounded-none overflow-hidden mb-6 relative shadow-sm group-hover:shadow-2xl transition-all duration-700">
+                            <img 
+                                src="https://media.rolex.com/image/upload/q_auto/f_auto/c_limit,w_1920/v1775050318/rolexcom/094398bf1f99/watches/datejust-41/roller-loop/04/rolex-new-watches-2026-the-datejust-41-roller-loop-m126334-0033-beauty-shot-standing" 
+                                alt="Rolex Boutique" 
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
+                                loading="lazy"
+                            >
+                            <!-- Interactive Glare Layer -->
+                            <div class="maison-glare"></div>
+                        </div>
+                        
+                        <!-- Title & Animated Expandable Action -->
+                        <div class="space-y-2">
+                            <h3 class="text-lg sm:text-xl font-serif text-[#141619] font-normal tracking-tight group-hover:text-[#006039] transition-colors leading-tight">
+                                Rolex Boutique
+                            </h3>
+                            <div class="maison-accent-line"></div>
+                            <p class="text-[9px] uppercase tracking-[0.25em] text-zinc-400 font-semibold group-hover:text-[#006039] group-hover:tracking-[0.32em] transition-all duration-300 flex items-center justify-center gap-1">
+                                <span>ENTER BOUTIQUE</span>
+                                <span class="maison-arrow-icon">→</span>
+                            </p>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- 2. Patek Philippe Salon (Higher Baseline) -->
+                <div class="delta-reveal delay-2 maison-card-wrapper flex flex-col items-center text-center cursor-pointer lg:translate-y-0" data-tilt>
+                    <a href="<%= patekUrl %>" class="block w-full group">
+                        <div class="maison-card-inner aspect-[4/5] w-full bg-[#f4f2ee] rounded-none overflow-hidden mb-6 relative shadow-sm group-hover:shadow-2xl transition-all duration-700">
+                            <img 
+                                src="https://patek-res.cloudinary.com/dfsmedia/0906caea301d42b3b8bd23bd656d1711/7005-51887"
+                                alt="Patek Philippe Salon" 
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
+                                loading="lazy"
+                            >
+                            <div class="maison-glare"></div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <h3 class="text-lg sm:text-xl font-serif text-[#141619] font-normal tracking-tight group-hover:text-[#006039] transition-colors leading-tight">
+                                Patek Philippe<br>Salon
+                            </h3>
+                            <div class="maison-accent-line"></div>
+                            <p class="text-[9px] uppercase tracking-[0.25em] text-zinc-400 font-semibold group-hover:text-[#006039] group-hover:tracking-[0.32em] transition-all duration-300 flex items-center justify-center gap-1">
+                                <span>ENTER SALON</span>
+                                <span class="maison-arrow-icon">→</span>
+                            </p>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- 3. Audemars Piguet Studio (Medium Baseline) -->
+                <div class="delta-reveal delay-3 maison-card-wrapper flex flex-col items-center text-center cursor-pointer lg:translate-y-6" data-tilt>
+                    <a href="<%= apUrl %>" class="block w-full group">
+                        <div class="maison-card-inner aspect-[4/5] w-full bg-[#f4f2ee] rounded-none overflow-hidden mb-6 relative shadow-sm group-hover:shadow-2xl transition-all duration-700">
+                            <img 
+                                src="https://dynamicmedia.audemarspiguet.com/is/image/audemarspiguet/standup-1000?fmt=avif-alpha&dpr=off"
+                                alt="Audemars Piguet Studio" 
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
+                                loading="lazy"
+                            >
+                            <div class="maison-glare"></div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <h3 class="text-lg sm:text-xl font-serif text-[#141619] font-normal tracking-tight group-hover:text-[#006039] transition-colors leading-tight">
+                                Audemars Piguet<br>Studio
+                            </h3>
+                            <div class="maison-accent-line"></div>
+                            <p class="text-[9px] uppercase tracking-[0.25em] text-zinc-400 font-semibold group-hover:text-[#006039] group-hover:tracking-[0.32em] transition-all duration-300 flex items-center justify-center gap-1">
+                                <span>ENTER STUDIO</span>
+                                <span class="maison-arrow-icon">→</span>
+                            </p>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- 4. Vacheron Constantin (Highest Baseline with Dark Backdrop) -->
+                <div class="delta-reveal delay-4 maison-card-wrapper flex flex-col items-center text-center cursor-pointer lg:-translate-y-4" data-tilt>
+                    <a href="<%= vcUrl %>" class="block w-full group">
+                        <div class="maison-card-inner aspect-[4/5] w-full bg-[#0a0c10] rounded-none overflow-hidden mb-6 relative shadow-md group-hover:shadow-2xl transition-all duration-700">
+                            <img 
+                                src="https://www.vacheron-constantin.com/dam/rcq/vac/cU/Cv/Dl/xQ/QJ/28/xm/3W/i4/CW/sA/cUCvDlxQQJ28xm3Wi4CWsA.png.transform.vacdetailmob.png"
+                                alt="Vacheron Constantin Atelier" 
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out filter contrast-110"
+                                loading="lazy"
+                            >
+                            
+                            <div class="maison-glare"></div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <h3 class="text-lg sm:text-xl font-serif text-[#141619] font-normal tracking-tight group-hover:text-[#006039] transition-colors leading-tight">
+                                Vacheron<br>Constantin
+                            </h3>
+                            <div class="maison-accent-line"></div>
+                            <p class="text-[9px] uppercase tracking-[0.25em] text-zinc-400 font-semibold group-hover:text-[#006039] group-hover:tracking-[0.32em] transition-all duration-300 flex items-center justify-center gap-1">
+                                <span>EXPLORE ATELIER</span>
+                                <span class="maison-arrow-icon">→</span>
+                            </p>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- 5. Omega Gallery (Slightly Lower Offset) -->
+                <div class="delta-reveal delay-5 maison-card-wrapper flex flex-col items-center text-center cursor-pointer col-span-2 sm:col-span-1 lg:col-span-1 lg:translate-y-10" data-tilt>
+                    <a href="<%= omegaUrl %>" class="block w-full max-w-[240px] sm:max-w-none mx-auto group">
+                        <div class="maison-card-inner aspect-[4/5] w-full bg-[#f8f9fa] rounded-none overflow-hidden mb-6 relative shadow-sm group-hover:shadow-2xl transition-all duration-700">
+                            <img 
+                                src="https://www.omegawatches.com/media/catalog/product/o/m/omega-speedmaster-moonwatch-professional-co-axial-master-chronometer-chronograph-42-mm-31060425010002-92e1a9.png?w=1400"
+                                alt="Omega Gallery" 
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
+                                loading="lazy"
+                            >
+                            <div class="maison-glare"></div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <h3 class="text-lg sm:text-xl font-serif text-[#141619] font-normal tracking-tight group-hover:text-[#006039] transition-colors leading-tight">
+                                Omega Gallery
+                            </h3>
+                            <div class="maison-accent-line"></div>
+                            <p class="text-[9px] uppercase tracking-[0.25em] text-zinc-400 font-semibold group-hover:text-[#006039] group-hover:tracking-[0.32em] transition-all duration-300 flex items-center justify-center gap-1">
+                                <span>VIEW COLLECTION</span>
+                                <span class="maison-arrow-icon">→</span>
+                            </p>
+                        </div>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         9. CRAFTSMANSHIP & ATELIER
+         ========================================== -->
+    <section id="heritage" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-6 sm:px-10">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+                
+                <div class="delta-reveal lg:col-span-6">
+                   <div class="aspect-[4/3] bg-zinc-100 overflow-hidden shadow-lg border border-zinc-200/70">
+
+    <video
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="metadata"
+        controlslist="nodownload nofullscreen"
+        disablepictureinpicture
+        disableremoteplayback
+        class="delta-zoom-img w-full h-full object-cover filter grayscale contrast-125 hover:scale-105 transition-transform duration-1000"
+        aria-label="Rolex 1908 luxury watch"
+    >
+        <source
+            src="https://media.rolex.com/video/upload/c_limit,w_1920/f_auto:video/q_auto:good/v1/rolexcom/094398bf1f99/collection/classic-watches/1908/cover/classic-watches-1908-cover-autoplay"
+            type="video/mp4"
+        >
+    </video>
+
+</div>
+                </div>
+
+                <div class="delta-reveal delay-2 lg:col-span-6 space-y-6 lg:pl-6">
+                    <span class="text-[10px] uppercase tracking-[0.3em] text-zinc-400 font-semibold block">
+                        The Atelier • Geneva
+                    </span>
+
+                    <h2 class="text-3xl sm:text-4xl lg:text-5xl font-serif italic text-[#1c1c1c] font-normal leading-[1.15] tracking-tight">
+                        Mastering the art of creation across the world's finest maisons.
+                    </h2>
+
+                    <p class="text-zinc-600 text-xs sm:text-sm font-light leading-relaxed">
+                        To hold a timepiece is to inherit centuries of human dedication. Our master watchmakers examine every escapement, balance bridge, and archive ledger to ensure that every mechanical masterpiece delivered to your vault represents the absolute summit of Swiss horological perfection.
+                    </p>
+
+                    <div class="pt-4">
+                        <a href="/shop" class="inline-flex items-center text-[11px] uppercase tracking-[0.2em] text-[#1c1c1c] font-semibold border-b border-[#1c1c1c] pb-1 hover:text-zinc-600 transition-colors">
+                            Inquire with Concierge →
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         10. THE DELTA STORY
+         ========================================== -->
+    <section id="story" class="py-24 bg-[#0b0c0e] text-white relative">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <span class="text-[10px] uppercase tracking-[0.35em] text-[#c5a059] font-medium block mb-4">
+                The Delta Story
+            </span>
+            <h2 class="text-3xl sm:text-5xl font-serif font-normal italic tracking-tight mb-6">
+                Where precision meets heritage.
+            </h2>
+            <p class="text-zinc-400 text-xs sm:text-sm md:text-base font-light leading-relaxed max-w-2xl mx-auto mb-10">
+                Delta brings together exceptional timepieces, remarkable craftsmanship, and the enduring art of watchmaking. Every certified piece comes complete with global archival documentation and armored white-glove transport.
+            </p>
+            <a href="/shop" class="px-8 py-3.5 border border-white/40 hover:border-white text-white rounded-full text-xs uppercase tracking-[0.2em] font-medium transition-all hover:bg-white hover:text-black">
+                Discover Our Story
+            </a>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         13. NEWSLETTER SECTION
+         ========================================== -->
+    <section class="py-20 bg-[#0b0c0e] text-white">
+        <div class="max-w-xl mx-auto px-6 text-center space-y-6">
+            <span class="text-2xl font-serif text-[#c5a059]">δ</span>
+            <h2 class="text-2xl sm:text-3xl font-serif font-normal tracking-tight">
+                Enter the World of DELTA
+            </h2>
+            <p class="text-xs text-zinc-400 font-light leading-relaxed">
+                Receive confidential notifications regarding new vault arrivals, private auctions, and watchmaking essays.
+            </p>
+            <form action="/newsletter/subscribe" method="POST" class="flex flex-col sm:flex-row gap-2 max-w-md mx-auto pt-2">
+                <input 
+                    type="email" 
+                    name="email" 
+                    required 
+                    placeholder="Enter your email address" 
+                    class="flex-grow px-5 py-3 rounded-full bg-white/10 border border-white/20 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white transition-colors"
+                >
+                <button type="submit" class="btn-delta-shimmer px-7 py-3 bg-white text-black font-semibold text-xs uppercase tracking-[0.2em] rounded-full hover:bg-zinc-200 transition-all">
+                    Subscribe
+                </button>
+            </form>
+        </div>
+    </section>
+
+</main>
+
+<!-- Rolex Carousel & Scroll Scripts -->
+<script>
+    // 1. Rolex Roller Navigation
+    function scrollRoller(direction) {
+        const list = document.getElementById('rolexRollerList');
+        const item = list ? list.querySelector('.rolex-roller-item') : null;
+        if (!list || !item) return;
+
+        const scrollStep = (item.offsetWidth + 24) * direction;
+        list.scrollBy({ left: scrollStep, behavior: 'smooth' });
+    }
+
+    // 2. Roller Progress Tracker
+    const rollerList = document.getElementById('rolexRollerList');
+    const rollerProgressBar = document.getElementById('rollerProgressBar');
+    const rollerCurrentSlide = document.getElementById('rollerCurrentSlide');
+    const rollerTotalSlides = document.getElementById('rollerTotalSlides');
+
+    if (rollerList && rollerProgressBar) {
+        const updateRollerProgress = () => {
+            const items = rollerList.querySelectorAll('.rolex-roller-item');
+            const totalSlides = items.length || 5;
+            if (rollerTotalSlides) {
+                rollerTotalSlides.textContent = totalSlides < 10 ? `0${totalSlides}` : `${totalSlides}`;
+            }
+            const maxScroll = rollerList.scrollWidth - rollerList.clientWidth;
+            const scrollFraction = maxScroll > 0 ? (rollerList.scrollLeft / maxScroll) : 0;
+            const currentIdx = Math.min(totalSlides, Math.max(1, Math.round(scrollFraction * (totalSlides - 1)) + 1));
+
+            rollerProgressBar.style.width = `${Math.max(100 / totalSlides, (currentIdx / totalSlides) * 100)}%`;
+            if (rollerCurrentSlide) {
+                rollerCurrentSlide.textContent = currentIdx < 10 ? `0${currentIdx}` : `${currentIdx}`;
+            }
+        };
+
+        rollerList.addEventListener('scroll', updateRollerProgress, { passive: true });
+        window.addEventListener('resize', updateRollerProgress);
+        updateRollerProgress();
+    }
+
+    // 3. Scroll Reveal Observer
+    document.addEventListener('DOMContentLoaded', () => {
+        const revealElements = document.querySelectorAll('.delta-reveal');
+        const observer = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    obs.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+        revealElements.forEach(el => observer.observe(el));
+    });
+
+    // Modern 3D Tilt & Sapphire Glare Interaction for The Great Maisons
+    document.addEventListener('DOMContentLoaded', () => {
+        const tiltCards = document.querySelectorAll('.maison-card-wrapper');
+        
+        tiltCards.forEach(card => {
+            const inner = card.querySelector('.maison-card-inner');
+            const glare = card.querySelector('.maison-glare');
+            if (!inner) return;
+
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = ((y - centerY) / centerY) * -7;
+                const rotateY = ((x - centerX) / centerX) * 7;
+                
+                inner.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-6px) scale3d(1.02, 1.02, 1.02)`;
+                
+                if (glare) {
+                    const glareX = (x / rect.width) * 100;
+                    const glareY = (y / rect.height) * 100;
+                    glare.style.background = `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.08) 45%, transparent 70%)`;
+                }
+            });
+
+            card.addEventListener('mouseleave', () => {
+                inner.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0) scale3d(1, 1, 1)';
+                inner.style.transition = 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+            });
+
+            card.addEventListener('mouseenter', () => {
+                inner.style.transition = 'transform 0.15s ease-out, box-shadow 0.3s ease';
+            });
+        });
+    });
+
+</script>
+
+<%- include('../partials/footer') %>

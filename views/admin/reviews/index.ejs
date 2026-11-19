@@ -1,0 +1,546 @@
+<%- include('../partials/header', { title: 'Collector Reviews Management — DELTA Maison' }) %>
+
+<div class="flex min-h-screen bg-[#faf8f7] text-[#1b1c1c] font-sans antialiased">
+    <!-- Admin Sidebar -->
+    <%- include('../partials/sidebar', { activePage: 'reviews' }) %>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        
+        <!-- Top Admin Header -->
+        <header class="h-20 bg-white border-b border-zinc-200/80 px-8 flex items-center justify-between sticky top-0 z-20 shadow-[0_2px_15px_rgba(0,0,0,0.02)]">
+            <div class="flex items-center gap-4">
+                <span class="text-xs uppercase tracking-[0.25em] text-[#0A4D2E] font-bold">Collector Feedback & Quality</span>
+                <span class="text-zinc-300">/</span>
+                <h1 class="text-lg font-serif font-normal text-zinc-900">Review Management</h1>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-mono text-zinc-500">
+                    Vault Curator View
+                </span>
+            </div>
+        </header>
+
+        <!-- Main Body Content -->
+        <main class="flex-1 p-8 max-w-7xl w-full mx-auto space-y-6">
+            
+            <!-- Flash Message Alerts -->
+            <% if (typeof success !== 'undefined' && success) { %>
+                <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-3.5 rounded-xl text-xs flex items-center justify-between shadow-sm animate-fade-in">
+                    <div class="flex items-center gap-2.5">
+                        <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="font-medium"><%= success %></span>
+                    </div>
+                    <button type="button" onclick="this.parentElement.remove()" class="text-emerald-700 hover:text-emerald-900 text-sm cursor-pointer ml-3 font-semibold">✕</button>
+                </div>
+            <% } %>
+
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="bg-rose-50 border border-rose-200 text-rose-800 px-5 py-3.5 rounded-xl text-xs flex items-center justify-between shadow-sm animate-fade-in">
+                    <div class="flex items-center gap-2.5">
+                        <svg class="w-4 h-4 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        <span class="font-medium"><%= error %></span>
+                    </div>
+                    <button type="button" onclick="this.parentElement.remove()" class="text-rose-700 hover:text-rose-900 text-sm cursor-pointer ml-3 font-semibold">✕</button>
+                </div>
+            <% } %>
+
+            <!-- Stats Overview Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <!-- Stat 1: Total Reviews -->
+                <div class="bg-white rounded-2xl p-5 border border-zinc-200/80 shadow-2xs space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-mono tracking-wider text-zinc-400 font-semibold">Total Reviews</span>
+                        <span class="w-2 h-2 rounded-full bg-zinc-400"></span>
+                    </div>
+                    <p class="text-2xl font-serif text-zinc-900 font-bold"><%= stats.totalReviews || 0 %></p>
+                    <p class="text-[11px] text-zinc-500 font-light">Feedback entries across timepieces</p>
+                </div>
+
+                <!-- Stat 2: Vault Average Rating -->
+                <div class="bg-white rounded-2xl p-5 border border-zinc-200/80 shadow-2xs space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-mono tracking-wider text-amber-700 font-semibold">Average Rating</span>
+                        <span class="text-amber-500 text-sm">★</span>
+                    </div>
+                    <div class="flex items-baseline gap-2">
+                        <p class="text-2xl font-serif text-zinc-900 font-bold font-mono"><%= (stats.averageRating || 0).toFixed(1) %></p>
+                        <span class="text-xs text-zinc-400 font-mono">/ 5.0</span>
+                    </div>
+                    <p class="text-[11px] text-zinc-500 font-light">Overall collector satisfaction score</p>
+                </div>
+
+                <!-- Stat 3: 5-Star Reviews -->
+                <div class="bg-white rounded-2xl p-5 border border-zinc-200/80 shadow-2xs space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-mono tracking-wider text-[#0A4D2E] font-semibold">5-Star Masterpieces</span>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    </div>
+                    <p class="text-2xl font-serif text-zinc-900 font-bold"><%= stats.fiveStarCount || 0 %></p>
+                    <p class="text-[11px] text-zinc-500 font-light">Top-rated superlative endorsements</p>
+                </div>
+
+                <!-- Stat 4: Published & Active -->
+                <div class="bg-white rounded-2xl p-5 border border-zinc-200/80 shadow-2xs space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-mono tracking-wider text-emerald-700 font-semibold">Published Reviews</span>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    </div>
+                    <p class="text-2xl font-serif text-zinc-900 font-bold"><%= stats.activeReviews || 0 %></p>
+                    <p class="text-[11px] text-zinc-500 font-light"><%= stats.hiddenReviews || 0 %> hidden from public view</p>
+                </div>
+
+            </div>
+
+            <!-- Search & Filter Controls -->
+            <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-2xs space-y-4">
+                <form id="filterForm" method="GET" action="/admin/reviews" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    
+                    <!-- Search Input -->
+                    <div class="lg:col-span-2 relative">
+                        <input 
+                            type="text" 
+                            name="search" 
+                            value="<%= search || '' %>" 
+                            placeholder="Search by timepiece, collector, headline..." 
+                            class="w-full pl-9 pr-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] focus:bg-white outline-none text-xs transition-colors"
+                        >
+                        <svg class="w-4 h-4 text-zinc-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+
+                    <!-- Rating Filter -->
+                    <div>
+                        <select name="rating" onchange="this.form.submit()" class="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none text-xs text-zinc-700 cursor-pointer transition-colors">
+                            <option value="all" <%= (!rating || rating === 'all') ? 'selected' : '' %>>All Star Ratings</option>
+                            <option value="5" <%= rating === '5' ? 'selected' : '' %>>5 Stars ★★★★★</option>
+                            <option value="4" <%= rating === '4' ? 'selected' : '' %>>4 Stars ★★★★☆</option>
+                            <option value="3" <%= rating === '3' ? 'selected' : '' %>>3 Stars ★★★☆☆</option>
+                            <option value="2" <%= rating === '2' ? 'selected' : '' %>>2 Stars ★★☆☆☆</option>
+                            <option value="1" <%= rating === '1' ? 'selected' : '' %>>1 Star ★☆☆☆☆</option>
+                        </select>
+                    </div>
+
+                    <!-- Status Filter -->
+                    <div>
+                        <select name="status" onchange="this.form.submit()" class="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none text-xs text-zinc-700 cursor-pointer transition-colors">
+                            <option value="all" <%= (!status || status === 'all') ? 'selected' : '' %>>All Visibility</option>
+                            <option value="active" <%= status === 'active' ? 'selected' : '' %>>Published (Active)</option>
+                            <option value="inactive" <%= status === 'inactive' ? 'selected' : '' %>>Hidden (Inactive)</option>
+                        </select>
+                    </div>
+
+                    <!-- Sort -->
+                    <div class="flex items-center gap-2">
+                        <select name="sort" onchange="this.form.submit()" class="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:border-[#0A4D2E] outline-none text-xs text-zinc-700 cursor-pointer transition-colors">
+                            <option value="newest" <%= (!sort || sort === 'newest') ? 'selected' : '' %>>Newest First</option>
+                            <option value="oldest" <%= sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+                            <option value="rating-high" <%= sort === 'rating-high' ? 'selected' : '' %>>Rating: High to Low</option>
+                            <option value="rating-low" <%= sort === 'rating-low' ? 'selected' : '' %>>Rating: Low to High</option>
+                        </select>
+
+                        <% if (search || rating !== 'all' || status !== 'all' || sort !== 'newest') { %>
+                            <a href="/admin/reviews" class="p-2.5 border border-zinc-200 hover:bg-zinc-100 rounded-xl text-zinc-500 hover:text-zinc-800 transition-colors cursor-pointer flex-shrink-0" title="Reset Filters">
+                                ✕
+                            </a>
+                        <% } %>
+                    </div>
+
+                </form>
+            </div>
+
+            <!-- Reviews Table -->
+            <div class="bg-white rounded-2xl border border-zinc-200/80 shadow-2xs overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-zinc-200/80 bg-zinc-50/50 text-[10px] uppercase tracking-wider font-mono text-zinc-400 font-semibold">
+                                <th class="py-4 px-6">Timepiece</th>
+                                <th class="py-4 px-6">Collector</th>
+                                <th class="py-4 px-6">Rating & Impression</th>
+                                <th class="py-4 px-6">Date</th>
+                                <th class="py-4 px-6">Status</th>
+                                <th class="py-4 px-6 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-100">
+                            <% if (typeof reviews !== 'undefined' && reviews && reviews.length > 0) { %>
+                                <% reviews.forEach(r => { %>
+                                    <tr class="hover:bg-zinc-50/70 transition-colors">
+                                        
+                                        <!-- Timepiece -->
+                                        <td class="py-4 px-6">
+                                            <% if (r.product) { %>
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-12 h-12 rounded-xl bg-zinc-100 border border-zinc-200/70 overflow-hidden flex-shrink-0 flex items-center justify-center p-1">
+                                                        <% if (r.product.images && r.product.images.length > 0) { %>
+                                                            <img src="<%= r.product.images[0] %>" alt="<%= r.product.name %>" class="w-full h-full object-cover rounded-lg">
+                                                        <% } else { %>
+                                                            <span class="text-zinc-400 text-base">⏱</span>
+                                                        <% } %>
+                                                    </div>
+                                                    <div class="space-y-0.5">
+                                                        <a href="/product/<%= r.product.slug %>" target="_blank" class="font-serif font-medium text-zinc-900 hover:text-[#0A4D2E] transition-colors block line-clamp-1">
+                                                            <%= r.product.name %>
+                                                        </a>
+                                                        <div class="flex items-center gap-2 text-[10px] font-mono text-zinc-400">
+                                                            <span><%= r.product.brandName || 'DELTA' %></span>
+                                                            <span>•</span>
+                                                            <span>₹<%= Number(r.product.discountPrice || r.product.price || 0).toLocaleString('en-IN') %></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <% } else { %>
+                                                <span class="text-zinc-400 italic font-mono text-[11px]">Archived / Removed Timepiece</span>
+                                            <% } %>
+                                        </td>
+
+                                        <!-- Collector -->
+                                        <td class="py-4 px-6">
+                                            <div class="space-y-1">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-semibold text-zinc-900 font-sans">
+                                                        <%= (r.user && r.user.name) ? r.user.name : 'Vault Connoisseur' %>
+                                                    </span>
+                                                    <% if (r.isVerifiedPurchase) { %>
+                                                        <span class="px-2 py-0.5 rounded-full text-[9px] font-mono font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-0.5" title="Verified Customer Purchase">
+                                                            ✓ Verified
+                                                        </span>
+                                                    <% } %>
+                                                </div>
+                                                <p class="text-[11px] text-zinc-400 font-mono"><%= (r.user && r.user.email) ? r.user.email : 'Anonymous' %></p>
+                                            </div>
+                                        </td>
+
+                                        <!-- Rating & Impression -->
+                                        <td class="py-4 px-6 max-w-md">
+                                            <div class="space-y-1.5">
+                                                <div class="flex items-center gap-2">
+                                                    <div class="flex text-amber-500 text-xs tracking-tight">
+                                                        <% for (let i = 1; i <= 5; i++) { %>
+                                                            <span><%= r.rating >= i ? '★' : '☆' %></span>
+                                                        <% } %>
+                                                    </div>
+                                                    <span class="text-[11px] font-mono font-bold text-zinc-700"><%= r.rating %>/5</span>
+                                                </div>
+                                                
+                                                <% if (r.title) { %>
+                                                    <p class="font-serif font-medium text-zinc-900 text-xs line-clamp-1">
+                                                        <%= r.title %>
+                                                    </p>
+                                                <% } %>
+
+                                                <p class="text-zinc-500 text-[11px] font-light line-clamp-2 leading-relaxed">
+                                                    <%= r.comment %>
+                                                </p>
+                                            </div>
+                                        </td>
+
+                                        <!-- Date -->
+                                        <td class="py-4 px-6 font-mono text-[11px] text-zinc-500 whitespace-nowrap">
+                                            <%= new Date(r.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                                        </td>
+
+                                        <!-- Status -->
+                                        <td class="py-4 px-6 whitespace-nowrap">
+                                            <% if (r.isActive) { %>
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                                    Published
+                                                </span>
+                                            <% } else { %>
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold bg-zinc-100 text-zinc-600 border border-zinc-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
+                                                    Hidden
+                                                </span>
+                                            <% } %>
+                                        </td>
+
+                                        <!-- Actions -->
+                                        <td class="py-4 px-6 text-right whitespace-nowrap">
+                                            <div class="flex items-center justify-end gap-2">
+                                                
+                                                <!-- View Detail Modal Trigger -->
+                                                <button 
+                                                    type="button" 
+                                                    onclick="viewReviewDetail('<%= r._id %>')" 
+                                                    class="p-2 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors cursor-pointer"
+                                                    title="Inspect Complete Review"
+                                                >
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                                </button>
+
+                                                <!-- Toggle Visibility Button -->
+                                                <button 
+                                                    type="button" 
+                                                    onclick="toggleReviewStatus('<%= r._id %>', <%= r.isActive ? 'true' : 'false' %>)" 
+                                                    class="p-2 <%= r.isActive ? 'text-amber-600 hover:bg-amber-50' : 'text-emerald-600 hover:bg-emerald-50' %> rounded-lg transition-colors cursor-pointer"
+                                                    title="<%= r.isActive ? 'Hide Review from Store' : 'Publish Review to Store' %>"
+                                                >
+                                                    <% if (r.isActive) { %>
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"></path></svg>
+                                                    <% } else { %>
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                                    <% } %>
+                                                </button>
+
+                                                <!-- Delete Button -->
+                                                <button 
+                                                    type="button" 
+                                                    onclick="deleteReviewConfirm('<%= r._id %>')" 
+                                                    class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                                    title="Permanently Delete Review"
+                                                >
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+
+                                            </div>
+                                        </td>
+
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="p-12 text-center text-zinc-400">
+                                        <div class="space-y-3">
+                                            <span class="text-3xl block">⏱</span>
+                                            <p class="font-serif text-base text-zinc-600">No Collector Reviews Found</p>
+                                            <p class="text-xs font-light max-w-sm mx-auto text-zinc-400">
+                                                No reviews match your active filter criteria. Try adjusting the search query or star filter.
+                                            </p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Component -->
+                <% if (typeof pagination !== 'undefined' && pagination.totalPages > 1) { %>
+                    <div class="p-6 border-t border-zinc-200/80 bg-zinc-50/50 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono">
+                        <span class="text-zinc-500">
+                            Showing page <%= pagination.currentPage %> of <%= pagination.totalPages %> (<%= pagination.totalItems %> total reviews)
+                        </span>
+
+                        <div class="flex items-center gap-1.5">
+                            <% if (pagination.hasPrev) { %>
+                                <a href="/admin/reviews?page=<%= pagination.currentPage - 1 %>&search=<%= search || '' %>&rating=<%= rating || 'all' %>&status=<%= status || 'all' %>&sort=<%= sort || 'newest' %>" class="px-3 py-1.5 border border-zinc-200 rounded-lg hover:bg-white text-zinc-700 transition-colors">
+                                    ← Prev
+                                </a>
+                            <% } %>
+
+                            <% for (let p = 1; p <= pagination.totalPages; p++) { %>
+                                <% if (p === pagination.currentPage) { %>
+                                    <span class="px-3 py-1.5 rounded-lg bg-[#0A4D2E] text-white font-bold">
+                                        <%= p %>
+                                    </span>
+                                <% } else if (p === 1 || p === pagination.totalPages || Math.abs(p - pagination.currentPage) <= 2) { %>
+                                    <a href="/admin/reviews?page=<%= p %>&search=<%= search || '' %>&rating=<%= rating || 'all' %>&status=<%= status || 'all' %>&sort=<%= sort || 'newest' %>" class="px-3 py-1.5 border border-zinc-200 rounded-lg hover:bg-white text-zinc-700 transition-colors">
+                                        <%= p %>
+                                    </a>
+                                <% } %>
+                            <% } %>
+
+                            <% if (pagination.hasNext) { %>
+                                <a href="/admin/reviews?page=<%= pagination.currentPage + 1 %>&search=<%= search || '' %>&rating=<%= rating || 'all' %>&status=<%= status || 'all' %>&sort=<%= sort || 'newest' %>" class="px-3 py-1.5 border border-zinc-200 rounded-lg hover:bg-white text-zinc-700 transition-colors">
+                                    Next →
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+                <% } %>
+
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- INSPECT REVIEW DETAIL MODAL -->
+<!-- ========================================== -->
+<div id="reviewDetailModal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-zinc-200 max-h-[90vh] overflow-y-auto animate-scale-in">
+        
+        <div class="flex items-center justify-between border-b border-zinc-100 pb-4">
+            <div>
+                <span class="text-[10px] uppercase font-mono tracking-widest text-zinc-400 font-semibold block">Dossier Inspection</span>
+                <h3 class="text-xl font-serif text-zinc-900 font-normal">Review Details</h3>
+            </div>
+            <button type="button" onclick="closeReviewModal()" class="text-zinc-400 hover:text-zinc-700 text-lg cursor-pointer">✕</button>
+        </div>
+
+        <div id="reviewModalBody" class="space-y-5 text-xs">
+            <!-- Dynamically populated via JavaScript -->
+        </div>
+
+        <div class="flex items-center justify-end border-t border-zinc-100 pt-4">
+            <button type="button" onclick="closeReviewModal()" class="px-5 py-2.5 bg-zinc-900 hover:bg-black text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+                Close
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- JAVASCRIPT & SWEETALERT INTEGRATION -->
+<!-- ========================================== -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    async function viewReviewDetail(reviewId) {
+        try {
+            const res = await fetch(`/admin/reviews/${reviewId}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await res.json();
+            if (!data.success || !data.review) {
+                Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Could not load review detail.' });
+                return;
+            }
+
+            const r = data.review;
+            const modalBody = document.getElementById('reviewModalBody');
+            const starsHtml = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+
+            modalBody.innerHTML = `
+                <!-- Product Preview -->
+                <div class="flex items-center gap-3 p-3.5 bg-zinc-50 rounded-2xl border border-zinc-100">
+                    <div class="w-14 h-14 rounded-xl bg-white border border-zinc-200 overflow-hidden flex-shrink-0 p-1">
+                        ${r.product?.images && r.product.images.length > 0 ? `<img src="${r.product.images[0]}" class="w-full h-full object-cover rounded-lg">` : '⏱'}
+                    </div>
+                    <div class="space-y-0.5">
+                        <span class="text-[10px] font-mono text-[#0A4D2E] uppercase font-bold">${r.product?.brandName || 'DELTA'}</span>
+                        <h4 class="font-serif text-sm font-semibold text-zinc-900">${r.product?.name || 'Archived Timepiece'}</h4>
+                        <p class="font-mono text-[11px] text-zinc-500">Regular: ₹${Number(r.product?.price || 0).toLocaleString('en-IN')}</p>
+                    </div>
+                </div>
+
+                <!-- Collector Info -->
+                <div class="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-mono tracking-wider text-zinc-400 font-semibold">Author Details</span>
+                        ${r.isVerifiedPurchase ? '<span class="px-2 py-0.5 rounded-full text-[9px] font-mono font-semibold bg-emerald-100 text-emerald-800">✓ Verified Buyer</span>' : '<span class="text-[9px] font-mono text-zinc-400">Standard Review</span>'}
+                    </div>
+                    <p class="text-sm font-bold text-zinc-900">${r.user?.name || 'Anonymous'}</p>
+                    <p class="font-mono text-zinc-500">${r.user?.email || 'N/A'} ${r.user?.phone ? '• ' + r.user.phone : ''}</p>
+                </div>
+
+                <!-- Rating & Headline -->
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-amber-500 text-base tracking-tight">${starsHtml}</span>
+                        <span class="font-mono font-bold text-zinc-800 text-xs">${r.rating} out of 5</span>
+                        <span class="text-zinc-300">•</span>
+                        <span class="font-mono text-[11px] text-zinc-400">${new Date(r.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    ${r.title ? `<h4 class="font-serif text-base font-medium text-zinc-900">${r.title}</h4>` : ''}
+                </div>
+
+                <!-- Comment -->
+                <div class="p-4 bg-white border border-zinc-200/80 rounded-2xl space-y-1">
+                    <span class="text-[10px] uppercase font-mono tracking-wider text-zinc-400 font-semibold block">Collector Testimonial</span>
+                    <p class="text-zinc-700 leading-relaxed font-sans whitespace-pre-line">${r.comment}</p>
+                </div>
+            `;
+
+            const modal = document.getElementById('reviewDetailModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network communication failure.' });
+        }
+    }
+
+    function closeReviewModal() {
+        const modal = document.getElementById('reviewDetailModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    async function toggleReviewStatus(reviewId, currentStatus) {
+        const actionText = currentStatus ? 'hide' : 'publish';
+        const result = await Swal.fire({
+            title: `Confirm Visibility Change?`,
+            text: `Do you want to ${actionText} this review? The product average rating will be recalculated accordingly.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#0A4D2E',
+            cancelButtonColor: '#71717a',
+            confirmButtonText: `Yes, ${actionText}`
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            const res = await fetch(`/admin/reviews/${reviewId}/toggle`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await res.json();
+            if (data.success) {
+                const nextUrl = new URL(window.location.href);
+                nextUrl.searchParams.set('success', 'toggled');
+                window.location.href = nextUrl.toString();
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to update review visibility.' });
+        }
+    }
+
+    async function deleteReviewConfirm(reviewId) {
+        const result = await Swal.fire({
+            title: 'Delete Review?',
+            text: 'Are you sure you want to permanently delete this collector review? This action cannot be reversed.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e11d48',
+            cancelButtonColor: '#71717a',
+            confirmButtonText: 'Yes, Delete'
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            const res = await fetch(`/admin/reviews/${reviewId}/delete`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await res.json();
+            if (data.success) {
+                const nextUrl = new URL(window.location.href);
+                nextUrl.searchParams.set('success', 'deleted');
+                window.location.href = nextUrl.toString();
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to delete review.' });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        <% if (typeof success !== 'undefined' && success) { %>
+            if (typeof window.showToast === 'function') {
+                window.showToast(<%- JSON.stringify(success) %>, 'success');
+            }
+        <% } %>
+        <% if (typeof error !== 'undefined' && error) { %>
+            if (typeof window.showToast === 'function') {
+                window.showToast(<%- JSON.stringify(error) %>, 'error');
+            }
+        <% } %>
+    });
+</script>
+
+<%- include('../partials/footer') %>
