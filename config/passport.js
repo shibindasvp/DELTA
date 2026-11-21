@@ -1,5 +1,14 @@
+import "dotenv/config";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+
+passport.serializeUser((user, done) => {
+    done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+    done(null, user);
+});
 
 const googleConfigured =
     process.env.GOOGLE_CLIENT_ID &&

@@ -84,6 +84,7 @@ router.get(
             {
                 scope: ["profile", "email"],
                 session: false,
+                prompt: "select_account",
                 state: state || undefined
             }
         )(req, res, next);
@@ -92,61 +93,88 @@ router.get(
 
 router.get(
     "/auth/google/callback",
-    passport.authenticate(
-        "google",
-        {
-            session: false,
-            failureRedirect:
-                "/login?error=Google%20authentication%20failed"
+    (req, res, next) => {
+        // If user cancelled consent or Google returned an error query
+        if (req.query.error) {
+            const errorDesc =
+                req.query.error_description ||
+                (req.query.error === "access_denied"
+                    ? "Google sign-in was cancelled."
+                    : "Google authentication failed: " + req.query.error);
+            return res.redirect("/login?error=" + encodeURIComponent(errorDesc));
         }
-    ),
-    async (req, res) => {
-        try {
-            const googleProfile = req.user;
-            const email = googleProfile.email;
 
-            if (!email) {
-                return res.redirect("/login?error=Google%20did%20not%20provide%20an%20email%20address.");
+        // If no code parameter was provided
+        if (!req.query.code) {
+            return res.redirect(
+                "/login?error=" + encodeURIComponent("Google authorization code missing. Please sign in again.")
+            );
+        }
+
+        passport.authenticate("google", { session: false }, async (err, googleProfile, info) => {
+            if (err || !googleProfile) {
+                console.error("Google authentication error:", err || info);
+                let friendlyMessage = "Google authentication failed. Please try again.";
+                if (err?.code === "invalid_grant" || err?.message?.includes("Malformed auth code")) {
+                    friendlyMessage = "This Google sign-in authorization link has expired or has already been used. Please click 'Sign in with Google' again.";
+                } else if (err?.message) {
+                    friendlyMessage = err.message;
+                } else if (info?.message) {
+                    friendlyMessage = info.message;
+                }
+                return res.redirect("/login?error=" + encodeURIComponent(friendlyMessage));
             }
 
-            const { loginOrCreateOAuthUser } = await import("../../services/user/auth.service.js");
-            const { generateToken } = await import("../../utils/generateToken.js");
+            try {
+                const email = googleProfile.email;
+                if (!email) {
+                    return res.redirect("/login?error=" + encodeURIComponent("Google did not provide an email address."));
+                }
 
-            const user = await loginOrCreateOAuthUser({
-                provider: "google",
-                providerId: googleProfile.providerId || googleProfile.id,
-                name: googleProfile.name,
-                email,
-                profileImage: googleProfile.profileImage
-            });
+                const { loginOrCreateOAuthUser } = await import("../../services/user/auth.service.js");
+                const { generateToken } = await import("../../utils/generateToken.js");
 
-            const token = generateToken(user);
+                const user = await loginOrCreateOAuthUser({
+                    provider: "google",
+                    providerId: googleProfile.providerId || googleProfile.id,
+                    name: googleProfile.name,
+                    email,
+                    profileImage: googleProfile.profileImage
+                });
 
-            res.cookie("token", token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: "lax",
-                path: "/",
-                maxAge: 24 * 60 * 60 * 1000
-            });
+                const token = generateToken(user);
 
-            const returnTo = req.query.state;
-            const safeReturnTo = (returnTo && typeof returnTo === "string" && returnTo.startsWith("/") && !returnTo.startsWith("//"))
-                ? returnTo
-                : "/?welcome=true";
-            return res.redirect(safeReturnTo);
-        } catch (error) {
-            console.error(
-                "Google callback error:",
-                error
-            );
+                res.cookie("token", token, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === "production",
+                    sameSite: "lax",
+                    path: "/",
+                    maxAge: 24 * 60 * 60 * 1000
+                });
 
-            return res.redirect(
-                "/login?error=" + encodeURIComponent(
-                    formatErrorMessage(error, "Google sign-in failed. Please try again or use your email and password.")
-                )
-            );
-        }
+                if (req.session) {
+                    req.session.user = {
+                        _id: user._id,
+                        email: user.email,
+                        name: user.name,
+                        role: user.role
+                    };
+                }
+
+                const returnTo = req.query.state;
+                const safeReturnTo = (returnTo && typeof returnTo === "string" && returnTo.startsWith("/") && !returnTo.startsWith("//"))
+                    ? returnTo
+                    : "/?welcome=true";
+                return res.redirect(safeReturnTo);
+            } catch (error) {
+                console.error("Google callback user processing error:", error);
+                return res.redirect(
+                    "/login?error=" + encodeURIComponent(
+                        formatErrorMessage(error, "Google sign-in failed. Please try again or use your email and password.")
+                    )
+                );
+            }
+        })(req, res, next);
     }
 );
 

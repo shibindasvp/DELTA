@@ -10,6 +10,7 @@ import {
 import helmet from "helmet";
 
 import connectDB from "./config/db.js";
+import passport from "./config/passport.js";
 
 import authRoutes from "./routes/user/auth.routes.js";
 import homeRoutes from "./routes/user/home.routes.js";
@@ -91,6 +92,8 @@ app.use(
         }
     })
 );
+
+app.use(passport.initialize());
 
 
 app.use(
