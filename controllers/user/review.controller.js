@@ -48,7 +48,8 @@ export const addReviewHandler = async (req, res, next) => {
     } catch (error) {
         return respondWithError(req, res, error, {
             fallback: "Failed to submit review. Please check your rating and comment.",
-            redirectUrl: `/product/${req.params.slug}#reviewsSection`
+            redirectUrl: `/product/${req.params.slug}#reviewsSection`,
+            defaultStatus: error.statusCode || 400
         });
     }
 };

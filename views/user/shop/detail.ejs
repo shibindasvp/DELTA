@@ -464,15 +464,34 @@
                 </div>
                 <div>
                     <% if (typeof user !== 'undefined' && user) { %>
-                        <button 
-                            type="button" 
-                            onclick="toggleReviewForm()" 
-                            id="writeReviewBtn" 
-                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A4D2E] hover:bg-[#083e25] text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-sm cursor-pointer"
-                        >
-                            <svg class="w-4 h-4 text-[#c5a059]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                            <span><%= (typeof userReview !== 'undefined' && userReview) ? 'Edit Your Review' : '+ Write a Review' %></span>
-                        </button>
+                        <% if (typeof hasPurchased !== 'undefined' && hasPurchased) { %>
+                            <button 
+                                type="button" 
+                                onclick="toggleReviewForm()" 
+                                id="writeReviewBtn" 
+                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A4D2E] hover:bg-[#083e25] text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+                            >
+                                <svg class="w-4 h-4 text-[#c5a059]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                <span><%= (typeof userReview !== 'undefined' && userReview) ? 'Edit Your Review' : '+ Write a Review' %></span>
+                            </button>
+                        <% } else if (typeof userReview !== 'undefined' && userReview) { %>
+                            <button 
+                                type="button" 
+                                onclick="toggleReviewForm()" 
+                                id="writeReviewBtn" 
+                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A4D2E] hover:bg-[#083e25] text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+                            >
+                                <svg class="w-4 h-4 text-[#c5a059]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                <span>Edit Your Review</span>
+                            </button>
+                        <% } else { %>
+                            <div class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50/90 border border-amber-200/80 text-amber-900 text-xs font-medium select-none" title="Reviews are reserved for collectors who have purchased this timepiece.">
+                                <svg class="w-4 h-4 text-amber-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                                <span class="tracking-wide">Verified Purchasers Only</span>
+                            </div>
+                        <% } %>
                     <% } else { %>
                         <a 
                             href="/login?redirect=<%= encodeURIComponent('/product/' + safeProduct.slug + '#reviewsSection') %>" 
@@ -530,8 +549,25 @@
 
             </div>
 
+            <!-- Verified Purchaser Notice Banner -->
+            <% if (typeof user !== 'undefined' && user && !hasPurchased && (!userReview)) { %>
+                <div class="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="flex items-start sm:items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0 mt-0.5 sm:mt-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-amber-950 uppercase tracking-wider">Verified Purchase Required</h4>
+                            <p class="text-xs text-amber-800 font-light mt-0.5">Only clients who have purchased this timepiece can post a review. Once you acquire this piece, your authenticated impressions can be shared here.</p>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+
             <!-- Interactive Review Form (Collapsible) -->
-            <% if (typeof user !== 'undefined' && user) { %>
+            <% if (typeof user !== 'undefined' && user && ((typeof hasPurchased !== 'undefined' && hasPurchased) || (typeof userReview !== 'undefined' && userReview))) { %>
                 <div id="reviewFormContainer" class="hidden transition-all duration-300">
                     <form id="productReviewForm" onsubmit="submitProductReview(event)" class="bg-[#fcfbfa] border-2 border-[#0A4D2E]/30 rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm">
                         
@@ -769,13 +805,22 @@
                         </div>
                         <div>
                             <% if (typeof user !== 'undefined' && user) { %>
-                                <button 
-                                    type="button" 
-                                    onclick="toggleReviewForm(true)" 
-                                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A4D2E] hover:bg-[#083e25] text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-sm cursor-pointer"
-                                >
-                                    <span>+ Write the First Review</span>
-                                </button>
+                                <% if (typeof hasPurchased !== 'undefined' && hasPurchased) { %>
+                                    <button 
+                                        type="button" 
+                                        onclick="toggleReviewForm(true)" 
+                                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A4D2E] hover:bg-[#083e25] text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+                                    >
+                                        <span>+ Write the First Review</span>
+                                    </button>
+                                <% } else { %>
+                                    <div class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50/90 border border-amber-200/80 text-amber-900 text-xs font-medium select-none">
+                                        <svg class="w-4 h-4 text-amber-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                        </svg>
+                                        <span>Verified Purchasers Only</span>
+                                    </div>
+                                <% } %>
                             <% } else { %>
                                 <a 
                                     href="/login?redirect=<%= encodeURIComponent('/product/' + safeProduct.slug + '#reviewsSection') %>" 

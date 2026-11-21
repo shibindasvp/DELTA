@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Review from "../../models/review.model.js";
 import Product from "../../models/product.model.js";
 import Order from "../../models/order.model.js";
+import { hasUserPurchasedProduct } from "../../repositories/order.repository.js";
 import { validateReview } from "../../validations/review.validation.js";
 
 
@@ -76,12 +77,7 @@ export const getProductReviews = async (productId, currentUserId = null) => {
             return authorId === uidStr;
         }) || null;
 
-        const orderMatch = await Order.exists({
-            user: currentUserId,
-            "items.product": prodObjId,
-            "items.status": { $ne: "Cancelled" }
-        });
-        hasPurchased = Boolean(orderMatch);
+        hasPurchased = await hasUserPurchasedProduct(currentUserId, prodObjId);
     }
 
     return {
@@ -111,11 +107,13 @@ export const addOrUpdateReview = async ({ productId, userId, rating, title = "",
         throw new Error("Timepiece not found in vault catalog.");
     }
 
-    const hasPurchased = await Order.exists({
-        user: userId,
-        "items.product": product._id,
-        "items.status": { $ne: "Cancelled" }
-    });
+    const hasPurchased = await hasUserPurchasedProduct(userId, product._id);
+
+    if (!hasPurchased) {
+        const purchaseError = new Error("You can only review timepieces that you have purchased.");
+        purchaseError.statusCode = 403;
+        throw purchaseError;
+    }
 
     let review = await Review.findOne({ product: product._id, user: userId });
     let isNew = false;
@@ -128,16 +126,14 @@ export const addOrUpdateReview = async ({ productId, userId, rating, title = "",
             rating: Math.round(Number(rating)),
             title: title ? title.trim() : "",
             comment: comment.trim(),
-            isVerifiedPurchase: Boolean(hasPurchased),
+            isVerifiedPurchase: true,
             isActive: true
         });
     } else {
         review.rating = Math.round(Number(rating));
         review.title = title ? title.trim() : "";
         review.comment = comment.trim();
-        if (hasPurchased) {
-            review.isVerifiedPurchase = true;
-        }
+        review.isVerifiedPurchase = true;
         review.isActive = true;
     }
 

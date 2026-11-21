@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Order from "../models/order.model.js";
 
 
@@ -116,6 +117,31 @@ export const saveOrder = async (orderDoc) => {
     return await orderDoc.save();
 };
 
+export const hasUserPurchasedProduct = async (userId, productId) => {
+    if (!userId || !productId) return false;
+
+    const prodObjId = mongoose.Types.ObjectId.isValid(productId)
+        ? new mongoose.Types.ObjectId(productId)
+        : productId;
+    const userObjId = mongoose.Types.ObjectId.isValid(userId)
+        ? new mongoose.Types.ObjectId(userId)
+        : userId;
+
+    const orderMatch = await Order.exists({
+        user: { $in: [userObjId, userObjId.toString()] },
+        orderStatus: { $nin: ["Cancelled"] },
+        paymentStatus: { $ne: "Failed" },
+        items: {
+            $elemMatch: {
+                product: { $in: [prodObjId, prodObjId.toString()] },
+                status: { $nin: ["Cancelled"] }
+            }
+        }
+    });
+
+    return Boolean(orderMatch);
+};
+
 export default {
     createOrder,
     findOrderById,
@@ -127,5 +153,6 @@ export default {
     findReturnsWithPagination,
     countOrders,
     updateOrderById,
-    saveOrder
+    saveOrder,
+    hasUserPurchasedProduct
 };
